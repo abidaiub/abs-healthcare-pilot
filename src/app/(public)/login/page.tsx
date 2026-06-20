@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { TenantLoginForm } from "@/components/login/TenantLoginForm";
 import { getModuleBreadcrumb } from "@/lib/module-registry";
 import { listTenantOptions } from "@/lib/diagnostic/queries";
