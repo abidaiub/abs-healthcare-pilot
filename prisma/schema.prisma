@@ -1,0 +1,1105 @@
+// ABSHealthcareLite — Layer 1: SaaS Foundation + Security Foundation
+// Layer 2: Diagnostic Masters (host catalog + tenant setup)
+// Source: docs/Architecture/04-Phase2-DiagnosticSchemaDesign.md
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Layer 1 enums ────────────────────────────────────────────────────────────
+
+enum TenantType {
+  DIAGNOSTIC
+  HOSPITAL
+  CLINIC
+  PHARMACY
+  MIXED
+}
+
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  EXPIRED
+  ARCHIVED
+}
+
+enum OnboardingStatus {
+  DRAFT
+  SETUP_PENDING
+  ACTIVE
+  BLOCKED
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  LOCKED
+  SUSPENDED
+  ARCHIVED
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  DUE
+  GRACE_PERIOD
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum ModuleStatus {
+  ACTIVE
+  DISABLED
+  TRIAL
+  EXPIRED
+}
+
+enum AuditActionType {
+  INSERT
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  VIEW
+  PRINT
+  RELEASE
+}
+
+enum EntityStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+/// Subscription tier classification (SubscriptionPackage.packageType)
+enum PackageType {
+  TRIAL
+  STARTER
+  STANDARD
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+// ── Layer 2 enums (diagnostic masters) ───────────────────────────────────────
+
+enum ResultType {
+  NUMERIC
+  TEXT
+  LONG_TEXT
+  BOOLEAN
+  OPTION_LIST
+  CULTURE
+  NARRATIVE
+  CALCULATED
+}
+
+// ── Module 01: Tenant / SaaS ─────────────────────────────────────────────────
+
+/// Multi-tenant company profile (hospital group, clinic network, diagnostic center)
+model Tenant {
+  id                  String           @id @default(cuid())
+  tenantCode          String           @unique @map("tenant_code")
+  tenantName          String           @map("tenant_name")
+  shortCode           String           @map("short_code")
+  legalName           String?          @map("legal_name")
+  tradeLicenseNo      String?          @map("trade_license_no")
+  taxBinNo            String?          @map("tax_bin_no")
+  contactPerson       String           @map("contact_person")
+  contactMobile       String           @map("contact_mobile")
+  contactEmail        String           @map("contact_email")
+  address             String?
+  city                String?
+  district            String?
+  country             String           @default("Bangladesh")
+  timezone            String           @default("Asia/Dhaka")
+  defaultLanguage     String           @default("EN") @map("default_language")
+  tenantType          TenantType       @map("tenant_type")
+  tenantStatus        TenantStatus     @default(TRIAL) @map("tenant_status")
+  onboardingStatus    OnboardingStatus @default(DRAFT) @map("onboarding_status")
+  logoUrl             String?          @map("logo_url")
+  reportHeaderLogoUrl String?          @map("report_header_logo_url")
+  reportFooterText    String?          @map("report_footer_text")
+  isActive            Boolean          @default(true) @map("is_active")
+  createdAt           DateTime         @default(now()) @map("created_at")
+  createdBy           String?          @map("created_by")
+  updatedAt           DateTime         @updatedAt @map("updated_at")
+  updatedBy           String?          @map("updated_by")
+
+  branches                  Branch[]
+  users                     User[]
+  roles                     Role[]
+  userRoles                 UserRole[]
+  permissions               Permission[]
+  subscriptions             TenantSubscription[]
+  usageLimit                TenantUsageLimit?
+  modules                   TenantModule[]
+  auditLogs                 AuditLog[]
+  statusHistories           StatusHistory[]
+  departments               Department[]
+  categories                Category[]
+  tenantServices            TenantService[]
+  serviceParameters         ServiceParameter[]
+  serviceParameterRefRanges ServiceParameterReferenceRange[]
+  sampleTypes               SampleType[]
+  sampleContainers          SampleContainer[]
+  testMethods               TestMethod[]
+  reportingMethods          ReportingMethod[]
+  analyzers                 Analyzer[]
+  doctors                   Doctor[]
+  doctorBranches            DoctorBranch[]
+  doctorDepartmentMappings  DoctorDepartmentMapping[]
+  reportDoctorAssignments   ReportDoctorAssignment[]
+  reportSignatureTemplates  ReportSignatureTemplate[]
+  tenantServiceBranches     TenantServiceBranch[]
+
+  @@index([tenantStatus])
+  @@index([createdAt])
+  @@map("tenants")
+}
+
+/// Physical location / branch within a tenant
+model Branch {
+  id        String       @id @default(cuid())
+  tenantId  String       @map("tenant_id")
+  code      String
+  name      String
+  address   String?
+  city      String?
+  district  String?
+  phone     String?
+  email     String?
+  status    EntityStatus @default(ACTIVE)
+  isActive  Boolean      @default(true) @map("is_active")
+  createdAt DateTime     @default(now()) @map("created_at")
+  createdBy String?      @map("created_by")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+  updatedBy String?      @map("updated_by")
+
+  tenant                   Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  auditLogs                AuditLog[]
+  statusHistories          StatusHistory[]
+  testMethods              TestMethod[]
+  analyzers                Analyzer[]
+  doctorBranches           DoctorBranch[]
+  reportDoctorAssignments  ReportDoctorAssignment[]
+  reportSignatureTemplates ReportSignatureTemplate[]
+  tenantServiceBranches    TenantServiceBranch[]
+
+  @@unique([tenantId, code])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([status])
+  @@index([createdAt])
+  @@map("branches")
+}
+
+/// Host/global subscription package master (tenant_id not applicable)
+model SubscriptionPackage {
+  id                       String       @id @default(cuid())
+  packageCode              String       @unique @map("package_code")
+  packageName              String       @map("package_name")
+  packageType              PackageType  @map("package_type")
+  billingCycle             BillingCycle @map("billing_cycle")
+  monthlyFee               Decimal      @map("monthly_fee") @db.Decimal(18, 2)
+  yearlyFee                Decimal      @map("yearly_fee") @db.Decimal(18, 2)
+  includedBranches         Int          @map("included_branches")
+  includedUsers            Int          @map("included_users")
+  includedPatientsPerMonth Int          @map("included_patients_per_month")
+  includedOrdersPerMonth   Int          @map("included_orders_per_month")
+  includedStorageGb        Int          @map("included_storage_gb")
+  supportLevel             String       @map("support_level")
+  isActive                 Boolean      @default(true) @map("is_active")
+  createdAt                DateTime     @default(now()) @map("created_at")
+  createdBy                String?      @map("created_by")
+  updatedAt                DateTime     @updatedAt @map("updated_at")
+  updatedBy                String?      @map("updated_by")
+
+  subscriptions TenantSubscription[]
+
+  @@index([createdAt])
+  @@map("subscription_packages")
+}
+
+/// Active or historical subscription assignment for a tenant
+model TenantSubscription {
+  id                 String             @id @default(cuid())
+  tenantId           String             @map("tenant_id")
+  packageId          String             @map("package_id")
+  subscriptionStart  DateTime           @map("subscription_start")
+  subscriptionEnd    DateTime           @map("subscription_end")
+  billingCycle       BillingCycle       @map("billing_cycle")
+  subscriptionStatus SubscriptionStatus @map("subscription_status")
+  nextBillingDate    DateTime?          @map("next_billing_date")
+  gracePeriodDays    Int                @default(7) @map("grace_period_days")
+  autoRenew          Boolean            @default(true) @map("auto_renew")
+  isActive           Boolean            @default(true) @map("is_active")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  createdBy          String?            @map("created_by")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  updatedBy          String?            @map("updated_by")
+
+  tenant  Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  package SubscriptionPackage @relation(fields: [packageId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([tenantId, subscriptionStatus])
+  @@index([subscriptionStatus])
+  @@index([createdAt])
+  @@map("tenant_subscriptions")
+}
+
+/// Host/global module catalog (tenant_id not applicable)
+model ModuleRegistry {
+  id          String   @id @default(cuid())
+  moduleCode  String   @unique @map("module_code")
+  moduleName  String   @map("module_name")
+  moduleGroup String   @map("module_group")
+  description String?
+  isCore      Boolean  @default(false) @map("is_core")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdBy   String?  @map("created_by")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedBy   String?  @map("updated_by")
+
+  tenantModules TenantModule[]
+
+  @@index([moduleCode])
+  @@index([createdAt])
+  @@map("module_registry")
+}
+
+/// Per-tenant module enablement and lifecycle
+model TenantModule {
+  id           String       @id @default(cuid())
+  tenantId     String       @map("tenant_id")
+  moduleId     String       @map("module_id")
+  isEnabled    Boolean      @default(true) @map("is_enabled")
+  enabledFrom  DateTime     @map("enabled_from")
+  enabledTo    DateTime?    @map("enabled_to")
+  enabledBy    String?      @map("enabled_by")
+  moduleStatus ModuleStatus @map("module_status")
+  isActive     Boolean      @default(true) @map("is_active")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  createdBy    String?      @map("created_by")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  updatedBy    String?      @map("updated_by")
+
+  tenant Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  module ModuleRegistry @relation(fields: [moduleId], references: [id])
+
+  @@unique([tenantId, moduleId])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([moduleStatus])
+  @@index([createdAt])
+  @@map("tenant_modules")
+}
+
+/// Resource quotas for a tenant (1:1 with tenant)
+model TenantUsageLimit {
+  id                  String   @id @default(cuid())
+  tenantId            String   @unique @map("tenant_id")
+  maxBranches         Int      @map("max_branches")
+  maxUsers            Int      @map("max_users")
+  maxPatientsPerMonth Int      @map("max_patients_per_month")
+  maxOrdersPerMonth   Int      @map("max_orders_per_month")
+  maxReportsPerMonth  Int      @map("max_reports_per_month")
+  maxStorageGb        Int      @map("max_storage_gb")
+  maxSmsPerMonth      Int      @map("max_sms_per_month")
+  maxWhatsappPerMonth Int      @map("max_whatsapp_per_month")
+  maxApiCallsPerMonth Int      @map("max_api_calls_per_month")
+  allowCustomDomain   Boolean  @default(false) @map("allow_custom_domain")
+  allowApiAccess      Boolean  @default(false) @map("allow_api_access")
+  allowPatientPortal  Boolean  @default(false) @map("allow_patient_portal")
+  allowMultiBranch    Boolean  @default(false) @map("allow_multi_branch")
+  allowReportBranding Boolean  @default(true) @map("allow_report_branding")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  createdBy           String?  @map("created_by")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  updatedBy           String?  @map("updated_by")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@map("tenant_usage_limits")
+}
+
+// ── Module 02: User / RBAC ───────────────────────────────────────────────────
+
+/// IAM identity — HostUser: tenantId NULL + isHostAdmin true; Tenant user: tenantId required + isHostAdmin false
+model User {
+  id                  String     @id @default(cuid())
+  tenantId            String?    @map("tenant_id")
+  username            String
+  email               String
+  phone               String?
+  passwordHash        String     @map("password_hash")
+  userStatus          UserStatus @default(ACTIVE) @map("user_status")
+  isHostAdmin         Boolean    @default(false) @map("is_host_admin")
+  forcePasswordChange Boolean    @default(false) @map("force_password_change")
+  isActive            Boolean    @default(true) @map("is_active")
+  createdAt           DateTime   @default(now()) @map("created_at")
+  createdBy           String?    @map("created_by")
+  updatedAt           DateTime   @updatedAt @map("updated_at")
+  updatedBy           String?    @map("updated_by")
+
+  tenant    Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userRoles UserRole[]
+  auditLogs AuditLog[]
+  doctors   Doctor[]
+
+  @@unique([username])
+  @@unique([email])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([userStatus])
+  @@index([username])
+  @@index([email])
+  @@index([createdAt])
+  @@map("users")
+}
+
+/// RBAC role — host/global when tenantId IS NULL
+model Role {
+  id          String   @id @default(cuid())
+  tenantId    String?  @map("tenant_id")
+  roleName    String   @map("role_name")
+  roleCode    String   @map("role_code")
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdBy   String?  @map("created_by")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedBy   String?  @map("updated_by")
+
+  tenant      Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userRoles   UserRole[]
+  permissions Permission[]
+
+  @@unique([tenantId, roleCode])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([createdAt])
+  @@map("roles")
+}
+
+/// User-to-role assignment with primary role designation
+model UserRole {
+  id            String   @id @default(cuid())
+  tenantId      String?  @map("tenant_id")
+  userId        String   @map("user_id")
+  roleId        String   @map("role_id")
+  isPrimary     Boolean  @default(false) @map("is_primary")
+  effectiveFrom DateTime @default(now()) @map("effective_from")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdBy     String?  @map("created_by")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  updatedBy     String?  @map("updated_by")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([roleId])
+  @@index([createdAt])
+  @@map("user_roles")
+}
+
+/// Role-scoped permission grant (Module 03 permission matrix row)
+model Permission {
+  id             String   @id @default(cuid())
+  tenantId       String?  @map("tenant_id")
+  roleId         String   @map("role_id")
+  permissionCode String   @map("permission_code")
+  moduleCode     String   @map("module_code")
+  resourceKey    String   @map("resource_key")
+  canView        Boolean  @default(false) @map("can_view")
+  canCreate      Boolean  @default(false) @map("can_create")
+  canEdit        Boolean  @default(false) @map("can_edit")
+  canDelete      Boolean  @default(false) @map("can_delete")
+  canApprove     Boolean  @default(false) @map("can_approve")
+  canPrint       Boolean  @default(false) @map("can_print")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  createdBy      String?  @map("created_by")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  updatedBy      String?  @map("updated_by")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role   Role    @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, resourceKey])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([moduleCode])
+  @@index([permissionCode])
+  @@index([createdAt])
+  @@map("permissions")
+}
+
+// ── Module 04: Audit & cross-cutting status ──────────────────────────────────
+
+/// Immutable audit trail — host events use tenantId NULL
+model AuditLog {
+  id         String          @id @default(cuid())
+  tenantId   String?         @map("tenant_id")
+  branchId   String?         @map("branch_id")
+  userId     String?         @map("user_id")
+  actionType AuditActionType @map("action_type")
+  entityType String          @map("entity_type")
+  entityId   String?         @map("entity_id")
+  changeData Json?           @map("change_data")
+  ipAddress  String?         @map("ip_address")
+  userAgent  String?         @map("user_agent")
+  createdAt  DateTime        @default(now()) @map("created_at")
+  createdBy  String?         @map("created_by")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([branchId])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+/// Generic polymorphic status change trail for tenant-owned entities
+model StatusHistory {
+  id         String   @id @default(cuid())
+  tenantId   String   @map("tenant_id")
+  branchId   String?  @map("branch_id")
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  oldStatus  String   @map("old_status")
+  newStatus  String   @map("new_status")
+  remarks    String?
+  changedBy  String   @map("changed_by")
+  changedAt  DateTime @map("changed_at")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  createdBy  String?  @map("created_by")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  updatedBy  String?  @map("updated_by")
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([branchId])
+  @@index([tenantId, entityType, entityId])
+  @@index([changedAt])
+  @@index([createdAt])
+  @@map("status_histories")
+}
+
+// ── Layer 2: Host / global diagnostic taxonomy & catalog ─────────────────────
+
+/// Clinical/admin division — host when tenantId IS NULL, tenant-scoped otherwise
+model Department {
+  id        String   @id @default(cuid())
+  tenantId  String?  @map("tenant_id")
+  deptCode  String   @map("dept_code")
+  name      String
+  deptType  String   @map("dept_type")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  tenant                   Tenant?                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  categories               Category[]
+  hostServices             HostService[]
+  tenantServices           TenantService[]
+  testMethods              TestMethod[]
+  analyzers                Analyzer[]
+  sampleContainers         SampleContainer[]
+  doctors                  Doctor[]
+  doctorDepartmentMappings DoctorDepartmentMapping[]
+  reportDoctorAssignments  ReportDoctorAssignment[]
+  reportSignatureTemplates ReportSignatureTemplate[]
+
+  @@unique([tenantId, deptCode])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([createdAt])
+  @@map("departments")
+}
+
+/// Service grouping under a department — host when tenantId IS NULL
+model Category {
+  id           String   @id @default(cuid())
+  tenantId     String?  @map("tenant_id")
+  departmentId String   @map("department_id")
+  categoryCode String   @map("category_code")
+  name         String
+  categoryType String   @map("category_type")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  createdBy    String?  @map("created_by")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  updatedBy    String?  @map("updated_by")
+
+  tenant         Tenant?         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  department     Department      @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  hostServices   HostService[]
+  tenantServices TenantService[]
+
+  @@unique([tenantId, departmentId, categoryCode])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([createdAt])
+  @@map("categories")
+}
+
+/// Host/global diagnostic service catalog (no tenantId)
+model HostService {
+  id                String   @id @default(cuid())
+  departmentId      String   @map("department_id")
+  categoryId        String   @map("category_id")
+  serviceCode       String   @unique @map("service_code")
+  serviceName       String   @map("service_name")
+  shortName         String?  @map("short_name")
+  isSampleRequired  Boolean  @default(true) @map("is_sample_required")
+  isBarcodeRequired Boolean  @default(true) @map("is_barcode_required")
+  isLabTest         Boolean  @default(true) @map("is_lab_test")
+  resultMode        String   @map("result_mode")
+  basePrice         Decimal  @map("base_price") @db.Decimal(18, 2)
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  createdBy         String?  @map("created_by")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  updatedBy         String?  @map("updated_by")
+
+  department         Department                     @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  category           Category                       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  tenantServices     TenantService[]
+  parameters         HostServiceParameter[]
+  sampleRequirements HostServiceSampleRequirement[]
+
+  @@index([departmentId])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@map("host_services")
+}
+
+/// Default/global parameter skeleton for a host service
+model HostServiceParameter {
+  id            String     @id @default(cuid())
+  hostServiceId String     @map("host_service_id")
+  parameterCode String     @map("parameter_code")
+  parameterName String     @map("parameter_name")
+  unit          String?
+  resultType    ResultType @map("result_type")
+  displayOrder  Int        @default(0) @map("display_order")
+  isRequired    Boolean    @default(false) @map("is_required")
+  isActive      Boolean    @default(true) @map("is_active")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  createdBy     String?    @map("created_by")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+  updatedBy     String?    @map("updated_by")
+
+  hostService HostService @relation(fields: [hostServiceId], references: [id], onDelete: Cascade)
+
+  @@unique([hostServiceId, parameterCode])
+  @@index([hostServiceId])
+  @@index([createdAt])
+  @@map("host_service_parameters")
+}
+
+/// Default sample/container/method requirements for a host service (references nullable — no tenant on HostService)
+model HostServiceSampleRequirement {
+  id                  String   @id @default(cuid())
+  hostServiceId       String   @map("host_service_id")
+  sampleTypeId        String?  @map("sample_type_id")
+  sampleContainerId   String?  @map("sample_container_id")
+  testMethodId        String?  @map("test_method_id")
+  reportingMethodId   String?  @map("reporting_method_id")
+  analyzerId          String?  @map("analyzer_id")
+  specimenInstruction String?  @map("specimen_instruction")
+  fastingRequired     Boolean  @default(false) @map("fasting_required")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  createdBy           String?  @map("created_by")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  updatedBy           String?  @map("updated_by")
+
+  hostService     HostService      @relation(fields: [hostServiceId], references: [id], onDelete: Cascade)
+  sampleType      SampleType?      @relation(fields: [sampleTypeId], references: [id], onDelete: SetNull)
+  sampleContainer SampleContainer? @relation(fields: [sampleContainerId], references: [id], onDelete: SetNull)
+  testMethod      TestMethod?      @relation("HostSampleRequirementTestMethod", fields: [testMethodId], references: [id], onDelete: SetNull)
+  reportingMethod ReportingMethod? @relation("HostSampleRequirementReportingMethod", fields: [reportingMethodId], references: [id], onDelete: SetNull)
+  analyzer        Analyzer?        @relation("HostSampleRequirementAnalyzer", fields: [analyzerId], references: [id], onDelete: SetNull)
+
+  @@index([hostServiceId])
+  @@index([sampleTypeId])
+  @@index([sampleContainerId])
+  @@index([createdAt])
+  @@map("host_service_sample_requirements")
+}
+
+// ── Layer 2: Tenant diagnostic setup ─────────────────────────────────────────
+
+/// Tenant-local test/service configuration (imported from host or locally defined)
+model TenantService {
+  id                String    @id @default(cuid())
+  tenantId          String    @map("tenant_id")
+  hostServiceId     String?   @map("host_service_id")
+  localName         String    @map("local_name")
+  departmentId      String    @map("department_id")
+  categoryId        String    @map("category_id")
+  sampleTypeId      String?   @map("sample_type_id")
+  sampleContainerId String?   @map("sample_container_id")
+  price             Decimal   @db.Decimal(18, 2)
+  discountAllowed   Boolean   @default(false) @map("discount_allowed")
+  effectiveFrom     DateTime  @map("effective_from")
+  effectiveTo       DateTime? @map("effective_to")
+  testMethodId      String?   @map("test_method_id")
+  reportingMethodId String?   @map("reporting_method_id")
+  analyzerId        String?   @map("analyzer_id")
+  isBarcodeRequired Boolean   @default(true) @map("is_barcode_required")
+  tatHours          Int?      @map("tat_hours")
+  isActive          Boolean   @default(true) @map("is_active")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  createdBy         String?   @map("created_by")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  updatedBy         String?   @map("updated_by")
+
+  tenant                  Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  hostService             HostService?             @relation(fields: [hostServiceId], references: [id], onDelete: SetNull)
+  department              Department               @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  category                Category                 @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  sampleType              SampleType?              @relation(fields: [sampleTypeId], references: [id], onDelete: SetNull)
+  sampleContainer         SampleContainer?         @relation(fields: [sampleContainerId], references: [id], onDelete: SetNull)
+  testMethod              TestMethod?              @relation(fields: [testMethodId], references: [id], onDelete: SetNull)
+  reportingMethod         ReportingMethod?         @relation(fields: [reportingMethodId], references: [id], onDelete: SetNull)
+  analyzer                Analyzer?                @relation(fields: [analyzerId], references: [id], onDelete: SetNull)
+  serviceParameters       ServiceParameter[]
+  reportDoctorAssignments ReportDoctorAssignment[]
+  tenantServiceBranches   TenantServiceBranch[]
+
+  @@unique([tenantId, hostServiceId])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([departmentId])
+  @@index([categoryId])
+  @@index([createdAt])
+  @@map("tenant_services")
+}
+
+/// Branch-level service availability and pricing override
+model TenantServiceBranch {
+  id                    String   @id @default(cuid())
+  tenantId              String   @map("tenant_id")
+  branchId              String   @map("branch_id")
+  tenantServiceId       String   @map("tenant_service_id")
+  isAvailable           Boolean  @default(true) @map("is_available")
+  branchPrice           Decimal? @map("branch_price") @db.Decimal(18, 2)
+  branchDiscountAllowed Boolean  @default(true) @map("branch_discount_allowed")
+  tatMinutes            Int?     @map("tat_minutes")
+  isActive              Boolean  @default(true) @map("is_active")
+  createdAt             DateTime @default(now()) @map("created_at")
+  createdBy             String?  @map("created_by")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  updatedBy             String?  @map("updated_by")
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch        Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  tenantService TenantService @relation(fields: [tenantServiceId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, branchId, tenantServiceId])
+  @@index([tenantId])
+  @@index([branchId])
+  @@index([tenantServiceId])
+  @@index([tenantId, isActive])
+  @@index([createdAt])
+  @@map("tenant_service_branches")
+}
+
+/// Test parameter template for a tenant service
+model ServiceParameter {
+  id              String     @id @default(cuid())
+  tenantId        String     @map("tenant_id")
+  tenantServiceId String     @map("tenant_service_id")
+  parameterCode   String     @map("parameter_code")
+  parameterName   String     @map("parameter_name")
+  unit            String?
+  resultType      ResultType @map("result_type")
+  formula         String?
+  displayOrder    Int        @default(0) @map("display_order")
+  isActive        Boolean    @default(true) @map("is_active")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  createdBy       String?    @map("created_by")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+  updatedBy       String?    @map("updated_by")
+
+  tenant          Tenant                           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantService   TenantService                    @relation(fields: [tenantServiceId], references: [id], onDelete: Cascade)
+  referenceRanges ServiceParameterReferenceRange[]
+
+  @@unique([tenantId, tenantServiceId, parameterCode])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([tenantServiceId])
+  @@index([createdAt])
+  @@map("service_parameters")
+}
+
+/// Age/gender reference ranges for a service parameter
+model ServiceParameterReferenceRange {
+  id                 String   @id @default(cuid())
+  tenantId           String   @map("tenant_id")
+  serviceParameterId String   @map("service_parameter_id")
+  gender             String?
+  ageFromDays        Int?     @map("age_from_days")
+  ageToDays          Int?     @map("age_to_days")
+  normalLow          Decimal? @map("normal_low") @db.Decimal(18, 4)
+  normalHigh         Decimal? @map("normal_high") @db.Decimal(18, 4)
+  criticalLow        Decimal? @map("critical_low") @db.Decimal(18, 4)
+  criticalHigh       Decimal? @map("critical_high") @db.Decimal(18, 4)
+  textRange          String?  @map("text_range")
+  isActive           Boolean  @default(true) @map("is_active")
+  createdAt          DateTime @default(now()) @map("created_at")
+  createdBy          String?  @map("created_by")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  updatedBy          String?  @map("updated_by")
+
+  tenant           Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  serviceParameter ServiceParameter @relation(fields: [serviceParameterId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([serviceParameterId])
+  @@index([createdAt])
+  @@map("service_parameter_reference_ranges")
+}
+
+/// Sample material master — host when tenantId IS NULL
+model SampleType {
+  id         String   @id @default(cuid())
+  tenantId   String?  @map("tenant_id")
+  typeCode   String   @map("type_code")
+  sampleType String   @map("sample_type")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  createdBy  String?  @map("created_by")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+  updatedBy  String?  @map("updated_by")
+
+  tenant                 Tenant?                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantServices         TenantService[]
+  hostSampleRequirements HostServiceSampleRequirement[]
+
+  @@unique([tenantId, typeCode])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([createdAt])
+  @@map("sample_types")
+}
+
+/// Tube/container master — host when tenantId IS NULL
+model SampleContainer {
+  id                    String   @id @default(cuid())
+  tenantId              String?  @map("tenant_id")
+  departmentId          String?  @map("department_id")
+  containerCode         String   @map("container_code")
+  containerType         String   @map("container_type")
+  tubeColor             String?  @map("tube_color")
+  collectionInstruction String?  @map("collection_instruction")
+  barcodeRequired       Boolean  @default(true) @map("barcode_required")
+  sampleRequired        Boolean  @default(true) @map("sample_required")
+  volumeMl              Decimal? @map("volume_ml") @db.Decimal(10, 2)
+  transportTemperature  String?  @map("transport_temperature")
+  isActive              Boolean  @default(true) @map("is_active")
+  createdAt             DateTime @default(now()) @map("created_at")
+  createdBy             String?  @map("created_by")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  updatedBy             String?  @map("updated_by")
+
+  tenant                 Tenant?                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  department             Department?                    @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  tenantServices         TenantService[]
+  hostSampleRequirements HostServiceSampleRequirement[]
+
+  @@unique([tenantId, containerCode])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([departmentId])
+  @@index([createdAt])
+  @@map("sample_containers")
+}
+
+/// Test method master (Manual, ELISA, CLIA, etc.)
+model TestMethod {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  branchId     String?  @map("branch_id")
+  departmentId String?  @map("department_id")
+  methodCode   String   @map("method_code")
+  methodName   String   @map("method_name")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  createdBy    String?  @map("created_by")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  updatedBy    String?  @map("updated_by")
+
+  tenant                 Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch                 Branch?                        @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  department             Department?                    @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  tenantServices         TenantService[]
+  hostSampleRequirements HostServiceSampleRequirement[] @relation("HostSampleRequirementTestMethod")
+
+  @@unique([tenantId, branchId, methodCode])
+  @@index([tenantId])
+  @@index([branchId])
+  @@index([tenantId, isActive])
+  @@index([createdAt])
+  @@map("test_methods")
+}
+
+/// Reporting method master — host when tenantId IS NULL
+model ReportingMethod {
+  id          String   @id @default(cuid())
+  tenantId    String?  @map("tenant_id")
+  methodCode  String   @map("method_code")
+  methodName  String   @map("method_name")
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdBy   String?  @map("created_by")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedBy   String?  @map("updated_by")
+
+  tenant                 Tenant?                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantServices         TenantService[]
+  hostSampleRequirements HostServiceSampleRequirement[] @relation("HostSampleRequirementReportingMethod")
+
+  @@unique([tenantId, methodCode])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([createdAt])
+  @@map("reporting_methods")
+}
+
+/// Lab/radiology analyzer machine master
+model Analyzer {
+  id            String   @id @default(cuid())
+  tenantId      String   @map("tenant_id")
+  branchId      String   @map("branch_id")
+  departmentId  String   @map("department_id")
+  analyzerCode  String   @map("analyzer_code")
+  machineName   String   @map("machine_name")
+  model         String?
+  manufacturer  String?
+  interfaceType String   @map("interface_type")
+  protocol      String?
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdBy     String?  @map("created_by")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  updatedBy     String?  @map("updated_by")
+
+  tenant                 Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch                 Branch                         @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  department             Department                     @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  tenantServices         TenantService[]
+  hostSampleRequirements HostServiceSampleRequirement[] @relation("HostSampleRequirementAnalyzer")
+
+  @@unique([tenantId, branchId, analyzerCode])
+  @@index([tenantId])
+  @@index([branchId])
+  @@index([tenantId, isActive])
+  @@index([createdAt])
+  @@map("analyzers")
+}
+
+/// Provider/doctor registry
+model Doctor {
+  id                   String   @id @default(cuid())
+  tenantId             String   @map("tenant_id")
+  doctorCode           String   @map("doctor_code")
+  doctorName           String   @map("doctor_name")
+  degree               String?
+  specialty            String?
+  departmentId         String?  @map("department_id")
+  bmdcNo               String?  @map("bmdc_no")
+  phone                String?
+  email                String?
+  signatureImageUrl    String?  @map("signature_image_url")
+  sealImageUrl         String?  @map("seal_image_url")
+  isReferring          Boolean  @default(false) @map("is_referring")
+  isReporting          Boolean  @default(false) @map("is_reporting")
+  isVerifying          Boolean  @default(false) @map("is_verifying")
+  isConsultant         Boolean  @default(false) @map("is_consultant")
+  isPathologist        Boolean  @default(false) @map("is_pathologist")
+  isRadiologist        Boolean  @default(false) @map("is_radiologist")
+  commissionApplicable Boolean  @default(false) @map("commission_applicable")
+  consultationFee      Decimal? @map("consultation_fee") @db.Decimal(18, 2)
+  userId               String?  @map("user_id")
+  isActive             Boolean  @default(true) @map("is_active")
+  createdAt            DateTime @default(now()) @map("created_at")
+  createdBy            String?  @map("created_by")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  updatedBy            String?  @map("updated_by")
+
+  tenant                   Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  department               Department?               @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  user                     User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  doctorBranches           DoctorBranch[]
+  doctorDepartmentMappings DoctorDepartmentMapping[]
+  reportingAssignments     ReportDoctorAssignment[]  @relation("ReportingDoctor")
+  verifyingAssignments     ReportDoctorAssignment[]  @relation("VerifyingDoctor")
+  consultantAssignments    ReportDoctorAssignment[]  @relation("ConsultantDoctor")
+  reportSignatureTemplates ReportSignatureTemplate[]
+
+  @@unique([tenantId, doctorCode])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([departmentId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("doctors")
+}
+
+/// Doctor availability per branch
+model DoctorBranch {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  doctorId  String   @map("doctor_id")
+  branchId  String   @map("branch_id")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, doctorId, branchId])
+  @@index([tenantId])
+  @@index([doctorId])
+  @@index([branchId])
+  @@index([createdAt])
+  @@map("doctor_branches")
+}
+
+/// Department-level reporting/verification privileges for a doctor
+model DoctorDepartmentMapping {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id")
+  doctorId     String   @map("doctor_id")
+  departmentId String   @map("department_id")
+  canReport    Boolean  @default(false) @map("can_report")
+  canVerify    Boolean  @default(false) @map("can_verify")
+  canRelease   Boolean  @default(false) @map("can_release")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  createdBy    String?  @map("created_by")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  updatedBy    String?  @map("updated_by")
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  doctor     Doctor     @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, doctorId, departmentId])
+  @@index([tenantId])
+  @@index([doctorId])
+  @@index([departmentId])
+  @@index([createdAt])
+  @@map("doctor_department_mappings")
+}
+
+/// Per test/department doctor assignment for report workflow
+model ReportDoctorAssignment {
+  id                 String    @id @default(cuid())
+  tenantId           String    @map("tenant_id")
+  branchId           String?   @map("branch_id")
+  tenantServiceId    String?   @map("tenant_service_id")
+  departmentId       String    @map("department_id")
+  reportingDoctorId  String?   @map("reporting_doctor_id")
+  verifyingDoctorId  String?   @map("verifying_doctor_id")
+  consultantDoctorId String?   @map("consultant_doctor_id")
+  defaultForReport   Boolean   @default(false) @map("default_for_report")
+  effectiveFrom      DateTime  @map("effective_from")
+  effectiveTo        DateTime? @map("effective_to")
+  isActive           Boolean   @default(true) @map("is_active")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  createdBy          String?   @map("created_by")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  updatedBy          String?   @map("updated_by")
+
+  tenant           Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch           Branch?        @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  tenantService    TenantService? @relation(fields: [tenantServiceId], references: [id], onDelete: SetNull)
+  department       Department     @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  reportingDoctor  Doctor?        @relation("ReportingDoctor", fields: [reportingDoctorId], references: [id], onDelete: SetNull)
+  verifyingDoctor  Doctor?        @relation("VerifyingDoctor", fields: [verifyingDoctorId], references: [id], onDelete: SetNull)
+  consultantDoctor Doctor?        @relation("ConsultantDoctor", fields: [consultantDoctorId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([branchId])
+  @@index([tenantId, isActive])
+  @@index([tenantServiceId])
+  @@index([departmentId])
+  @@index([createdAt])
+  @@map("report_doctor_assignments")
+}
+
+/// Report print/sign layout template
+model ReportSignatureTemplate {
+  id                String   @id @default(cuid())
+  tenantId          String   @map("tenant_id")
+  branchId          String?  @map("branch_id")
+  departmentId      String?  @map("department_id")
+  doctorId          String   @map("doctor_id")
+  signaturePosition String   @map("signature_position")
+  showDegree        Boolean  @default(true) @map("show_degree")
+  showBmdc          Boolean  @default(true) @map("show_bmdc")
+  showSeal          Boolean  @default(true) @map("show_seal")
+  footerText        String?  @map("footer_text")
+  isActive          Boolean  @default(true) @map("is_active")
+  createdAt         DateTime @default(now()) @map("created_at")
+  createdBy         String?  @map("created_by")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  updatedBy         String?  @map("updated_by")
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch     Branch?     @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  doctor     Doctor      @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([branchId])
+  @@index([tenantId, isActive])
+  @@index([departmentId])
+  @@index([doctorId])
+  @@index([createdAt])
+  @@map("report_signature_templates")
+}

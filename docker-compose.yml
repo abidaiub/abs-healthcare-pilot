@@ -1,0 +1,44 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: abs-healthcare-pilot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-abshealthcare}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-abshealthcare_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-abs_healthcare_pilot}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-abshealthcare} -d ${POSTGRES_DB:-abs_healthcare_pilot}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: abs-healthcare-pilot-app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-abshealthcare}:${POSTGRES_PASSWORD:-abshealthcare_dev}@postgres:5432/${POSTGRES_DB:-abs_healthcare_pilot}?schema=public
+      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-"ABSHealthcareLite Pilot"}
+      NEXT_PUBLIC_SAMPLE_TENANT: ${NEXT_PUBLIC_SAMPLE_TENANT:-"Al Baraka Medical Group"}
+      NEXT_PUBLIC_SAMPLE_BRANCH: ${NEXT_PUBLIC_SAMPLE_BRANCH:-"Dhaka Central Hospital"}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+
+volumes:
+  postgres_data:
