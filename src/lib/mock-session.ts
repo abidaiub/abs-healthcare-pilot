@@ -34,6 +34,7 @@ export function buildHostMockSessionContext(
 ): SessionContext {
   return {
     loginKind: "host",
+    userId: "mock-host-user",
     ...PLATFORM_SESSION_CONTEXT,
     user: {
       name: input.userName.trim() || "Host Administrator",
@@ -48,6 +49,7 @@ export function buildTenantMockSessionContext(
 ): SessionContext {
   return {
     loginKind: "tenant",
+    userId: "mock-tenant-user",
     tenantId: input.tenantId,
     tenantName: input.tenantName,
     tenantCode: input.tenantCode,

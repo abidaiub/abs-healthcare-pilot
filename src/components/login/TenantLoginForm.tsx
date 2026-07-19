@@ -1,36 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { setTenantMockSessionAction } from "@/app/actions/auth";
+import { tenantLoginAction } from "@/app/actions/host-auth";
 import {
   LoginBrandingPanel,
   PLATFORM_STATS,
 } from "@/components/login/LoginBrandingPanel";
 import { Badge, Button, Card, CardBody, Input, Select } from "@/components/ui";
 import type { TenantOptionRow } from "@/lib/diagnostic/types";
-import { persistMockSessionClient, type TenantMockSessionInput } from "@/lib/mock-session";
-import { TENANT_PRIMARY_ROLES } from "@/lib/navigation";
-
-type AccountStatus = "Active" | "Locked" | "Inactive";
 
 type Props = {
   tenants: TenantOptionRow[];
 };
 
 export function TenantLoginForm({ tenants }: Props) {
-  const router = useRouter();
   const [tenantId, setTenantId] = useState<string>(tenants[0]?.id ?? "");
   const [branchId, setBranchId] = useState<string>(
     tenants[0]?.branches[0]?.id ?? "",
   );
-  const [selectedRole, setSelectedRole] = useState<string>(
-    TENANT_PRIMARY_ROLES[1],
-  );
-  const [accountStatus] = useState<AccountStatus>("Active");
-  const [showForcePasswordChange] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const selectedTenant = useMemo(
     () => tenants.find((tenant) => tenant.id === tenantId),
@@ -46,31 +36,19 @@ export function TenantLoginForm({ tenants }: Props) {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!selectedTenant) return;
-
-    const formData = new FormData(event.currentTarget);
-    const userName = String(formData.get("username") ?? "").trim();
-    const role = String(formData.get("role") ?? selectedRole).trim();
-    const branch = branches.find((entry) => entry.id === branchId);
-    if (!branch) return;
-
-    const mockSession: TenantMockSessionInput = {
-      loginKind: "tenant",
-      tenantId: selectedTenant.id,
-      tenantName: selectedTenant.name,
-      tenantCode: selectedTenant.code,
-      branchId: branch.id,
-      branchName: branch.name,
-      branchCode: branch.code,
-      role,
-      userName: userName || "Workspace User",
-    };
+    if (!selectedTenant || !branchId) return;
 
     setSubmitting(true);
+    setError(null);
+
     try {
-      persistMockSessionClient(mockSession);
-      await setTenantMockSessionAction(mockSession);
-      router.push("/dashboard");
+      const formData = new FormData(event.currentTarget);
+      formData.set("tenantId", tenantId);
+      formData.set("branchId", branchId);
+      const result = await tenantLoginAction(formData);
+      if (result?.error) {
+        setError(result.error);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -95,7 +73,7 @@ export function TenantLoginForm({ tenants }: Props) {
     <div className="flex min-h-screen">
       <LoginBrandingPanel
         headline="Tenant workspace for hospitals, diagnostics, and clinics"
-        description="Select your tenant and branch from the database. Demo session — credentials not verified against User table yet."
+        description="Select your tenant and branch, then sign in with your assigned credentials."
       />
 
       <div className="flex w-full flex-1 items-center justify-center px-6 py-12">
@@ -115,41 +93,26 @@ export function TenantLoginForm({ tenants }: Props) {
             </div>
           </div>
 
-          {showForcePasswordChange && (
-            <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              <p className="font-medium">Password change required</p>
-              <p className="mt-1 text-xs text-amber-700">
-                Your account requires a password update before continuing. UI
-                placeholder — no enforcement in demo session.
-              </p>
-            </div>
-          )}
-
           <Card>
             <CardBody className="space-y-5">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="info">Tenant Login</Badge>
                   <Badge variant="success">Database tenants</Badge>
-                  <Badge
-                    variant={
-                      accountStatus === "Active"
-                        ? "success"
-                        : accountStatus === "Locked"
-                          ? "danger"
-                          : "default"
-                    }
-                  >
-                    Account: {accountStatus}
-                  </Badge>
                 </div>
                 <h2 className="mt-3 text-xl font-semibold text-slate-900">
                   Staff sign in
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Tenant and branch loaded from Prisma. Session uses real tenantId for data scoping.
+                  Credentials are verified server-side against the User table.
                 </p>
               </div>
+
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                  {error}
+                </div>
+              )}
 
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <Select
@@ -180,38 +143,22 @@ export function TenantLoginForm({ tenants }: Props) {
                   ))}
                 </Select>
 
-                <Select
-                  label="Primary role"
-                  name="role"
-                  value={selectedRole}
-                  onChange={(event) => setSelectedRole(event.target.value)}
-                  required
-                >
-                  {TENANT_PRIMARY_ROLES.map((role) => (
-                    <option key={role} value={role}>
-                      {role}
-                    </option>
-                  ))}
-                </Select>
-
                 <Input
                   label="Username"
                   name="username"
-                  placeholder="rec_arif"
+                  placeholder="laila.hasan"
                   autoComplete="username"
                   required
                 />
 
-                <div>
-                  <Input
-                    label="Password"
-                    name="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    autoComplete="current-password"
-                    required
-                  />
-                </div>
+                <Input
+                  label="Password"
+                  name="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  required
+                />
 
                 <Button type="submit" className="w-full" disabled={submitting}>
                   {submitting ? "Signing in..." : "Sign in to workspace"}

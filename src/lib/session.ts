@@ -8,6 +8,7 @@ export type LoginKind = "host" | "tenant";
 
 export type SessionContext = {
   loginKind: LoginKind;
+  userId: string;
   tenantId: string;
   tenantName: string;
   tenantCode: string;
@@ -62,6 +63,7 @@ export const DEMO_USERS = [
 function isValidSession(parsed: Partial<SessionContext>): parsed is SessionContext {
   return Boolean(
     parsed.loginKind &&
+      parsed.userId &&
       parsed.tenantId &&
       parsed.branchId &&
       parsed.user?.name &&

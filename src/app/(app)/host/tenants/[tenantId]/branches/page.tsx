@@ -4,7 +4,7 @@ import { BranchManagementPanel } from "@/components/host/BranchManagementPanel";
 import { ModulePageHeader } from "@/components/layout/ModulePageHeader";
 import { Button } from "@/components/ui";
 import { requireHostSession } from "@/lib/auth";
-import { getSaasTenantById } from "@/lib/saas-foundation-data";
+import { getTenantDetailById } from "@/lib/saas/queries";
 
 export default async function TenantBranchesPage({
   params,
@@ -13,7 +13,7 @@ export default async function TenantBranchesPage({
 }) {
   await requireHostSession();
   const { tenantId } = await params;
-  const tenant = getSaasTenantById(tenantId);
+  const tenant = await getTenantDetailById(tenantId);
 
   if (!tenant) notFound();
 

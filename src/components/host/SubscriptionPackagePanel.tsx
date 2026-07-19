@@ -1,15 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { Badge, Button, Card, CardBody, CardHeader, Input, Select } from "@/components/ui";
-import {
-  SUBSCRIPTION_PACKAGES,
-  formatBdt,
-  type SubscriptionPackage,
-} from "@/lib/saas-foundation-data";
+import { Badge, Card, CardBody, CardHeader, Input, Select } from "@/components/ui";
+import { formatBdt } from "@/lib/saas/format";
+import type { SubscriptionPackageRow } from "@/lib/saas/types";
 
-export function SubscriptionPackagePanel() {
-  const [selected, setSelected] = useState<SubscriptionPackage>(SUBSCRIPTION_PACKAGES[1]);
+export function SubscriptionPackagePanel({
+  packages,
+}: {
+  packages: SubscriptionPackageRow[];
+}) {
+  const [selected, setSelected] = useState<SubscriptionPackageRow>(
+    packages[0] ?? {
+      id: "",
+      code: "",
+      name: "",
+      type: "",
+      monthlyFee: 0,
+      yearlyFee: 0,
+      includedBranches: 0,
+      includedUsers: 0,
+      includedOrders: 0,
+      storageGb: 0,
+      supportLevel: "",
+      status: "Inactive",
+    },
+  );
+
+  if (packages.length === 0) {
+    return (
+      <Card>
+        <CardBody>
+          <p className="text-sm text-slate-600">
+            No subscription packages found. Run <code>npm run db:seed</code> to seed packages.
+          </p>
+        </CardBody>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -32,9 +60,9 @@ export function SubscriptionPackagePanel() {
               </tr>
             </thead>
             <tbody>
-              {SUBSCRIPTION_PACKAGES.map((pkg) => (
+              {packages.map((pkg) => (
                 <tr
-                  key={pkg.code}
+                  key={pkg.id}
                   className={`cursor-pointer border-b border-slate-100 hover:bg-teal-50/50 ${
                     selected.code === pkg.code ? "bg-teal-50" : ""
                   }`}
@@ -61,49 +89,22 @@ export function SubscriptionPackagePanel() {
       </Card>
 
       <Card>
-        <CardHeader title="Package form" description={`Editing ${selected.name} — mockup only`} />
-        <CardBody className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Input label="Package code" defaultValue={selected.code} readOnly className="bg-slate-50" />
-            <Input label="Package name" defaultValue={selected.name} />
-            <Select label="Type" defaultValue={selected.type}>
-              <option>Starter</option>
-              <option>Professional</option>
-              <option>Enterprise</option>
-              <option>Custom</option>
-            </Select>
-            <Input label="Monthly fee (BDT)" defaultValue={String(selected.monthlyFee)} />
-            <Input label="Yearly fee (BDT)" defaultValue={String(selected.yearlyFee)} />
-            <Select label="Status" defaultValue={selected.status}>
-              <option>Active</option>
-              <option>Inactive</option>
-            </Select>
-          </div>
-
-          <div>
-            <p className="mb-2 text-sm font-medium text-slate-700">Feature flags</p>
-            <div className="flex flex-wrap gap-2">
-              {selected.featureFlags.map((flag) => (
-                <Badge key={flag} variant="info">{flag}</Badge>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <p className="mb-3 text-sm font-medium text-slate-700">Included limits</p>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Input label="Included branches" defaultValue={String(selected.includedBranches)} />
-              <Input label="Included users" defaultValue={String(selected.includedUsers)} />
-              <Input label="Included orders / month" defaultValue={String(selected.includedOrders)} />
-              <Input label="Storage (GB)" defaultValue={String(selected.storageGb)} />
-              <Input label="Support level" defaultValue={selected.supportLevel} />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <Button type="button" variant="secondary">Cancel</Button>
-            <Button type="button">Save package</Button>
-          </div>
+        <CardHeader title="Package detail" description={`${selected.name} — database-backed read view`} />
+        <CardBody className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Input label="Package code" value={selected.code} readOnly className="bg-slate-50" />
+          <Input label="Package name" value={selected.name} readOnly className="bg-slate-50" />
+          <Input label="Type" value={selected.type} readOnly className="bg-slate-50" />
+          <Input label="Monthly fee (BDT)" value={String(selected.monthlyFee)} readOnly className="bg-slate-50" />
+          <Input label="Yearly fee (BDT)" value={String(selected.yearlyFee)} readOnly className="bg-slate-50" />
+          <Select label="Status" value={selected.status} disabled>
+            <option>Active</option>
+            <option>Inactive</option>
+          </Select>
+          <Input label="Included branches" value={String(selected.includedBranches)} readOnly className="bg-slate-50" />
+          <Input label="Included users" value={String(selected.includedUsers)} readOnly className="bg-slate-50" />
+          <Input label="Included orders / month" value={String(selected.includedOrders)} readOnly className="bg-slate-50" />
+          <Input label="Storage (GB)" value={String(selected.storageGb)} readOnly className="bg-slate-50" />
+          <Input label="Support level" value={selected.supportLevel} readOnly className="bg-slate-50" />
         </CardBody>
       </Card>
     </div>

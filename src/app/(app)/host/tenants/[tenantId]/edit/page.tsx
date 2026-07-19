@@ -2,7 +2,10 @@ import { notFound } from "next/navigation";
 import { TenantFormPanel } from "@/components/host/TenantFormPanel";
 import { ModulePageHeader } from "@/components/layout/ModulePageHeader";
 import { requireHostSession } from "@/lib/auth";
-import { getSaasTenantById } from "@/lib/saas-foundation-data";
+import {
+  getTenantDetailById,
+  listSubscriptionPackages,
+} from "@/lib/saas/queries";
 
 export default async function TenantEditPage({
   params,
@@ -11,7 +14,10 @@ export default async function TenantEditPage({
 }) {
   await requireHostSession();
   const { tenantId } = await params;
-  const tenant = getSaasTenantById(tenantId);
+  const [tenant, packages] = await Promise.all([
+    getTenantDetailById(tenantId),
+    listSubscriptionPackages(),
+  ]);
 
   if (!tenant) notFound();
 
@@ -19,9 +25,9 @@ export default async function TenantEditPage({
     <div className="space-y-8">
       <ModulePageHeader
         screenKey="tenantEdit"
-        description={`Edit ${tenant.name} — profile, branding, deployment, admin, and package.`}
+        description={`Edit ${tenant.name} — profile, branding, and subscription.`}
       />
-      <TenantFormPanel mode="edit" tenant={tenant} />
+      <TenantFormPanel mode="edit" tenant={tenant} packages={packages} />
     </div>
   );
 }

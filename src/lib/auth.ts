@@ -1,5 +1,3 @@
-// TODO: Replace mock session with real authentication before production.
-
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import {

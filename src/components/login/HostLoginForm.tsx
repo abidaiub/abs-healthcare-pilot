@@ -1,38 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { setHostMockSessionAction } from "@/app/actions/auth";
+import { hostLoginAction } from "@/app/actions/host-auth";
 import {
   LoginBrandingPanel,
   PLATFORM_STATS,
 } from "@/components/login/LoginBrandingPanel";
 import { Badge, Button, Card, CardBody, Input } from "@/components/ui";
-import {
-  persistMockSessionClient,
-  type HostMockSessionInput,
-} from "@/lib/mock-session";
 
 export function HostLoginForm() {
-  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const userName = String(formData.get("username") ?? "").trim();
-
-    const mockSession: HostMockSessionInput = {
-      loginKind: "host",
-      userName: userName || "Host Administrator",
-    };
-
     setSubmitting(true);
+    setError(null);
+
     try {
-      persistMockSessionClient(mockSession);
-      await setHostMockSessionAction(mockSession);
-      router.push("/host/dashboard");
+      const formData = new FormData(event.currentTarget);
+      const result = await hostLoginAction(formData);
+      if (result?.error) {
+        setError(result.error);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -72,6 +63,12 @@ export function HostLoginForm() {
                   login instead.
                 </p>
               </div>
+
+              {error && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                  {error}
+                </div>
+              )}
 
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <Input

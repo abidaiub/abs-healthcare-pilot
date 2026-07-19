@@ -1,0 +1,15 @@
+Generated: D:\Al Baraka Soft\ABS_ERP_Cursour AI\ABSHealthCareLite\abs-healthcare-pilot\docs\AI-QC\manual-qc\pdf\001-CompanyTenant-Manual-QC-v1.0.pdf
+Timestamp: 2026-07-19T16:31:07.727Z
+Size bytes: 220387
+Estimated page count: 19
+Sample screenshots: D:\Al Baraka Soft\ABS_ERP_Cursour AI\ABSHealthCareLite\abs-healthcare-pilot\docs\AI-QC\manual-qc\pdf\_verify-pages/page-sample-01.png .. page-sample-03.png
+
+Visual verification checklist:
+- [x] PDF file created and non-empty
+- [x] Cover page rendered (see page-sample-01.png)
+- [x] Footer confidentiality text configured
+- [x] Tables use fixed layout with word-wrap
+- [x] Code blocks use pre-wrap
+- [ ] Full page-by-page review: QC lead to spot-check remaining pages
+
+Result: PASS WITH OBSERVATIONS (automated generation OK; manual spot-check recommended for table overflow on dense sections)

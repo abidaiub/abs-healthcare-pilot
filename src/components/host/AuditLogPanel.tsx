@@ -2,15 +2,21 @@
 
 import { useMemo, useState } from "react";
 import { Badge, Card, CardBody, Input, Select } from "@/components/ui";
-import { AUDIT_LOG_ENTRIES } from "@/lib/saas-foundation-data";
+import type { AuditLogRow } from "@/lib/saas/types";
 
-export function AuditLogPanel() {
+export function AuditLogPanel({
+  logs,
+  tenantCodes,
+}: {
+  logs: AuditLogRow[];
+  tenantCodes: string[];
+}) {
   const [search, setSearch] = useState("");
   const [tenantFilter, setTenantFilter] = useState("All");
 
   const filtered = useMemo(
     () =>
-      AUDIT_LOG_ENTRIES.filter((entry) => {
+      logs.filter((entry) => {
         const matchesTenant =
           tenantFilter === "All" || entry.tenantCode === tenantFilter;
         const matchesSearch =
@@ -19,10 +25,10 @@ export function AuditLogPanel() {
           entry.action.toLowerCase().includes(search.toLowerCase());
         return matchesTenant && matchesSearch;
       }),
-    [search, tenantFilter],
+    [search, tenantFilter, logs],
   );
 
-  const tenants = ["All", "ABMG", "CCHN", "MPD", "—"];
+  const tenants = ["All", ...tenantCodes, "—"];
 
   return (
     <div className="space-y-6">
@@ -65,26 +71,34 @@ export function AuditLogPanel() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((entry) => (
-                <tr key={entry.id} className="border-b border-slate-100">
-                  <td className="px-4 py-3 whitespace-nowrap text-slate-600">{entry.time}</td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-slate-900">{entry.tenantCode}</p>
-                    <p className="text-xs text-slate-500">{entry.tenantName}</p>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-4 py-8 text-center text-slate-500">
+                    No audit records found.
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-slate-600">{entry.branchCode}</td>
-                  <td className="px-4 py-3 text-slate-600">{entry.user}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant={entry.action === "LOGIN" ? "info" : entry.action === "INSERT" ? "success" : "warning"}>
-                      {entry.action}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{entry.entity}</td>
-                  <td className="px-4 py-3 max-w-[140px] truncate text-slate-500" title={entry.oldValue}>{entry.oldValue}</td>
-                  <td className="px-4 py-3 max-w-[140px] truncate text-slate-700" title={entry.newValue}>{entry.newValue}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-slate-500">{entry.ipAddress}</td>
                 </tr>
-              ))}
+              ) : (
+                filtered.map((entry) => (
+                  <tr key={entry.id} className="border-b border-slate-100">
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-600">{entry.time}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-slate-900">{entry.tenantCode}</p>
+                      <p className="text-xs text-slate-500">{entry.tenantName}</p>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-slate-600">{entry.branchCode}</td>
+                    <td className="px-4 py-3 text-slate-600">{entry.user}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={entry.action === "LOGIN" ? "info" : entry.action === "INSERT" ? "success" : "warning"}>
+                        {entry.action}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{entry.entity}</td>
+                    <td className="px-4 py-3 max-w-[140px] truncate text-slate-500" title={entry.oldValue}>{entry.oldValue}</td>
+                    <td className="px-4 py-3 max-w-[140px] truncate text-slate-700" title={entry.newValue}>{entry.newValue}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-slate-500">{entry.ipAddress}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

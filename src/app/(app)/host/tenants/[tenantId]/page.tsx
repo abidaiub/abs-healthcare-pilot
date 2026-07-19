@@ -4,7 +4,7 @@ import { TenantDetailPanel } from "@/components/host/TenantDetailPanel";
 import { ModulePageHeader } from "@/components/layout/ModulePageHeader";
 import { Button } from "@/components/ui";
 import { requireHostSession } from "@/lib/auth";
-import { getSaasTenantById } from "@/lib/saas-foundation-data";
+import { getTenantDetailById } from "@/lib/saas/queries";
 
 export default async function TenantDetailPage({
   params,
@@ -13,7 +13,7 @@ export default async function TenantDetailPage({
 }) {
   await requireHostSession();
   const { tenantId } = await params;
-  const tenant = getSaasTenantById(tenantId);
+  const tenant = await getTenantDetailById(tenantId);
 
   if (!tenant) notFound();
 

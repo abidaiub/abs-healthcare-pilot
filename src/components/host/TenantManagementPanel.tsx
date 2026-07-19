@@ -1,42 +1,69 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { changeTenantStatusAction } from "@/app/actions/host-tenant";
 import { Badge, Button, Card, CardBody, Input, Select } from "@/components/ui";
-import {
-  SAAS_TENANTS,
-  formatBdt,
-  getStatusBadgeVariant,
-} from "@/lib/saas-foundation-data";
+import { formatBdt } from "@/lib/saas/format";
+import { getStatusBadgeVariant } from "@/lib/saas/status-badge";
+import type { TenantListRow } from "@/lib/saas/types";
 
 export function TenantManagementPanel({
+  tenants,
   initialFilter,
 }: {
+  tenants: TenantListRow[];
   initialFilter?: string;
 }) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState(
     initialFilter === "due" ? "Due" : "All",
   );
+  const [message, setMessage] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
 
   const filtered = useMemo(
     () =>
-      SAAS_TENANTS.filter((tenant) => {
+      tenants.filter((tenant) => {
         const matchesSearch =
           tenant.name.toLowerCase().includes(search.toLowerCase()) ||
           tenant.code.toLowerCase().includes(search.toLowerCase());
         const matchesStatus =
           statusFilter === "All" ||
           (statusFilter === "Due"
-            ? tenant.subscription.dueAmount > 0
+            ? tenant.dueAmount > 0
             : tenant.tenantStatus === statusFilter);
         return matchesSearch && matchesStatus;
       }),
-    [search, statusFilter],
+    [search, statusFilter, tenants],
   );
+
+  function handleStatusToggle(tenant: TenantListRow) {
+    const action = tenant.tenantStatus === "Suspended" ? "reactivate" : "suspend";
+    const reason =
+      action === "suspend"
+        ? window.prompt("Enter suspension reason:")
+        : undefined;
+    if (action === "suspend" && !reason?.trim()) return;
+
+    startTransition(async () => {
+      const result = await changeTenantStatusAction({
+        tenantId: tenant.id,
+        action,
+        reason: reason ?? undefined,
+      });
+      setMessage(result.ok ? "Tenant status updated." : result.error);
+    });
+  }
 
   return (
     <div className="space-y-6">
+      {message && (
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          {message}
+        </div>
+      )}
+
       <Card>
         <CardBody className="flex flex-col gap-4 lg:flex-row lg:items-end">
           <div className="flex-1">
@@ -83,65 +110,83 @@ export function TenantManagementPanel({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((tenant) => (
-                <tr key={tenant.id} className="border-b border-slate-100">
-                  <td className="px-4 py-3 font-mono font-medium text-teal-700">
-                    {tenant.code}
-                  </td>
-                  <td className="px-4 py-3 font-medium text-slate-900">
-                    {tenant.name}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">{tenant.tenantType}</td>
-                  <td className="px-4 py-3">
-                    <Badge variant={getStatusBadgeVariant(tenant.tenantStatus)}>
-                      {tenant.tenantStatus}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {tenant.subscription.packageName}
-                  </td>
-                  <td className="px-4 py-3 text-center text-slate-600">
-                    {tenant.branches.length}
-                  </td>
-                  <td className="px-4 py-3 text-center text-slate-600">
-                    {tenant.userCount}
-                  </td>
-                  <td className="px-4 py-3">
-                    {tenant.subscription.dueAmount > 0 ? (
-                      <span className="font-medium text-amber-700">
-                        {formatBdt(tenant.subscription.dueAmount)}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={tenant.deployment.status === "Live" ? "success" : "warning"}>
-                      {tenant.deployment.status}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {tenant.primaryAdmin.name}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      <Link href={`/host/tenants/${tenant.id}`}>
-                        <Button type="button" variant="ghost" className="px-2 py-1 text-xs">
-                          View
-                        </Button>
-                      </Link>
-                      <Link href={`/host/tenants/${tenant.id}/edit`}>
-                        <Button type="button" variant="ghost" className="px-2 py-1 text-xs">
-                          Edit
-                        </Button>
-                      </Link>
-                      <Button type="button" variant="ghost" className="px-2 py-1 text-xs">
-                        {tenant.tenantStatus === "Suspended" ? "Activate" : "Suspend"}
-                      </Button>
-                    </div>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={11} className="px-4 py-8 text-center text-slate-500">
+                    No tenants found. Create a tenant or adjust filters.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filtered.map((tenant) => (
+                  <tr key={tenant.id} className="border-b border-slate-100">
+                    <td className="px-4 py-3 font-mono font-medium text-teal-700">
+                      {tenant.code}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-slate-900">
+                      {tenant.name}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{tenant.tenantType}</td>
+                    <td className="px-4 py-3">
+                      <Badge variant={getStatusBadgeVariant(tenant.tenantStatus)}>
+                        {tenant.tenantStatus}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {tenant.subscriptionPackage}
+                    </td>
+                    <td className="px-4 py-3 text-center text-slate-600">
+                      {tenant.branchCount}
+                    </td>
+                    <td className="px-4 py-3 text-center text-slate-600">
+                      {tenant.userCount}
+                    </td>
+                    <td className="px-4 py-3">
+                      {tenant.dueAmount > 0 ? (
+                        <span className="font-medium text-amber-700">
+                          {formatBdt(tenant.dueAmount)}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge
+                        variant={
+                          tenant.deploymentStatus === "Live" ? "success" : "warning"
+                        }
+                      >
+                        {tenant.deploymentStatus}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {tenant.primaryAdminName}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        <Link href={`/host/tenants/${tenant.id}`}>
+                          <Button type="button" variant="ghost" className="px-2 py-1 text-xs">
+                            View
+                          </Button>
+                        </Link>
+                        <Link href={`/host/tenants/${tenant.id}/edit`}>
+                          <Button type="button" variant="ghost" className="px-2 py-1 text-xs">
+                            Edit
+                          </Button>
+                        </Link>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="px-2 py-1 text-xs"
+                          disabled={pending}
+                          onClick={() => handleStatusToggle(tenant)}
+                        >
+                          {tenant.tenantStatus === "Suspended" ? "Activate" : "Suspend"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
