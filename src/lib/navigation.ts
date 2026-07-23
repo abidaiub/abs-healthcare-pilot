@@ -82,6 +82,8 @@ const TENANT_ADMIN_NAV: NavGroup[] = [
 
       { href: "/settings/roles", label: "Roles & Permissions", icon: "◍" },
 
+      { href: "/settings/audit", label: "Audit Center", icon: "◎" },
+
     ],
 
   },

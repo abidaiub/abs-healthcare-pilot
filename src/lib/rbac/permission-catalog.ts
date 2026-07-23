@@ -45,6 +45,14 @@ export const TENANT_PERMISSION_RESOURCES: PermissionResource[] = [
     group: "Security & IAM",
   },
   {
+    resourceKey: "/settings/audit",
+    moduleCode: "MOD-04",
+    permissionCode: "AUDIT_CENTER",
+    label: "Audit Center",
+    route: "/settings/audit",
+    group: "Security & IAM",
+  },
+  {
     resourceKey: "/settings/service-catalog",
     moduleCode: "MOD-10",
     permissionCode: "SERVICE_CATALOG",

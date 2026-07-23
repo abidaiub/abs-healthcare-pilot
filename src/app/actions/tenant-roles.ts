@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireTenantSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
   TENANT_PERMISSION_RESOURCES,
@@ -14,13 +13,6 @@ import { writeAuditLog } from "@/lib/saas/audit";
 export type TenantRoleActionResult =
   | { ok: true; roleId?: string }
   | { ok: false; error: string };
-
-async function getRoleActor(requireEdit = true) {
-  if (requireEdit) {
-    return requireTenantPermission("/settings/roles", "canEdit");
-  }
-  return requireTenantSession();
-}
 
 function revalidateRolePaths(tenantId: string, roleId?: string) {
   revalidatePath("/settings/roles");

@@ -361,7 +361,7 @@ model User {
   updatedAt           DateTime   @updatedAt @map("updated_at")
   updatedBy           String?    @map("updated_by")
 
-  tenant       Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant       Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   userRoles    UserRole[]
   userBranches UserBranch[]
   auditLogs    AuditLog[]
@@ -508,6 +508,8 @@ model AuditLog {
 
   @@index([tenantId])
   @@index([branchId])
+  @@index([userId])
+  @@index([tenantId, actionType])
   @@index([tenantId, createdAt(sort: Desc)])
   @@index([entityType, entityId])
   @@index([createdAt])

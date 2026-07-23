@@ -10,6 +10,7 @@ import { seedModuleRegistry, seedTenantDiagnosticMasters } from "./seed/tenant-d
 import { seedTenantImportedServices } from "./seed/tenant-imported-services";
 import { seedSaasFoundation } from "./seed/saas-foundation";
 import { seedTenantRbacFoundation } from "./seed/rbac-foundation";
+import { seedTenantAuditSamples } from "./seed/audit-foundation";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -60,6 +61,15 @@ async function main() {
   await seedTenantReferenceTestMethods(prisma, tenant.id);
   await seedSaasFoundation(prisma, tenant.id);
   await seedTenantRbacFoundation(prisma, tenant.id, branch.id);
+
+  const adminUser = await prisma.user.findUnique({
+    where: { username: "laila.hasan" },
+    select: { id: true },
+  });
+  if (adminUser) {
+    await seedTenantAuditSamples(prisma, tenant.id, branch.id, adminUser.id);
+  }
+
   await seedTenantImportedServices(prisma, tenant.id, branch.id);
   await seedTenantDiagnosticMasters(prisma, tenant.id, branch.id);
 

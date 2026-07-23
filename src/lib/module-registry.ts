@@ -199,6 +199,12 @@ export const SCREENS = {
     screenName: "Permission Matrix",
     workflowRef: "View/Create/Edit/Delete/Approve/Print per route",
   },
+  tenantAuditCenter: {
+    route: "/settings/audit",
+    moduleKey: "auditCenter",
+    screenName: "Audit Center",
+    workflowRef: "Filter → Inspect detail → Export CSV",
+  },
   hostTestCatalog: {
     route: "/host/catalog",
     moduleKey: "masterServiceCatalog",

@@ -304,6 +304,7 @@ export const RESULT_DISPLAY_PREVIEW = [
 export const SECURITY_SETUP_NAV = [
   { href: "/settings/users", label: "User Management" },
   { href: "/settings/roles", label: "Roles & Permissions" },
+  { href: "/settings/audit", label: "Audit Center" },
 ] as const;
 
 export const DIAGNOSTIC_SETUP_NAV = [
