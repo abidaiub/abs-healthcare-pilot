@@ -142,6 +142,7 @@ model Tenant {
   users                     User[]
   roles                     Role[]
   userRoles                 UserRole[]
+  userBranches              UserBranch[]
   permissions               Permission[]
   subscriptions             TenantSubscription[]
   usageLimit                TenantUsageLimit?
@@ -189,6 +190,7 @@ model Branch {
   updatedBy String?      @map("updated_by")
 
   tenant                   Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userBranches             UserBranch[]
   auditLogs                AuditLog[]
   statusHistories          StatusHistory[]
   testMethods              TestMethod[]
@@ -359,10 +361,11 @@ model User {
   updatedAt           DateTime   @updatedAt @map("updated_at")
   updatedBy           String?    @map("updated_by")
 
-  tenant    Tenant?    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userRoles UserRole[]
-  auditLogs AuditLog[]
-  doctors   Doctor[]
+  tenant       Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userRoles    UserRole[]
+  userBranches UserBranch[]
+  auditLogs    AuditLog[]
+  doctors      Doctor[]
 
   @@unique([username])
   @@unique([email])
@@ -423,6 +426,31 @@ model UserRole {
   @@index([roleId])
   @@index([createdAt])
   @@map("user_roles")
+}
+
+/// User-to-branch assignment with primary branch designation
+model UserBranch {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  userId    String   @map("user_id")
+  branchId  String   @map("branch_id")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  createdBy String?  @map("created_by")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, branchId])
+  @@index([tenantId])
+  @@index([userId])
+  @@index([branchId])
+  @@index([tenantId, isActive])
+  @@map("user_branches")
 }
 
 /// Role-scoped permission grant (Module 03 permission matrix row)

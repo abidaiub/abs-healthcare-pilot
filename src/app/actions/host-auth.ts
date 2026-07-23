@@ -13,6 +13,7 @@ import { writeAuditLog } from "@/lib/saas/audit";
 import {
   PLATFORM_SESSION_CONTEXT,
   SESSION_COOKIE,
+  getPostLoginPath,
   type SessionContext,
 } from "@/lib/session";
 
@@ -65,13 +66,17 @@ export async function hostLoginAction(
     user.tenantId !== null ||
     !verifyPassword(password, user.passwordHash)
   ) {
-    await recordFailedLogin(`host:${username.toLowerCase()}`);
+    if (user && user.userStatus === "LOCKED") {
+      return { error: "Account is locked. Contact an administrator." };
+    }
+    await recordFailedLogin(`host:${username.toLowerCase()}`, user?.id);
     return { error: GENERIC_ERROR };
   }
 
   await clearLoginAttempts(`host:${username.toLowerCase()}`);
 
   const roleName = user.userRoles[0]?.role.roleName ?? "Host Admin";
+  const roleCode = user.userRoles[0]?.role.roleCode ?? "HOST_ADMIN";
 
   const session: SessionContext = {
     loginKind: "host",
@@ -80,6 +85,7 @@ export async function hostLoginAction(
     user: {
       name: user.username,
       role: roleName,
+      roleCode,
       employeeCode: "HOST-001",
     },
   };
@@ -132,12 +138,23 @@ export async function tenantLoginAction(
   if (
     !user ||
     !user.isActive ||
-    user.userStatus !== "ACTIVE" ||
     user.isHostAdmin ||
     user.tenantId !== tenantId ||
     !verifyPassword(password, user.passwordHash)
   ) {
-    await recordFailedLogin(`tenant:${username.toLowerCase()}`);
+    if (user?.userStatus === "LOCKED") {
+      return { error: "Account is locked. Contact an administrator." };
+    }
+    if (user && user.userStatus !== "ACTIVE") {
+      await recordFailedLogin(`tenant:${username.toLowerCase()}`, user.id);
+      return { error: GENERIC_ERROR };
+    }
+    await recordFailedLogin(`tenant:${username.toLowerCase()}`, user?.id);
+    return { error: GENERIC_ERROR };
+  }
+
+  if (user.userStatus !== "ACTIVE") {
+    await recordFailedLogin(`tenant:${username.toLowerCase()}`, user.id);
     return { error: GENERIC_ERROR };
   }
 
@@ -151,13 +168,14 @@ export async function tenantLoginAction(
   ]);
 
   if (!tenant || !branch) {
-    await recordFailedLogin(`tenant:${username.toLowerCase()}`);
+    await recordFailedLogin(`tenant:${username.toLowerCase()}`, user.id);
     return { error: GENERIC_ERROR };
   }
 
   await clearLoginAttempts(`tenant:${username.toLowerCase()}`);
 
   const roleName = user.userRoles[0]?.role.roleName ?? "Tenant User";
+  const roleCode = user.userRoles[0]?.role.roleCode ?? "TENANT_USER";
 
   const session: SessionContext = {
     loginKind: "tenant",
@@ -171,6 +189,7 @@ export async function tenantLoginAction(
     user: {
       name: user.username,
       role: roleName,
+      roleCode,
       employeeCode: user.id.slice(-8).toUpperCase(),
     },
   };
@@ -188,5 +207,5 @@ export async function tenantLoginAction(
     createdBy: user.username,
   });
 
-  redirect("/dashboard");
+  redirect(getPostLoginPath(session));
 }

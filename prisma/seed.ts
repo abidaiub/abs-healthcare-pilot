@@ -9,6 +9,7 @@ import {
 import { seedModuleRegistry, seedTenantDiagnosticMasters } from "./seed/tenant-diagnostic-masters";
 import { seedTenantImportedServices } from "./seed/tenant-imported-services";
 import { seedSaasFoundation } from "./seed/saas-foundation";
+import { seedTenantRbacFoundation } from "./seed/rbac-foundation";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -58,6 +59,7 @@ async function main() {
 
   await seedTenantReferenceTestMethods(prisma, tenant.id);
   await seedSaasFoundation(prisma, tenant.id);
+  await seedTenantRbacFoundation(prisma, tenant.id, branch.id);
   await seedTenantImportedServices(prisma, tenant.id, branch.id);
   await seedTenantDiagnosticMasters(prisma, tenant.id, branch.id);
 

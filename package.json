@@ -15,6 +15,9 @@
     "import:host-services": "tsx scripts/import-host-services.ts",
     "db:studio": "prisma studio",
     "screenshots": "node scripts/capture-screenshots.mjs",
+    "daily:sync": "powershell -ExecutionPolicy Bypass -File scripts/daily-git-sync.ps1",
+    "verify:mod01": "tsx scripts/verify-mod01-auth.ts",
+    "verify:mod02": "tsx scripts/verify-mod02-rbac.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

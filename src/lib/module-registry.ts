@@ -71,6 +71,11 @@ export const MODULES = {
     name: "User Management & RBAC",
     docPath: "docs/02-UserManagement/UserManagement_v1.md",
   },
+  rolePermission: {
+    id: "03",
+    name: "Role & Permission Management",
+    docPath: "docs/03-RolePermission/RolePermission_v1.md",
+  },
   auditCenter: {
     id: "04",
     name: "Audit Center",
@@ -157,6 +162,42 @@ export const SCREENS = {
     moduleKey: "platformAdministration",
     screenName: "SaaS Settings",
     workflowRef: "Platform branding, billing, and security",
+  },
+  tenantUserList: {
+    route: "/settings/users",
+    moduleKey: "userManagement",
+    screenName: "User List",
+    workflowRef: "Search users → Edit profile → Assign role/branch",
+  },
+  tenantUserCreate: {
+    route: "/settings/users/new",
+    moduleKey: "userManagement",
+    screenName: "Create User",
+    workflowRef: "Credentials → Primary role → Primary branch",
+  },
+  tenantUserEdit: {
+    route: "/settings/users/[userId]",
+    moduleKey: "userManagement",
+    screenName: "Edit User",
+    workflowRef: "Update profile → Reset password → Status control",
+  },
+  tenantRoleList: {
+    route: "/settings/roles",
+    moduleKey: "rolePermission",
+    screenName: "Role List",
+    workflowRef: "Define roles → Open permission matrix",
+  },
+  tenantRoleCreate: {
+    route: "/settings/roles/new",
+    moduleKey: "rolePermission",
+    screenName: "Create Role",
+    workflowRef: "Role code → Role name → Permission matrix",
+  },
+  tenantPermissionMatrix: {
+    route: "/settings/roles/[roleId]/permissions",
+    moduleKey: "rolePermission",
+    screenName: "Permission Matrix",
+    workflowRef: "View/Create/Edit/Delete/Approve/Print per route",
   },
   hostTestCatalog: {
     route: "/host/catalog",

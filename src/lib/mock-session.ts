@@ -39,6 +39,7 @@ export function buildHostMockSessionContext(
     user: {
       name: input.userName.trim() || "Host Administrator",
       role: "Host Admin",
+      roleCode: "HOST_ADMIN",
       employeeCode: "HOST-001",
     },
   };
@@ -59,6 +60,7 @@ export function buildTenantMockSessionContext(
     user: {
       name: input.userName,
       role: input.role,
+      roleCode: inferTenantRoleCode(input.role),
       employeeCode: "MOCK-USER",
     },
   };
@@ -70,6 +72,16 @@ export function buildMockSessionContext(input: MockSessionInput): SessionContext
   }
 
   return buildTenantMockSessionContext(input);
+}
+
+export function inferTenantRoleCode(role: string): string {
+  const value = role.trim().toLowerCase();
+  if (value.includes("admin")) return "TENANT_ADMIN";
+  if (value.includes("doctor")) return "DOCTOR";
+  if (value.includes("lab")) return "LAB_TECH";
+  if (value.includes("bill") || value.includes("cashier")) return "BILLING";
+  if (value.includes("portal")) return "PATIENT_PORTAL";
+  return "RECEPTION";
 }
 
 export function inferTenantRole(username: string): string {

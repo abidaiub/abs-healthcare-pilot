@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 
+import { prisma } from "@/lib/db";
+
 const ATTEMPT_COOKIE = "abs-login-attempts";
 const MAX_ATTEMPTS = 5;
 const WINDOW_SECONDS = 15 * 60;
@@ -45,19 +47,33 @@ export async function assertLoginAllowed(scope: string): Promise<void> {
   }
 }
 
-export async function recordFailedLogin(scope: string): Promise<void> {
+export async function recordFailedLogin(
+  scope: string,
+  userId?: string,
+): Promise<number> {
   const record = await readAttempts(scope);
   const now = Date.now();
 
-  if (!record || now - record.firstAttemptAt > WINDOW_SECONDS * 1000) {
-    await writeAttempts(scope, { count: 1, firstAttemptAt: now });
-    return;
+  let nextCount = 1;
+  if (record && now - record.firstAttemptAt <= WINDOW_SECONDS * 1000) {
+    nextCount = record.count + 1;
   }
 
   await writeAttempts(scope, {
-    count: record.count + 1,
-    firstAttemptAt: record.firstAttemptAt,
+    count: nextCount,
+    firstAttemptAt: record && now - record.firstAttemptAt <= WINDOW_SECONDS * 1000
+      ? record.firstAttemptAt
+      : now,
   });
+
+  if (nextCount >= MAX_ATTEMPTS && userId) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { userStatus: "LOCKED" },
+    });
+  }
+
+  return nextCount;
 }
 
 export async function clearLoginAttempts(scope: string): Promise<void> {

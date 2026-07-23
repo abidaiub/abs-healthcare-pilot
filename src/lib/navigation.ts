@@ -74,6 +74,20 @@ const TENANT_ADMIN_NAV: NavGroup[] = [
 
   {
 
+    title: "Security & IAM",
+
+    items: [
+
+      { href: "/settings/users", label: "User Management", icon: "◌" },
+
+      { href: "/settings/roles", label: "Roles & Permissions", icon: "◍" },
+
+    ],
+
+  },
+
+  {
+
     title: "Diagnostic Setup",
 
     items: [
@@ -244,11 +258,17 @@ export function getHostNavGroups(): NavGroup[] {
 
 export function getTenantNavGroups(session: SessionContext): NavGroup[] {
 
+  const roleCode = session.user.roleCode;
   const role = session.user.role;
 
 
 
-  if (role === "Tenant Admin" || role === "Company Admin") {
+  if (
+    roleCode === "TENANT_ADMIN" ||
+    role === "Tenant Admin" ||
+    role === "Company Admin" ||
+    role === "Primary Tenant Admin"
+  ) {
 
     return TENANT_ADMIN_NAV;
 
@@ -336,44 +356,43 @@ export function getDiagnosticNavGroups(session: SessionContext): NavGroup[] {
 
 
 
-export function getRoleHomePath(role: string): string {
+export function getRoleHomePath(role: string, roleCode?: string): string {
 
-  if (role === "Host Admin") return "/host/dashboard";
+  if (role === "Host Admin" || roleCode === "HOST_ADMIN") return "/host/dashboard";
 
-  if (role === "Tenant Admin" || role === "Company Admin") {
-
-    return "/settings/service-catalog";
-
-  }
-
-  if (role === "Reception" || role === "Receptionist" || role === "Cashier") {
-
-    return "/dashboard";
-
+  if (
+    roleCode === "TENANT_ADMIN" ||
+    role === "Tenant Admin" ||
+    role === "Company Admin" ||
+    role === "Primary Tenant Admin"
+  ) {
+    return "/settings/users";
   }
 
   if (
-
-    role === "Lab Technician" ||
-
-    role === "Lab Supervisor" ||
-
-    role === "Pathologist"
-
+    roleCode === "RECEPTION" ||
+    role === "Reception" ||
+    role === "Receptionist" ||
+    role === "Cashier"
   ) {
-
-    return "/lab/sample-collection";
-
+    return "/dashboard";
   }
 
-  if (role === "Billing") return "/diagnostic/billing";
+  if (
+    roleCode === "LAB_TECH" ||
+    role === "Lab Technician" ||
+    role === "Lab Supervisor" ||
+    role === "Pathologist"
+  ) {
+    return "/lab/sample-collection";
+  }
+
+  if (roleCode === "BILLING" || role === "Billing") return "/diagnostic/billing";
 
   if (role === "Report Delivery") return "/lab/report-release";
 
   if (role === "Patient Portal" || role === "Patient Portal User") {
-
     return "/portal/reports";
-
   }
 
   return "/dashboard";

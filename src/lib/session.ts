@@ -1,6 +1,7 @@
 export type SessionUser = {
   name: string;
   role: string;
+  roleCode: string;
   employeeCode: string;
 };
 
@@ -35,6 +36,7 @@ export const DEMO_USERS = [
     password: "demo",
     name: "Arif Hossain",
     role: "Receptionist",
+    roleCode: "RECEPTION",
     employeeCode: "EMP-201",
   },
   {
@@ -42,6 +44,7 @@ export const DEMO_USERS = [
     password: "demo",
     name: "Tania Sultana",
     role: "Receptionist",
+    roleCode: "RECEPTION",
     employeeCode: "EMP-202",
   },
   {
@@ -49,6 +52,7 @@ export const DEMO_USERS = [
     password: "demo",
     name: "Dr. Shafiqul Islam",
     role: "Doctor",
+    roleCode: "DOCTOR",
     employeeCode: "DR-1001",
   },
   {
@@ -56,6 +60,7 @@ export const DEMO_USERS = [
     password: "demo",
     name: "Syed Asif Iqbal",
     role: "Administrator",
+    roleCode: "TENANT_ADMIN",
     employeeCode: "EMP-701",
   },
 ] as const;
@@ -82,6 +87,10 @@ export function parseSession(raw: string | undefined): SessionContext | null {
       parsed.loginKind = "tenant";
     }
 
+    if (parsed.user && !parsed.user.roleCode) {
+      parsed.user.roleCode = "TENANT_USER";
+    }
+
     if (isValidSession(parsed)) {
       return parsed;
     }
@@ -102,12 +111,12 @@ export function isTenantSession(session: SessionContext): boolean {
 
 import { getRoleHomePath as getNavigationHomePath } from "@/lib/navigation";
 
-export function getRoleHomePath(role: string, loginKind?: LoginKind): string {
+export function getRoleHomePath(role: string, loginKind?: LoginKind, roleCode?: string): string {
   if (loginKind === "host" || role === "Host Admin") {
     return "/host/dashboard";
   }
 
-  return getNavigationHomePath(role);
+  return getNavigationHomePath(role, roleCode);
 }
 
 export function getPostLoginPath(session: SessionContext): string {
@@ -115,5 +124,5 @@ export function getPostLoginPath(session: SessionContext): string {
     return "/host/dashboard";
   }
 
-  return "/dashboard";
+  return getNavigationHomePath(session.user.role, session.user.roleCode);
 }

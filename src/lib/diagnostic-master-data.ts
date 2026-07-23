@@ -301,6 +301,11 @@ export const RESULT_DISPLAY_PREVIEW = [
   { test: "FBS", value: "12.5 mmol/L", flag: "high" as const },
 ];
 
+export const SECURITY_SETUP_NAV = [
+  { href: "/settings/users", label: "User Management" },
+  { href: "/settings/roles", label: "Roles & Permissions" },
+] as const;
+
 export const DIAGNOSTIC_SETUP_NAV = [
   { href: "/settings/service-catalog", label: "Service Catalog" },
   { href: "/settings/services", label: "Imported Services" },
