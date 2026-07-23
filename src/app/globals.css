@@ -24,8 +24,17 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+[dir="rtl"] body {
+  text-align: start;
+}
+
+[dir="rtl"] .rtl-mirror {
+  transform: scaleX(-1);
+}
+
 input,
 select,
 textarea {
   font-family: inherit;
+  text-align: start;
 }

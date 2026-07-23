@@ -1,0 +1,22 @@
+{
+  "center.title": "مركز التدقيق",
+  "center.description": "مراجعة سجل التدقيق للمستأجر مع الفلاتر والتصدير.",
+  "filters.search": "بحث",
+  "filters.dateFrom": "من تاريخ",
+  "filters.dateTo": "إلى تاريخ",
+  "filters.branch": "الفرع",
+  "filters.user": "المستخدم",
+  "filters.actionType": "نوع الإجراء",
+  "filters.entityType": "نوع الكيان",
+  "filters.moduleCode": "الوحدة",
+  "actions.exportCsv": "تصدير CSV",
+  "table.time": "الوقت",
+  "table.user": "المستخدم",
+  "table.action": "الإجراء",
+  "table.entity": "الكيان",
+  "table.branch": "الفرع",
+  "table.details": "التفاصيل",
+  "actions.view": "عرض",
+  "actions.print": "طباعة",
+  "empty": "لا توجد سجلات تدقيق مطابقة."
+}

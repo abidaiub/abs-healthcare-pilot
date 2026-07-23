@@ -15,6 +15,7 @@ import {
   ensureAbmgLocaleProfile,
   migrateTenantLocaleProfiles,
 } from "./seed/tenant-locale-migration";
+import { seedLocalizationFoundation } from "./seed/localization-foundation";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -65,6 +66,7 @@ async function main() {
   await seedTenantReferenceTestMethods(prisma, tenant.id);
   await migrateTenantLocaleProfiles(prisma);
   await ensureAbmgLocaleProfile(prisma, tenant.id);
+  await seedLocalizationFoundation(prisma);
   await seedSaasFoundation(prisma, tenant.id);
   await seedTenantRbacFoundation(prisma, tenant.id, branch.id);
 

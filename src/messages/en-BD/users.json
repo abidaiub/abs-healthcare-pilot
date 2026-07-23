@@ -1,0 +1,6 @@
+{
+  "list.title": "User Management",
+  "list.description": "Manage tenant staff accounts, primary roles, branches, and account status.",
+  "create.title": "Create User",
+  "edit.title": "Edit User"
+}

@@ -1,0 +1,10 @@
+{
+  "regionalProfile.title": "আঞ্চলিক প্রোফাইল",
+  "regionalProfile.subtitle": "দেশ নির্বাচন শুধু পরামর্শ দেয়। সংরক্ষণের আগে যেকোনো ক্ষেত্র পরিবর্তন করুন।",
+  "regionalProfile.applySuggestions": "পরামর্শ প্রয়োগ",
+  "regionalProfile.keepCurrent": "বর্তমান রাখুন",
+  "regionalProfile.textDirectionPreview": "টেক্সট দিক প্রিভিউ",
+  "regionalProfile.rtlNote": "সম্পূর্ণ RTL রেন্ডারিং MOD-06-এ থাকবে।",
+  "management.title": "টenant ব্যবস্থাপনা",
+  "management.description": "টenant, শাখা, সাবস্ক্রিপশন, মডিউল ও ব্যবহার সীমা প্রদান করুন।"
+}

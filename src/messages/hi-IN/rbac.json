@@ -1,0 +1,6 @@
+{
+  "roles.title": "भूमिकाएँ और अनुमतियाँ",
+  "roles.description": "टenant भूमिकाएँ और अनुमतियाँ प्रबंधित करें।",
+  "permissions.title": "अनुमति मैट्रिक्स",
+  "permissions.description": "इस भूमिका के लिए मॉड्यूल अनुमतियाँ।"
+}

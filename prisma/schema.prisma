@@ -360,6 +360,7 @@ model User {
   phone               String?
   passwordHash        String     @map("password_hash")
   userStatus          UserStatus @default(ACTIVE) @map("user_status")
+  preferredLocale     String?    @map("preferred_locale")
   isHostAdmin         Boolean    @default(false) @map("is_host_admin")
   forcePasswordChange Boolean    @default(false) @map("force_password_change")
   isActive            Boolean    @default(true) @map("is_active")

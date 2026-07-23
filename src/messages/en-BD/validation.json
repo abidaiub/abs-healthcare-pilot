@@ -1,0 +1,15 @@
+{
+  "REQUIRED_FIELDS": "Required fields are missing.",
+  "INVALID_LOCALE": "The selected language is not valid.",
+  "LOCALE_NOT_ALLOWED": "This language is not enabled for your tenant.",
+  "USER_INACTIVE": "Your account is inactive.",
+  "FORBIDDEN": "You do not have permission to perform this action.",
+  "UNAUTHORIZED": "Please sign in to continue.",
+  "NOT_FOUND": "The requested record was not found.",
+  "GENERIC": "Something went wrong. Please try again.",
+  "INVALID_CREDENTIALS": "Invalid username or password.",
+  "DUPLICATE_CODE": "This code is already in use.",
+  "required": "This field is required.",
+  "email": "Enter a valid email address.",
+  "mobile": "Enter a valid mobile number."
+}

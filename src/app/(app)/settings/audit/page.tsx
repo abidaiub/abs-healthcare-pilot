@@ -5,6 +5,7 @@ import {
   getTenantAuditFilterOptions,
   listTenantAuditLogs,
 } from "@/lib/audit/queries";
+import { getServerI18n } from "@/lib/i18n/server";
 import { requireTenantPermission } from "@/lib/rbac/auth";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -91,13 +92,16 @@ export default async function TenantAuditCenterPage({
 }: {
   searchParams: SearchParams;
 }) {
+  const session = await requireTenantPermission("/settings/audit");
+  const { t } = await getServerI18n(session);
+
   return (
     <div className="space-y-6">
       <ModulePageHeader
         screenKey="tenantAuditCenter"
-        description="Review tenant-scoped audit history with filters, detail inspection, and CSV export."
+        description={t("audit.center.description")}
       />
-      <Suspense fallback={<p className="text-sm text-slate-500">Loading audit records...</p>}>
+      <Suspense fallback={<p className="text-sm text-slate-500">{t("system.loadingAudit")}</p>}>
         <AuditCenterContent searchParams={searchParams} />
       </Suspense>
     </div>

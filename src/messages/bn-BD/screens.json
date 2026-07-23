@@ -1,0 +1,21 @@
+{
+  "hostDashboard.title": "হোস্ট SaaS ড্যাশবোর্ড",
+  "hostDashboard.breadcrumb": "প্ল্যাটফর্ম প্রশাসন / হোস্ট ড্যাশবোর্ড",
+  "tenantManagement.title": "টenant ব্যবস্থাপনা",
+  "tenantManagement.breadcrumb": "প্ল্যাটফর্ম প্রশাসন / টenant ব্যবস্থাপনা",
+  "tenantCreate.title": "টenant তৈরি",
+  "tenantEdit.title": "টenant সম্পাদনা",
+  "tenantDetail.title": "টenant বিবরণ",
+  "branchManagement.title": "শাখা ব্যবস্থাপনা",
+  "subscriptionPackages.title": "সাবস্ক্রিপশন প্যাকেজ",
+  "hostAuditLog.title": "হোস্ট অডিট লগ",
+  "tenantUserList.title": "ব্যবহারকারী ব্যবস্থাপনা",
+  "tenantUserCreate.title": "ব্যবহারকারী তৈরি",
+  "tenantUserEdit.title": "ব্যবহারকারী সম্পাদনা",
+  "tenantRoleList.title": "ভূমিকা ও অনুমতি",
+  "tenantRoleCreate.title": "ভূমিকা তৈরি",
+  "tenantPermissionMatrix.title": "অনুমতি ম্যাট্রিক্স",
+  "tenantAuditCenter.title": "অডিট সেন্টার",
+  "tenantAuditCenter.breadcrumb": "অডিট সেন্টার / টenant অডিট",
+  "receptionDashboard.title": "রিসেপশন ড্যাশবোর্ড"
+}

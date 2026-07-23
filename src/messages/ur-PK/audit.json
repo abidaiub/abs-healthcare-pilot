@@ -1,0 +1,22 @@
+{
+  "center.title": "آڈٹ سینٹر",
+  "center.description": "فلٹر اور CSV برآمد کے ساتھ آڈٹ تاریخ۔",
+  "filters.search": "تلاش",
+  "filters.dateFrom": "تاریخ سے",
+  "filters.dateTo": "تاریخ تک",
+  "filters.branch": "شاخ",
+  "filters.user": "صارف",
+  "filters.actionType": "عمل کی قسم",
+  "filters.entityType": "ہستی کی قسم",
+  "filters.moduleCode": "ماڈیول",
+  "actions.exportCsv": "CSV برآمد",
+  "table.time": "وقت",
+  "table.user": "صارف",
+  "table.action": "عمل",
+  "table.entity": "ہستی",
+  "table.branch": "شاخ",
+  "table.details": "تفصیل",
+  "actions.view": "دیکھیں",
+  "actions.print": "پرنٹ",
+  "empty": "کوئی آڈٹ ریکارڈ نہیں۔"
+}

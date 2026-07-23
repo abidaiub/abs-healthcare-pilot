@@ -2,25 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { logoutAction } from "@/app/actions/auth";
-import { Badge, cn, Select } from "@/components/ui";
+import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { Badge, Button, cn } from "@/components/ui";
+import { useI18n } from "@/lib/i18n/client";
 import { getNavGroups } from "@/lib/navigation";
 import { clearMockSessionClient } from "@/lib/mock-session";
 import { isHostSession, type SessionContext } from "@/lib/session";
-
-const LANGUAGES = [
-  { code: "EN", label: "English" },
-  { code: "BN", label: "বাংলা" },
-  { code: "AR", label: "العربية" },
-  { code: "UR", label: "اردو" },
-  { code: "HI", label: "हिन्दी" },
-] as const;
 
 export function Sidebar({ session }: { session: SessionContext }) {
   const pathname = usePathname();
   const navGroups = getNavGroups(session);
   const hostMode = isHostSession(session);
+  const { t } = useI18n();
 
   return (
     <aside className="flex w-64 shrink-0 flex-col bg-slate-900 text-white">
@@ -29,7 +23,7 @@ export function Sidebar({ session }: { session: SessionContext }) {
           ABSHealthcareLite
         </p>
         <h1 className="mt-1 text-lg font-semibold">
-          {hostMode ? "Host Console" : "Tenant Workspace"}
+          {hostMode ? t("common.shell.hostConsole") : t("common.shell.tenantWorkspace")}
         </h1>
         <p className="mt-2 text-xs leading-relaxed text-slate-400">
           {session.tenantName}
@@ -41,9 +35,9 @@ export function Sidebar({ session }: { session: SessionContext }) {
 
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-4">
         {navGroups.map((group) => (
-          <div key={group.title}>
+          <div key={group.titleKey}>
             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-              {group.title}
+              {t(group.titleKey)}
             </p>
             <div className="space-y-1">
               {group.items.map((item) => {
@@ -65,7 +59,7 @@ export function Sidebar({ session }: { session: SessionContext }) {
                     )}
                   >
                     <span className="text-base opacity-80">{item.icon}</span>
-                    {item.label}
+                    {t(`navigation.${item.labelKey}`)}
                   </Link>
                 );
               })}
@@ -86,14 +80,14 @@ export function Sidebar({ session }: { session: SessionContext }) {
 
 export function TopBar({ session }: { session: SessionContext }) {
   const hostMode = isHostSession(session);
-  const [language, setLanguage] = useState("EN");
+  const { t } = useI18n();
 
   return (
     <header className="border-b border-slate-200 bg-white">
       <div className="flex items-center justify-between px-6 py-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-teal-700">
-            {hostMode ? "Platform Host" : session.branchCode}
+            {hostMode ? t("common.labels.platformHost") : session.branchCode}
           </p>
           <p className="text-sm text-slate-600">
             {hostMode
@@ -103,6 +97,7 @@ export function TopBar({ session }: { session: SessionContext }) {
         </div>
 
         <div className="flex items-center gap-4">
+          <LanguageSwitcher compact />
           <div className="hidden text-right sm:block">
             <p className="text-sm font-medium text-slate-900">
               {session.user.name}
@@ -115,12 +110,9 @@ export function TopBar({ session }: { session: SessionContext }) {
               await logoutAction();
             }}
           >
-            <button
-              type="submit"
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
-            >
-              Sign out
-            </button>
+            <Button type="submit" variant="secondary">
+              {t("common.actions.signOut")}
+            </Button>
           </form>
         </div>
       </div>
@@ -128,29 +120,14 @@ export function TopBar({ session }: { session: SessionContext }) {
       {!hostMode && (
         <div className="flex flex-wrap items-center gap-4 border-t border-slate-100 bg-slate-50/80 px-6 py-2.5">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-500">Company / Tenant</span>
+            <span className="text-slate-500">{t("common.labels.companyTenant")}</span>
             <Badge variant="info">{session.tenantName}</Badge>
             <span className="font-mono text-slate-600">{session.tenantCode}</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-500">Branch</span>
+            <span className="text-slate-500">{t("common.labels.branch")}</span>
             <Badge>{session.branchName}</Badge>
             <span className="font-mono text-slate-600">{session.branchCode}</span>
-          </div>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-slate-500">Language</span>
-            <Select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              className="w-auto min-w-[100px] py-1.5 text-xs"
-              aria-label="Language selector"
-            >
-              {LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code}>
-                  {lang.code} — {lang.label}
-                </option>
-              ))}
-            </Select>
           </div>
         </div>
       )}

@@ -1,0 +1,21 @@
+{
+  "hostDashboard.title": "Host SaaS Dashboard",
+  "hostDashboard.breadcrumb": "Platform Administration / Host Dashboard",
+  "tenantManagement.title": "Tenant Management",
+  "tenantManagement.breadcrumb": "Platform Administration / Tenant Management",
+  "tenantCreate.title": "Create Tenant",
+  "tenantEdit.title": "Edit Tenant",
+  "tenantDetail.title": "Tenant Detail",
+  "branchManagement.title": "Branch Management",
+  "subscriptionPackages.title": "Subscription Packages",
+  "hostAuditLog.title": "Host Audit Log",
+  "tenantUserList.title": "User Management",
+  "tenantUserCreate.title": "Create User",
+  "tenantUserEdit.title": "Edit User",
+  "tenantRoleList.title": "Roles & Permissions",
+  "tenantRoleCreate.title": "Create Role",
+  "tenantPermissionMatrix.title": "Permission Matrix",
+  "tenantAuditCenter.title": "Audit Center",
+  "tenantAuditCenter.breadcrumb": "Audit Center / Tenant Audit",
+  "receptionDashboard.title": "Reception Dashboard"
+}

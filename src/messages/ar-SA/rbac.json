@@ -1,0 +1,6 @@
+{
+  "roles.title": "الأدوار والصلاحيات",
+  "roles.description": "إدارة أدوار المستأجر والصلاحيات.",
+  "permissions.title": "مصفوفة الصلاحيات",
+  "permissions.description": "تهيئة صلاحيات الوحدات لهذا الدور."
+}

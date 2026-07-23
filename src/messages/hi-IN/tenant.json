@@ -1,0 +1,10 @@
+{
+  "regionalProfile.title": "क्षेत्रीय प्रोफ़ाइल",
+  "regionalProfile.subtitle": "देश चयन केवल सुझाव देता है।",
+  "regionalProfile.applySuggestions": "सुझाव लागू करें",
+  "regionalProfile.keepCurrent": "वर्तमान रखें",
+  "regionalProfile.textDirectionPreview": "पाठ दिशा पूर्वावलोकन",
+  "regionalProfile.rtlNote": "पूर्ण RTL MOD-06 में।",
+  "management.title": "टenant प्रबंधन",
+  "management.description": "टenant, शाखा, सदस्यता और मॉड्यूल प्रदान करें।"
+}

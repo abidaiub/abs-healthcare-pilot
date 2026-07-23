@@ -1,0 +1,21 @@
+{
+  "hostDashboard.title": "میزبان SaaS ڈیش بورڈ",
+  "hostDashboard.breadcrumb": "پلیٹ فارم / میزبان ڈیش بورڈ",
+  "tenantManagement.title": "کرایہ دار انتظام",
+  "tenantManagement.breadcrumb": "پلیٹ فارم / کرایہ دار انتظام",
+  "tenantCreate.title": "کرایہ دار بنائیں",
+  "tenantEdit.title": "کرایہ دار ترمیم",
+  "tenantDetail.title": "کرایہ دار تفصیل",
+  "branchManagement.title": "شاخ انتظام",
+  "subscriptionPackages.title": "سبسکرپشن پیکج",
+  "hostAuditLog.title": "میزبان آڈٹ لاگ",
+  "tenantUserList.title": "صارف انتظام",
+  "tenantUserCreate.title": "صارف بنائیں",
+  "tenantUserEdit.title": "صارف ترمیم",
+  "tenantRoleList.title": "کردار و اجازت",
+  "tenantRoleCreate.title": "کردار بنائیں",
+  "tenantPermissionMatrix.title": "اجازت میٹرکس",
+  "tenantAuditCenter.title": "آڈٹ سینٹر",
+  "tenantAuditCenter.breadcrumb": "آڈٹ سینٹر / کرایہ دار آڈٹ",
+  "receptionDashboard.title": "ریسیپشن ڈیش بورڈ"
+}

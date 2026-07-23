@@ -1,0 +1,7 @@
+{
+  "languagePreference": "भाषा वरीयता",
+  "languagePreferenceHelp": "टenant की सक्षम भाषा चुनें।",
+  "currentLanguage": "वर्तमान भाषा",
+  "switchLanguage": "भाषा बदलें",
+  "switchFailed": "भाषा बदल नहीं सकी।"
+}

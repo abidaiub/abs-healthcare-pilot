@@ -8,7 +8,7 @@ export type NavItem = {
 
   href: string;
 
-  label: string;
+  labelKey: string;
 
   icon: string;
 
@@ -18,7 +18,7 @@ export type NavItem = {
 
 export type NavGroup = {
 
-  title: string;
+  titleKey: string;
 
   items: NavItem[];
 
@@ -50,17 +50,17 @@ const HOST_NAV: NavGroup[] = [
 
   {
 
-    title: "Host Console",
+    titleKey: "groups.hostConsole",
 
     items: [
 
-      { href: "/host/dashboard", label: "Host Dashboard", icon: "◉" },
-      { href: "/host/tenants", label: "Tenant Management", icon: "◇" },
-      { href: "/host/subscription-packages", label: "Subscription Packages", icon: "◆" },
-      { href: "/host/modules", label: "Module Registry", icon: "▦" },
-      { href: "/host/audit", label: "Audit Log", icon: "◎" },
-      { href: "/host/catalog", label: "Host Test Catalog", icon: "◈" },
-      { href: "/host/settings", label: "SaaS Settings", icon: "⚙" },
+      { href: "/host/dashboard", labelKey: "hostDashboard", icon: "◉" },
+      { href: "/host/tenants", labelKey: "tenantManagement", icon: "◇" },
+      { href: "/host/subscription-packages", labelKey: "subscriptionPackages", icon: "◆" },
+      { href: "/host/modules", labelKey: "moduleRegistry", icon: "▦" },
+      { href: "/host/audit", labelKey: "hostAuditLog", icon: "◎" },
+      { href: "/host/catalog", labelKey: "hostTestCatalog", icon: "◈" },
+      { href: "/host/settings", labelKey: "saasSettings", icon: "⚙" },
 
     ],
 
@@ -74,15 +74,15 @@ const TENANT_ADMIN_NAV: NavGroup[] = [
 
   {
 
-    title: "Security & IAM",
+    titleKey: "groups.securityIam",
 
     items: [
 
-      { href: "/settings/users", label: "User Management", icon: "◌" },
+      { href: "/settings/users", labelKey: "userManagement", icon: "◌" },
 
-      { href: "/settings/roles", label: "Roles & Permissions", icon: "◍" },
+      { href: "/settings/roles", labelKey: "rolesPermissions", icon: "◍" },
 
-      { href: "/settings/audit", label: "Audit Center", icon: "◎" },
+      { href: "/settings/audit", labelKey: "auditCenter", icon: "◎" },
 
     ],
 
@@ -90,25 +90,25 @@ const TENANT_ADMIN_NAV: NavGroup[] = [
 
   {
 
-    title: "Diagnostic Setup",
+    titleKey: "groups.diagnosticSetup",
 
     items: [
 
-      { href: "/settings/service-catalog", label: "Service Catalog", icon: "◈" },
+      { href: "/settings/service-catalog", labelKey: "serviceCatalog", icon: "◈" },
 
-      { href: "/settings/services", label: "Imported Services", icon: "◎" },
+      { href: "/settings/services", labelKey: "importedServices", icon: "◎" },
 
-      { href: "/settings/test-parameters", label: "Test Parameters", icon: "⬡" },
+      { href: "/settings/test-parameters", labelKey: "testParameters", icon: "⬡" },
 
-      { href: "/settings/sample-types", label: "Sample Types", icon: "⬢" },
+      { href: "/settings/sample-types", labelKey: "sampleTypes", icon: "⬢" },
 
-      { href: "/settings/containers", label: "Containers & Tubes", icon: "▤" },
+      { href: "/settings/containers", labelKey: "containersTubes", icon: "▤" },
 
-      { href: "/settings/analyzers", label: "Analyzers", icon: "⇄" },
+      { href: "/settings/analyzers", labelKey: "analyzers", icon: "⇄" },
 
-      { href: "/settings/doctors", label: "Doctors", icon: "✚" },
+      { href: "/settings/doctors", labelKey: "doctors", icon: "✚" },
 
-      { href: "/settings/report-layouts", label: "Report Layouts", icon: "⎙" },
+      { href: "/settings/report-layouts", labelKey: "reportLayouts", icon: "⎙" },
 
     ],
 
@@ -122,19 +122,19 @@ const RECEPTION_NAV: NavGroup[] = [
 
   {
 
-    title: "Reception",
+    titleKey: "groups.reception",
 
     items: [
 
-      { href: "/patients/new", label: "Patient Registration", icon: "＋" },
+      { href: "/patients/new", labelKey: "patientRegistration", icon: "＋" },
 
-      { href: "/patients", label: "Patient Search", icon: "⌕" },
+      { href: "/patients", labelKey: "patientSearch", icon: "⌕" },
 
       {
 
         href: "/diagnostic/billing",
 
-        label: "Diagnostic Billing / Test Order",
+        labelKey: "diagnosticBilling",
 
         icon: "₤",
 
@@ -152,7 +152,7 @@ const LAB_NAV: NavGroup[] = [
 
   {
 
-    title: "Laboratory",
+    titleKey: "groups.laboratory",
 
     items: [
 
@@ -160,29 +160,29 @@ const LAB_NAV: NavGroup[] = [
 
         href: "/lab/sample-collection",
 
-        label: "Sample Collection",
+        labelKey: "sampleCollection",
 
         icon: "⬢",
 
       },
 
-      { href: "/lab/label-print", label: "Label Print", icon: "▤" },
+      { href: "/lab/label-print", labelKey: "labelPrint", icon: "▤" },
 
-      { href: "/lab/lis-worklist", label: "LIS Worklist", icon: "⇄" },
+      { href: "/lab/lis-worklist", labelKey: "lisWorklist", icon: "⇄" },
 
       {
 
         href: "/lab/result-entry",
 
-        label: "Manual Result Entry",
+        labelKey: "manualResultEntry",
 
         icon: "✎",
 
       },
 
-      { href: "/lab/verification", label: "Verification", icon: "✓" },
+      { href: "/lab/verification", labelKey: "verification", icon: "✓" },
 
-      { href: "/lab/report-release", label: "Report Release", icon: "⎙" },
+      { href: "/lab/report-release", labelKey: "reportRelease", icon: "⎙" },
 
     ],
 
@@ -196,7 +196,7 @@ const BILLING_NAV: NavGroup[] = [
 
   {
 
-    title: "Billing",
+    titleKey: "groups.billing",
 
     items: [
 
@@ -204,7 +204,7 @@ const BILLING_NAV: NavGroup[] = [
 
         href: "/diagnostic/billing",
 
-        label: "Diagnostic Billing / Test Order",
+        labelKey: "diagnosticBilling",
 
         icon: "₤",
 
@@ -222,11 +222,11 @@ const REPORT_DELIVERY_NAV: NavGroup[] = [
 
   {
 
-    title: "Report Delivery",
+    titleKey: "groups.reportDelivery",
 
     items: [
 
-      { href: "/lab/report-release", label: "Report Release", icon: "⎙" },
+      { href: "/lab/report-release", labelKey: "reportRelease", icon: "⎙" },
 
     ],
 
@@ -240,9 +240,9 @@ const PORTAL_NAV: NavGroup[] = [
 
   {
 
-    title: "Patient Portal",
+    titleKey: "groups.patientPortal",
 
-    items: [{ href: "/portal/reports", label: "My Reports", icon: "☰" }],
+    items: [{ href: "/portal/reports", labelKey: "myReports", icon: "☰" }],
 
   },
 

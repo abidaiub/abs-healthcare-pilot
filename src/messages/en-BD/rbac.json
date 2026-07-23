@@ -1,0 +1,6 @@
+{
+  "roles.title": "Roles & Permissions",
+  "roles.description": "Manage tenant roles and permission assignments.",
+  "permissions.title": "Permission Matrix",
+  "permissions.description": "Configure module permissions for this role."
+}

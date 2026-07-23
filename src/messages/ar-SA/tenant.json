@@ -1,0 +1,10 @@
+{
+  "regionalProfile.title": "الملف الإقليمي",
+  "regionalProfile.subtitle": "اختيار الدولة يقترح افتراضيات فقط.",
+  "regionalProfile.applySuggestions": "تطبيق الاقتراحات",
+  "regionalProfile.keepCurrent": "الإبقاء على الحالي",
+  "regionalProfile.textDirectionPreview": "معاينة اتجاه النص",
+  "regionalProfile.rtlNote": "عرض RTL الكامل في MOD-06.",
+  "management.title": "إدارة المستأجر",
+  "management.description": "توفير المستأجرين والفروع والاشتراكات والوحدات."
+}

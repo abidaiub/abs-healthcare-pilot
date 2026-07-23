@@ -1,0 +1,7 @@
+{
+  "languagePreference": "تفضيل اللغة",
+  "languagePreferenceHelp": "اختر لغة مفعّلة للمستأجر.",
+  "currentLanguage": "اللغة الحالية",
+  "switchLanguage": "تغيير اللغة",
+  "switchFailed": "تعذر تغيير اللغة. حاول مرة أخرى."
+}

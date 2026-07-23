@@ -1,0 +1,6 @@
+{
+  "roles.title": "ভূমিকা ও অনুমতি",
+  "roles.description": "টenant ভূমিকা ও অনুমতি বরাদ্দ পরিচালনা করুন।",
+  "permissions.title": "অনুমতি ম্যাট্রিক্স",
+  "permissions.description": "এই ভূমিকার জন্য মডিউল অনুমতি কনফিগার করুন।"
+}

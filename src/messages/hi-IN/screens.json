@@ -1,0 +1,21 @@
+{
+  "hostDashboard.title": "होस्ट SaaS डैशबोर्ड",
+  "hostDashboard.breadcrumb": "प्लेटफ़ॉर्म / होस्ट डैशबोर्ड",
+  "tenantManagement.title": "टenant प्रबंधन",
+  "tenantManagement.breadcrumb": "प्लेटफ़ॉर्म / टenant प्रबंधन",
+  "tenantCreate.title": "टenant बनाएँ",
+  "tenantEdit.title": "टenant संपादित",
+  "tenantDetail.title": "टenant विवरण",
+  "branchManagement.title": "शाखा प्रबंधन",
+  "subscriptionPackages.title": "सदस्यता पैकेज",
+  "hostAuditLog.title": "होस्ट ऑडिट लॉग",
+  "tenantUserList.title": "उपयोगकर्ता प्रबंधन",
+  "tenantUserCreate.title": "उपयोगकर्ता बनाएँ",
+  "tenantUserEdit.title": "उपयोगकर्ता संपादित",
+  "tenantRoleList.title": "भूमिकाएँ और अनुमतियाँ",
+  "tenantRoleCreate.title": "भूमिका बनाएँ",
+  "tenantPermissionMatrix.title": "अनुमति मैट्रिक्स",
+  "tenantAuditCenter.title": "ऑडिट केंद्र",
+  "tenantAuditCenter.breadcrumb": "ऑडिट केंद्र / टenant ऑडिट",
+  "receptionDashboard.title": "रिसेप्शन डैशबोर्ड"
+}

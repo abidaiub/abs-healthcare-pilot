@@ -1,12 +1,14 @@
 import { PageHeader } from "@/components/ui";
+import { getServerI18n } from "@/lib/i18n/server";
 import {
   getModuleBreadcrumb,
   SCREENS,
   type ScreenDefinition,
 } from "@/lib/module-registry";
+import { getSession } from "@/lib/auth";
 import type { ReactNode } from "react";
 
-export function ModulePageHeader({
+export async function ModulePageHeader({
   screenKey,
   description,
   action,
@@ -15,8 +17,14 @@ export function ModulePageHeader({
   description?: string;
   action?: ReactNode;
 }) {
+  const session = await getSession();
+  const { t } = await getServerI18n(session);
   const screen: ScreenDefinition = SCREENS[screenKey];
-  const breadcrumb = getModuleBreadcrumb(screenKey);
+  const title = t(`screens.${screenKey}.title`, screen.screenName);
+  const breadcrumb = t(
+    `screens.${screenKey}.breadcrumb`,
+    getModuleBreadcrumb(screenKey),
+  );
 
   return (
     <div className="space-y-1 border-b border-slate-200 pb-6">
@@ -24,7 +32,7 @@ export function ModulePageHeader({
         {breadcrumb}
       </p>
       <PageHeader
-        title={screen.screenName}
+        title={title}
         description={description ?? screen.workflowRef}
         action={action}
       />

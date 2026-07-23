@@ -1,0 +1,22 @@
+{
+  "center.title": "ऑडिट केंद्र",
+  "center.description": "फ़िल्टर और CSV निर्यात के साथ ऑडिट इतिहास।",
+  "filters.search": "खोज",
+  "filters.dateFrom": "तिथि से",
+  "filters.dateTo": "तिथि तक",
+  "filters.branch": "शाखा",
+  "filters.user": "उपयोगकर्ता",
+  "filters.actionType": "क्रिया प्रकार",
+  "filters.entityType": "इकाई प्रकार",
+  "filters.moduleCode": "मॉड्यूल",
+  "actions.exportCsv": "CSV निर्यात",
+  "table.time": "समय",
+  "table.user": "उपयोगकर्ता",
+  "table.action": "क्रिया",
+  "table.entity": "इकाई",
+  "table.branch": "शाखा",
+  "table.details": "विवरण",
+  "actions.view": "देखें",
+  "actions.print": "प्रिंट",
+  "empty": "कोई ऑडिट रिकॉर्ड नहीं।"
+}

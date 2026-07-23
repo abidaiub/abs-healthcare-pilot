@@ -1,0 +1,10 @@
+{
+  "regionalProfile.title": "Regional profile",
+  "regionalProfile.subtitle": "Country selection suggests defaults only. Override any field before saving.",
+  "regionalProfile.applySuggestions": "Apply suggestions",
+  "regionalProfile.keepCurrent": "Keep current",
+  "regionalProfile.textDirectionPreview": "Text direction preview",
+  "regionalProfile.rtlNote": "Full RTL rendering and translation switching remain in MOD-06.",
+  "management.title": "Tenant Management",
+  "management.description": "Provision tenants, branches, subscriptions, modules, and usage limits."
+}

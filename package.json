@@ -20,6 +20,7 @@
     "verify:mod01a": "tsx scripts/verify-mod01a-locale.ts",
     "verify:mod02": "tsx scripts/verify-mod02-rbac.ts",
     "verify:mod04": "tsx scripts/verify-mod04-audit.ts",
+    "verify:mod06": "tsx scripts/verify-mod06-localization.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

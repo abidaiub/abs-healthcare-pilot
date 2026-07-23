@@ -1,0 +1,22 @@
+{
+  "center.title": "অডিট সেন্টার",
+  "center.description": "ফিল্টার, বিস্তারিত পরিদর্শন ও CSV রপ্তানিসহ টenant-স cope অডিট ইতিহাস দেখুন।",
+  "filters.search": "অনুসন্ধান",
+  "filters.dateFrom": "তারিখ থেকে",
+  "filters.dateTo": "তারিখ পর্যন্ত",
+  "filters.branch": "শাখা",
+  "filters.user": "ব্যবহারকারী",
+  "filters.actionType": "কর্মের ধরন",
+  "filters.entityType": "এনটিটির ধরন",
+  "filters.moduleCode": "মডিউল",
+  "actions.exportCsv": "CSV রপ্তানি",
+  "table.time": "সময়",
+  "table.user": "ব্যবহারকারী",
+  "table.action": "কর্ম",
+  "table.entity": "এনটিটি",
+  "table.branch": "শাখা",
+  "table.details": "বিস্তারিত",
+  "actions.view": "দেখুন",
+  "actions.print": "প্রিন্ট",
+  "empty": "বর্তমান ফিল্টারে কোনো অডিট রেকর্ড নেই।"
+}

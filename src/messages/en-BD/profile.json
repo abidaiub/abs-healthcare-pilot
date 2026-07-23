@@ -1,0 +1,7 @@
+{
+  "languagePreference": "Language preference",
+  "languagePreferenceHelp": "Choose one of the languages enabled for your tenant.",
+  "currentLanguage": "Current language",
+  "switchLanguage": "Switch language",
+  "switchFailed": "Unable to change language. Please try again."
+}

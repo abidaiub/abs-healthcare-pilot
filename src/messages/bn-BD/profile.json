@@ -1,0 +1,7 @@
+{
+  "languagePreference": "ভাষা পছন্দ",
+  "languagePreferenceHelp": "আপনার টenant-এ সক্রিয় ভাষাগুলো থেকে একটি বেছে নিন।",
+  "currentLanguage": "বর্তমান ভাষা",
+  "switchLanguage": "ভাষা পরিবর্তন",
+  "switchFailed": "ভাষা পরিবর্তন করা যায়নি। আবার চেষ্টা করুন।"
+}

@@ -1,0 +1,21 @@
+{
+  "hostDashboard.title": "لوحة SaaS للمضيف",
+  "hostDashboard.breadcrumb": "إدارة المنصة / لوحة المضيف",
+  "tenantManagement.title": "إدارة المستأجر",
+  "tenantManagement.breadcrumb": "إدارة المنصة / إدارة المستأجر",
+  "tenantCreate.title": "إنشاء مستأجر",
+  "tenantEdit.title": "تعديل المستأجر",
+  "tenantDetail.title": "تفاصيل المستأجر",
+  "branchManagement.title": "إدارة الفروع",
+  "subscriptionPackages.title": "باقات الاشتراك",
+  "hostAuditLog.title": "سجل تدقيق المضيف",
+  "tenantUserList.title": "إدارة المستخدمين",
+  "tenantUserCreate.title": "إنشاء مستخدم",
+  "tenantUserEdit.title": "تعديل مستخدم",
+  "tenantRoleList.title": "الأدوار والصلاحيات",
+  "tenantRoleCreate.title": "إنشاء دور",
+  "tenantPermissionMatrix.title": "مصفوفة الصلاحيات",
+  "tenantAuditCenter.title": "مركز التدقيق",
+  "tenantAuditCenter.breadcrumb": "مركز التدقيق / تدقيق المستأجر",
+  "receptionDashboard.title": "لوحة الاستقبال"
+}

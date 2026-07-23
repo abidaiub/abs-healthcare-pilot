@@ -1,0 +1,22 @@
+{
+  "center.title": "Audit Center",
+  "center.description": "Review tenant-scoped audit history with filters, detail inspection, and CSV export.",
+  "filters.search": "Search",
+  "filters.dateFrom": "Date from",
+  "filters.dateTo": "Date to",
+  "filters.branch": "Branch",
+  "filters.user": "User",
+  "filters.actionType": "Action type",
+  "filters.entityType": "Entity type",
+  "filters.moduleCode": "Module",
+  "actions.exportCsv": "Export CSV",
+  "table.time": "Time",
+  "table.user": "User",
+  "table.action": "Action",
+  "table.entity": "Entity",
+  "table.branch": "Branch",
+  "table.details": "Details",
+  "actions.view": "View",
+  "actions.print": "Print",
+  "empty": "No audit records match the current filters."
+}
