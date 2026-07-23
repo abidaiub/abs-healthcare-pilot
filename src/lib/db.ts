@@ -29,8 +29,22 @@ function createPrismaClient() {
   });
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+function isPrismaClientReady(client: PrismaClient | undefined): client is PrismaClient {
+  return Boolean(client && typeof client.userBranch?.findFirst === "function");
 }
+
+function getPrismaClient(): PrismaClient {
+  if (isPrismaClientReady(globalForPrisma.prisma)) {
+    return globalForPrisma.prisma;
+  }
+
+  const client = createPrismaClient();
+
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client;
+  }
+
+  return client;
+}
+
+export const prisma = getPrismaClient();
