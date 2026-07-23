@@ -27,5 +27,17 @@
   "patientDetail.title": "Patient Detail",
   "patientDetail.breadcrumb": "Operations / Patient Detail",
   "patientEdit.title": "Edit Patient",
-  "patientEdit.breadcrumb": "Operations / Edit Patient"
+  "patientEdit.breadcrumb": "Operations / Edit Patient",
+  "appointmentList.title": "Appointment List",
+  "appointmentList.breadcrumb": "Operations / Appointments",
+  "appointmentBooking.title": "Book Appointment",
+  "appointmentBooking.breadcrumb": "Operations / Book Appointment",
+  "appointmentDetail.title": "Appointment Detail",
+  "appointmentDetail.breadcrumb": "Operations / Appointment Detail",
+  "appointmentEdit.title": "Edit Appointment",
+  "appointmentEdit.breadcrumb": "Operations / Edit Appointment",
+  "queueDashboard.title": "Queue Dashboard",
+  "queueDashboard.breadcrumb": "Operations / Queue Dashboard",
+  "queueOperator.title": "Queue Operator",
+  "queueOperator.breadcrumb": "Operations / Queue Operator"
 }

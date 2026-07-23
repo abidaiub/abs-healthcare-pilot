@@ -36,6 +36,7 @@ const ABMG_ENABLED_MODULES = new Set([
   "MOD-07",
   "MOD-10",
   "MOD-15",
+  "MOD-17",
   "MOD-21",
   "MOD-22",
   "MOD-23",

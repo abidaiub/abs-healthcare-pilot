@@ -21,6 +21,12 @@ export const MODULES = {
     docPath: "docs/modules/MOD-15-Patient-Registration.md",
     mockupPath: "docs/15-PatientRegistration/Mockups/WireframeMockup.md",
   },
+  appointmentQueue: {
+    id: "17",
+    name: "Appointment & Queue Management",
+    docPath: "docs/modules/MOD-17-Appointment-Queue-Management.md",
+    mockupPath: "docs/17-AppointmentManagement/Mockups/WireframeMockup.md",
+  },
   sampleCollection: {
     id: "21",
     name: "Sample Collection & Laboratory Workflow",
@@ -361,10 +367,40 @@ export const SCREENS = {
     workflowRef: "Update registration data without changing patient number",
   },
   appointmentBooking: {
+    route: "/appointments/new",
+    moduleKey: "appointmentQueue",
+    screenName: "New Appointment",
+    workflowRef: "Patient → Doctor → Slot → Book",
+  },
+  appointmentList: {
     route: "/appointments",
-    moduleKey: "patientRegistration",
-    screenName: "Appointment Booking",
-    workflowRef: "Search Patient → Select Slot → Confirm",
+    moduleKey: "appointmentQueue",
+    screenName: "Appointment List",
+    workflowRef: "Search and manage appointments",
+  },
+  appointmentDetail: {
+    route: "/appointments/[appointmentId]",
+    moduleKey: "appointmentQueue",
+    screenName: "Appointment Detail",
+    workflowRef: "View appointment and queue status",
+  },
+  appointmentEdit: {
+    route: "/appointments/[appointmentId]/edit",
+    moduleKey: "appointmentQueue",
+    screenName: "Edit Appointment",
+    workflowRef: "Update appointment without changing appointment number",
+  },
+  queueDashboard: {
+    route: "/appointments/queue",
+    moduleKey: "appointmentQueue",
+    screenName: "Queue Dashboard",
+    workflowRef: "Branch queue overview by doctor",
+  },
+  queueOperator: {
+    route: "/appointments/queue/operator",
+    moduleKey: "appointmentQueue",
+    screenName: "Queue Operator",
+    workflowRef: "Call, skip, recall, complete tokens",
   },
   doctorWorklist: {
     route: "/doctor/worklist",

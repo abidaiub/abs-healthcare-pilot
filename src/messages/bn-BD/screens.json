@@ -27,5 +27,17 @@
   "patientDetail.title": "রোগীর বিবরণ",
   "patientDetail.breadcrumb": "অপারেশন / রোগীর বিবরণ",
   "patientEdit.title": "রোগী সম্পাদনা",
-  "patientEdit.breadcrumb": "অপারেশন / রোগী সম্পাদনা"
+  "patientEdit.breadcrumb": "অপারেশন / রোগী সম্পাদনা",
+  "appointmentList.title": "অ্যাপয়েন্টমেন্ট তালিকা",
+  "appointmentList.breadcrumb": "অপারেশন / অ্যাপয়েন্টমেন্ট",
+  "appointmentBooking.title": "অ্যাপয়েন্টমেন্ট বুক",
+  "appointmentBooking.breadcrumb": "অপারেশন / অ্যাপয়েন্টমেন্ট বুক",
+  "appointmentDetail.title": "অ্যাপয়েন্টমেন্ট বিবরণ",
+  "appointmentDetail.breadcrumb": "অপারেশন / অ্যাপয়েন্টমেন্ট বিবরণ",
+  "appointmentEdit.title": "অ্যাপয়েন্টমেন্ট সম্পাদনা",
+  "appointmentEdit.breadcrumb": "অপারেশন / অ্যাপয়েন্টমেন্ট সম্পাদনা",
+  "queueDashboard.title": "কিউ ড্যাশবোর্ড",
+  "queueDashboard.breadcrumb": "অপারেশন / কিউ ড্যাশবোর্ড",
+  "queueOperator.title": "কিউ অপারেটর",
+  "queueOperator.breadcrumb": "অপারেশন / কিউ অপারেটর"
 }

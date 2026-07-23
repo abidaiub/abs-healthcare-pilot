@@ -27,5 +27,17 @@
   "patientDetail.title": "مریض کی تفصیل",
   "patientDetail.breadcrumb": "آپریشنز / مریض کی تفصیل",
   "patientEdit.title": "مریض میں ترمیم",
-  "patientEdit.breadcrumb": "آپریشنز / مریض میں ترمیم"
+  "patientEdit.breadcrumb": "آپریشنز / مریض میں ترمیم",
+  "appointmentList.title": "اپائنٹمنٹ فہرست",
+  "appointmentList.breadcrumb": "آپریشنز / اپائنٹمنٹس",
+  "appointmentBooking.title": "اپائنٹمنٹ بک",
+  "appointmentBooking.breadcrumb": "آپریشنز / اپائنٹمنٹ بک",
+  "appointmentDetail.title": "اپائنٹمنٹ تفصیل",
+  "appointmentDetail.breadcrumb": "آپریشنز / اپائنٹمنٹ تفصیل",
+  "appointmentEdit.title": "اپائنٹمنٹ میں ترمیم",
+  "appointmentEdit.breadcrumb": "آپریشنز / اپائنٹمنٹ میں ترمیم",
+  "queueDashboard.title": "قطار ڈیش بورڈ",
+  "queueDashboard.breadcrumb": "آپریشنز / قطار ڈیش بورڈ",
+  "queueOperator.title": "قطار آپریٹر",
+  "queueOperator.breadcrumb": "آپریشنز / قطار آپریٹر"
 }

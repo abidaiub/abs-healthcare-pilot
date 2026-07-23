@@ -132,6 +132,12 @@ const RECEPTION_NAV: NavGroup[] = [
 
       { href: "/patients", labelKey: "patientSearch", icon: "⌕" },
 
+      { href: "/appointments/new", labelKey: "appointmentBooking", icon: "📅" },
+
+      { href: "/appointments", labelKey: "appointmentList", icon: "☰" },
+
+      { href: "/appointments/queue", labelKey: "queueDashboard", icon: "⏱" },
+
       {
 
         href: "/diagnostic/billing",

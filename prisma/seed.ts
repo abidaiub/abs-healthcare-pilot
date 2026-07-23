@@ -18,6 +18,7 @@ import {
 import { seedLocalizationFoundation } from "./seed/localization-foundation";
 import { seedBranchFoundation } from "./seed/branch-foundation";
 import { seedPatientFoundation } from "./seed/patient-foundation";
+import { seedAppointmentFoundation } from "./seed/appointment-foundation";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -82,6 +83,7 @@ async function main() {
   await seedTenantRbacFoundation(prisma, tenant.id, branch.id);
   await seedBranchFoundation(prisma, tenant.id);
   await seedPatientFoundation(prisma, tenant.id);
+  await seedAppointmentFoundation(prisma, tenant.id);
 
   const adminUser = await prisma.user.findUnique({
     where: { username: "laila.hasan" },

@@ -27,5 +27,17 @@
   "patientDetail.title": "रोगी विवरण",
   "patientDetail.breadcrumb": "ऑपरेशंस / रोगी विवरण",
   "patientEdit.title": "रोगी संपादित करें",
-  "patientEdit.breadcrumb": "ऑपरेशंस / रोगी संपादित करें"
+  "patientEdit.breadcrumb": "ऑपरेशंस / रोगी संपादित करें",
+  "appointmentList.title": "अपॉइंटमेंट सूची",
+  "appointmentList.breadcrumb": "ऑपरेशंस / अपॉइंटमेंट",
+  "appointmentBooking.title": "अपॉइंटमेंट बुक",
+  "appointmentBooking.breadcrumb": "ऑपरेशंस / अपॉइंटमेंट बुक",
+  "appointmentDetail.title": "अपॉइंटमेंट विवरण",
+  "appointmentDetail.breadcrumb": "ऑपरेशंस / अपॉइंटमेंट विवरण",
+  "appointmentEdit.title": "अपॉइंटमेंट संपादित",
+  "appointmentEdit.breadcrumb": "ऑपरेशंस / अपॉइंटमेंट संपादित",
+  "queueDashboard.title": "क्यू डैशबोर्ड",
+  "queueDashboard.breadcrumb": "ऑपरेशंस / क्यू डैशबोर्ड",
+  "queueOperator.title": "क्यू ऑपरेटर",
+  "queueOperator.breadcrumb": "ऑपरेशंस / क्यू ऑपरेटर"
 }

@@ -265,3 +265,87 @@ export function validateMod15RegistryCompliance(): {
 
   return { ok: errors.length === 0, errors };
 }
+
+export function validateMod17RegistryCompliance(): {
+  ok: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  const mod17 = getModuleRegistryEntry("MOD-17");
+
+  if (!mod17) {
+    errors.push("MOD-17 entry missing from MODULE_REGISTRY");
+    return { ok: false, errors };
+  }
+
+  if (MODULE_REGISTRY.filter((entry) => entry.moduleCode === "MOD-17").length !== 1) {
+    errors.push("MOD-17 module ID must be unique in MODULE_REGISTRY");
+  }
+
+  if (mod17.displayName !== "Appointment & Queue") {
+    errors.push("MOD-17 displayName must be Appointment & Queue");
+  }
+
+  if (mod17.implementationStatus !== "Implemented") {
+    errors.push("MOD-17 implementationStatus must be Implemented");
+  }
+
+  for (const dependency of [
+    "MOD-01",
+    "MOD-01A",
+    "MOD-02",
+    "MOD-03",
+    "MOD-04",
+    "MOD-06",
+    "MOD-07",
+    "MOD-15",
+  ]) {
+    if (!mod17.dependencies?.includes(dependency)) {
+      errors.push(`MOD-17 must depend on ${dependency}`);
+    }
+  }
+
+  if (!mod17.verifyCommand?.includes("verify:mod17")) {
+    errors.push("MOD-17 verifyCommand must reference verify:mod17");
+  }
+
+  for (const filePath of [
+    mod17.docPath,
+    mod17.aiQcReportPath,
+    mod17.manualQcGuidePath,
+    mod17.manualQcResultTemplatePath,
+  ]) {
+    if (!filePath || !fs.existsSync(path.join(process.cwd(), filePath))) {
+      errors.push(`MOD-17 documentation path missing: ${filePath ?? "(unset)"}`);
+    }
+  }
+
+  if (mod17.manualQcStatus !== "NOT TESTED" || mod17.browserUatStatus !== "NOT TESTED") {
+    errors.push("MOD-17 QC statuses must remain NOT TESTED until manual UAT");
+  }
+
+  if (mod17.productionApprovalStatus !== "Pending Manual QC") {
+    errors.push("MOD-17 must not claim production approval");
+  }
+
+  const requiredCapabilities = [
+    "Tenant-isolated appointments",
+    "Branch-aware scheduling",
+    "Walk-in and scheduled booking",
+    "Appointment number generation",
+    "Doctor-wise daily queue tokens",
+    "Queue call/skip/recall/complete",
+    "Duplicate slot prevention",
+    "Patient master integration",
+    "Localization",
+    "RTL support",
+  ];
+
+  for (const capability of requiredCapabilities) {
+    if (!mod17.capabilities?.includes(capability)) {
+      errors.push(`MOD-17 capabilities missing: ${capability}`);
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}

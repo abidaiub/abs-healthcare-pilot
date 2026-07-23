@@ -213,6 +213,9 @@ model Tenant {
   tenantServiceBranches     TenantServiceBranch[]
   patients                  Patient[]
   patientCounter            TenantPatientCounter?
+  appointments              Appointment[]
+  appointmentCounter        TenantAppointmentCounter?
+  queueCounters             BranchDoctorQueueCounter[]
 
   @@index([tenantStatus])
   @@index([createdAt])
@@ -258,6 +261,8 @@ model Branch {
   reportSignatureTemplates ReportSignatureTemplate[]
   tenantServiceBranches    TenantServiceBranch[]
   registeredPatients       Patient[]                 @relation("PatientRegistrationBranch")
+  appointments             Appointment[]
+  queueCounters            BranchDoctorQueueCounter[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -331,6 +336,7 @@ model Patient {
 
   tenant             Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   registrationBranch Branch @relation("PatientRegistrationBranch", fields: [registrationBranchId], references: [id])
+  appointments       Appointment[]
 
   @@unique([tenantId, patientNumber])
   @@index([tenantId])
@@ -342,6 +348,95 @@ model Patient {
   @@index([registrationBranchId])
   @@index([createdAt])
   @@map("patients")
+}
+
+enum AppointmentType {
+  WALK_IN
+  SCHEDULED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CHECKED_IN
+  WAITING
+  CALLED
+  IN_CONSULTATION
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+/// Tenant-scoped sequential counter for appointment numbers (MOD-17)
+model TenantAppointmentCounter {
+  tenantId   String @id @map("tenant_id")
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_appointment_counters")
+}
+
+/// Daily doctor queue token counter per branch (MOD-17)
+model BranchDoctorQueueCounter {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id")
+  branchId  String   @map("branch_id")
+  doctorId  String   @map("doctor_id")
+  queueDate DateTime @map("queue_date") @db.Date
+  lastToken Int      @default(0) @map("last_token")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, branchId, doctorId, queueDate])
+  @@index([tenantId, branchId, queueDate])
+  @@map("branch_doctor_queue_counters")
+}
+
+/// OPD appointment record (MOD-17)
+model Appointment {
+  id                String            @id @default(cuid())
+  tenantId          String            @map("tenant_id")
+  appointmentNumber String            @map("appointment_number")
+  appointmentType   AppointmentType   @map("appointment_type")
+  status            AppointmentStatus @default(SCHEDULED)
+  appointmentDate   DateTime          @map("appointment_date") @db.Date
+  timeSlot          String?           @map("time_slot")
+  patientId         String            @map("patient_id")
+  branchId          String            @map("branch_id")
+  doctorId          String            @map("doctor_id")
+  departmentId      String?           @map("department_id")
+  reasonForVisit    String?           @map("reason_for_visit")
+  notes             String?
+  queueToken        Int?              @map("queue_token")
+  queueTokenDate    DateTime?         @map("queue_token_date") @db.Date
+  checkedInAt       DateTime?         @map("checked_in_at")
+  calledAt          DateTime?         @map("called_at")
+  completedAt       DateTime?         @map("completed_at")
+  cancelledAt       DateTime?         @map("cancelled_at")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  createdBy         String?           @map("created_by")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  updatedBy         String?           @map("updated_by")
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient    Patient     @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  branch     Branch      @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  doctor     Doctor      @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, appointmentNumber])
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, doctorId])
+  @@index([tenantId, patientId])
+  @@index([tenantId, status])
+  @@index([tenantId, appointmentDate])
+  @@index([tenantId, branchId, doctorId, appointmentDate], map: "appointments_tenant_branch_doctor_date_idx")
+  @@index([tenantId, branchId, doctorId, appointmentDate, timeSlot], map: "appointments_tenant_branch_doctor_date_slot_idx")
+  @@index([tenantId, branchId, doctorId, queueTokenDate, queueToken])
+  @@map("appointments")
 }
 
 /// Host/global subscription package master (tenant_id not applicable)
@@ -708,6 +803,7 @@ model Department {
   doctorDepartmentMappings DoctorDepartmentMapping[]
   reportDoctorAssignments  ReportDoctorAssignment[]
   reportSignatureTemplates ReportSignatureTemplate[]
+  appointments             Appointment[]
 
   @@unique([tenantId, deptCode])
   @@index([tenantId])
@@ -1141,6 +1237,8 @@ model Doctor {
   verifyingAssignments     ReportDoctorAssignment[]  @relation("VerifyingDoctor")
   consultantAssignments    ReportDoctorAssignment[]  @relation("ConsultantDoctor")
   reportSignatureTemplates ReportSignatureTemplate[]
+  appointments             Appointment[]
+  queueCounters            BranchDoctorQueueCounter[]
 
   @@unique([tenantId, doctorCode])
   @@index([tenantId])

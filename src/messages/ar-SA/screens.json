@@ -27,5 +27,17 @@
   "patientDetail.title": "تفاصيل المريض",
   "patientDetail.breadcrumb": "العمليات / تفاصيل المريض",
   "patientEdit.title": "تعديل المريض",
-  "patientEdit.breadcrumb": "العمليات / تعديل المريض"
+  "patientEdit.breadcrumb": "العمليات / تعديل المريض",
+  "appointmentList.title": "قائمة المواعيد",
+  "appointmentList.breadcrumb": "العمليات / المواعيد",
+  "appointmentBooking.title": "حجز موعد",
+  "appointmentBooking.breadcrumb": "العمليات / حجز موعد",
+  "appointmentDetail.title": "تفاصيل الموعد",
+  "appointmentDetail.breadcrumb": "العمليات / تفاصيل الموعد",
+  "appointmentEdit.title": "تعديل الموعد",
+  "appointmentEdit.breadcrumb": "العمليات / تعديل الموعد",
+  "queueDashboard.title": "لوحة الطابور",
+  "queueDashboard.breadcrumb": "العمليات / لوحة الطابور",
+  "queueOperator.title": "مشغل الطابور",
+  "queueOperator.breadcrumb": "العمليات / مشغل الطابور"
 }

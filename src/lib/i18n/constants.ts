@@ -28,6 +28,7 @@ export const REQUIRED_MESSAGE_NAMESPACES = [
   "screens",
   "branch",
   "patient",
+  "appointment",
 ] as const;
 
 export type MessageNamespace = (typeof REQUIRED_MESSAGE_NAMESPACES)[number];
