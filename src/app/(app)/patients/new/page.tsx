@@ -1,17 +1,29 @@
 import { ModulePageHeader } from "@/components/layout/ModulePageHeader";
-import { PatientRegistrationForm } from "@/components/patients/PatientRegistrationForm";
-import { requireSession } from "@/lib/auth";
+import { PatientForm } from "@/components/patients/PatientForm";
+import { getServerI18n } from "@/lib/i18n/server";
+import { requireTenantPermission, hasTenantPermission } from "@/lib/rbac/auth";
 
 export default async function PatientRegistrationPage() {
-  const session = await requireSession();
+  const session = await requireTenantPermission("/patients/new", "canCreate");
+  const { t } = await getServerI18n(session);
+  const canOverrideDuplicates = await hasTenantPermission(
+    session.tenantId,
+    session.userId,
+    "/patients/new",
+    "canApprove",
+  );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <ModulePageHeader
         screenKey="patientRegistration"
-        description={`Capture demographics, identity, and emergency contact for ${session.tenantName}`}
+        description={t("patient.list.description")}
       />
-      <PatientRegistrationForm session={session} />
+      <PatientForm
+        mode="create"
+        branchLabel={`${session.branchCode ?? ""} — ${session.branchName}`}
+        canOverrideDuplicates={canOverrideDuplicates}
+      />
     </div>
   );
 }

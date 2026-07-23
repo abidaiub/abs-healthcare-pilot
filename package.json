@@ -22,6 +22,7 @@
     "verify:mod04": "tsx scripts/verify-mod04-audit.ts",
     "verify:mod06": "tsx scripts/verify-mod06-localization.ts",
     "verify:mod07": "tsx scripts/verify-mod07-branch-location.ts",
+    "verify:mod15": "tsx scripts/verify-mod15-patient-registration.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

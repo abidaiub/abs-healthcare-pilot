@@ -95,6 +95,34 @@ enum BranchType {
   OTHER
 }
 
+enum PatientGender {
+  MALE
+  FEMALE
+  OTHER
+  UNKNOWN
+}
+
+enum BloodGroup {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+  UNKNOWN
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+  SEPARATED
+  UNKNOWN
+}
+
 /// Subscription tier classification (SubscriptionPackage.packageType)
 enum PackageType {
   TRIAL
@@ -183,6 +211,8 @@ model Tenant {
   reportDoctorAssignments   ReportDoctorAssignment[]
   reportSignatureTemplates  ReportSignatureTemplate[]
   tenantServiceBranches     TenantServiceBranch[]
+  patients                  Patient[]
+  patientCounter            TenantPatientCounter?
 
   @@index([tenantStatus])
   @@index([createdAt])
@@ -227,6 +257,7 @@ model Branch {
   reportDoctorAssignments  ReportDoctorAssignment[]
   reportSignatureTemplates ReportSignatureTemplate[]
   tenantServiceBranches    TenantServiceBranch[]
+  registeredPatients       Patient[]                 @relation("PatientRegistrationBranch")
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -235,6 +266,82 @@ model Branch {
   @@index([status])
   @@index([createdAt])
   @@map("branches")
+}
+
+/// Tenant-scoped sequential counter for patient numbers (MOD-15)
+model TenantPatientCounter {
+  tenantId   String @id @map("tenant_id")
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_patient_counters")
+}
+
+/// Patient master record (MOD-15)
+model Patient {
+  id                               String         @id @default(cuid())
+  tenantId                         String         @map("tenant_id")
+  patientNumber                    String         @map("patient_number")
+  firstName                        String         @map("first_name")
+  middleName                       String?        @map("middle_name")
+  lastName                         String?        @map("last_name")
+  fullName                         String         @map("full_name")
+  preferredName                    String?        @map("preferred_name")
+  gender                           PatientGender  @default(UNKNOWN)
+  dateOfBirth                      DateTime?      @map("date_of_birth") @db.Date
+  estimatedAge                     Int?           @map("estimated_age")
+  ageAsOfDate                      DateTime?      @map("age_as_of_date") @db.Date
+  bloodGroup                       BloodGroup?    @map("blood_group")
+  maritalStatus                    MaritalStatus? @map("marital_status")
+  nationality                      String?
+  countryCode                      String?        @map("country_code")
+  mobile                           String?
+  mobileNormalized                 String?        @map("mobile_normalized")
+  alternateMobile                  String?        @map("alternate_mobile")
+  alternateMobileNormalized        String?        @map("alternate_mobile_normalized")
+  email                            String?
+  addressLine1                     String?        @map("address_line1")
+  addressLine2                     String?        @map("address_line2")
+  city                             String?
+  district                         String?
+  postalCode                       String?        @map("postal_code")
+  nationalId                       String?        @map("national_id")
+  nationalIdNormalized             String?        @map("national_id_normalized")
+  passportNumber                   String?        @map("passport_number")
+  passportNumberNormalized         String?        @map("passport_number_normalized")
+  occupation                       String?
+  religion                         String?
+  photoUrl                         String?        @map("photo_url")
+  notes                            String?
+  guardianName                     String?        @map("guardian_name")
+  guardianRelation                 String?        @map("guardian_relation")
+  guardianMobile                   String?        @map("guardian_mobile")
+  guardianMobileNormalized         String?        @map("guardian_mobile_normalized")
+  emergencyContactName             String?        @map("emergency_contact_name")
+  emergencyContactRelation         String?        @map("emergency_contact_relation")
+  emergencyContactMobile           String?        @map("emergency_contact_mobile")
+  emergencyContactMobileNormalized String?        @map("emergency_contact_mobile_normalized")
+  registrationBranchId             String         @map("registration_branch_id")
+  isActive                         Boolean        @default(true) @map("is_active")
+  createdAt                        DateTime       @default(now()) @map("created_at")
+  createdBy                        String?        @map("created_by")
+  updatedAt                        DateTime       @updatedAt @map("updated_at")
+  updatedBy                        String?        @map("updated_by")
+
+  tenant             Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  registrationBranch Branch @relation("PatientRegistrationBranch", fields: [registrationBranchId], references: [id])
+
+  @@unique([tenantId, patientNumber])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@index([tenantId, mobileNormalized])
+  @@index([tenantId, nationalIdNormalized])
+  @@index([tenantId, fullName])
+  @@index([tenantId, registrationBranchId])
+  @@index([registrationBranchId])
+  @@index([createdAt])
+  @@map("patients")
 }
 
 /// Host/global subscription package master (tenant_id not applicable)

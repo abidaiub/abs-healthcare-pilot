@@ -19,5 +19,13 @@
   "tenantPermissionMatrix.title": "مصفوفة الصلاحيات",
   "tenantAuditCenter.title": "مركز التدقيق",
   "tenantAuditCenter.breadcrumb": "مركز التدقيق / تدقيق المستأجر",
-  "receptionDashboard.title": "لوحة الاستقبال"
+  "receptionDashboard.title": "لوحة الاستقبال",
+  "patientSearch.title": "بحث المريض",
+  "patientSearch.breadcrumb": "العمليات / بحث المريض",
+  "patientRegistration.title": "تسجيل المريض",
+  "patientRegistration.breadcrumb": "العمليات / تسجيل المريض",
+  "patientDetail.title": "تفاصيل المريض",
+  "patientDetail.breadcrumb": "العمليات / تفاصيل المريض",
+  "patientEdit.title": "تعديل المريض",
+  "patientEdit.breadcrumb": "العمليات / تعديل المريض"
 }

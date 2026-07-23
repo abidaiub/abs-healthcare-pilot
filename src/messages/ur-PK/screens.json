@@ -19,5 +19,13 @@
   "tenantPermissionMatrix.title": "اجازت میٹرکس",
   "tenantAuditCenter.title": "آڈٹ سینٹر",
   "tenantAuditCenter.breadcrumb": "آڈٹ سینٹر / کرایہ دار آڈٹ",
-  "receptionDashboard.title": "ریسیپشن ڈیش بورڈ"
+  "receptionDashboard.title": "ریسیپشن ڈیش بورڈ",
+  "patientSearch.title": "مریض تلاش",
+  "patientSearch.breadcrumb": "آپریشنز / مریض تلاش",
+  "patientRegistration.title": "مریض رجسٹریشن",
+  "patientRegistration.breadcrumb": "آپریشنز / مریض رجسٹریشن",
+  "patientDetail.title": "مریض کی تفصیل",
+  "patientDetail.breadcrumb": "آپریشنز / مریض کی تفصیل",
+  "patientEdit.title": "مریض میں ترمیم",
+  "patientEdit.breadcrumb": "آپریشنز / مریض میں ترمیم"
 }

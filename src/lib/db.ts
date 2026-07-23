@@ -30,7 +30,11 @@ function createPrismaClient() {
 }
 
 function isPrismaClientReady(client: PrismaClient | undefined): client is PrismaClient {
-  return Boolean(client && typeof client.userBranch?.findFirst === "function");
+  return Boolean(
+    client &&
+      typeof client.userBranch?.findFirst === "function" &&
+      typeof client.patient?.findFirst === "function",
+  );
 }
 
 function getPrismaClient(): PrismaClient {

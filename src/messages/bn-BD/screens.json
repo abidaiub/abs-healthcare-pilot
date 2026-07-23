@@ -19,5 +19,13 @@
   "tenantPermissionMatrix.title": "অনুমতি ম্যাট্রিক্স",
   "tenantAuditCenter.title": "অডিট সেন্টার",
   "tenantAuditCenter.breadcrumb": "অডিট সেন্টার / টenant অডিট",
-  "receptionDashboard.title": "রিসেপশন ড্যাশবোর্ড"
+  "receptionDashboard.title": "রিসেপশন ড্যাশবোর্ড",
+  "patientSearch.title": "রোগী অনুসন্ধান",
+  "patientSearch.breadcrumb": "অপারেশন / রোগী অনুসন্ধান",
+  "patientRegistration.title": "রোগী নিবন্ধন",
+  "patientRegistration.breadcrumb": "অপারেশন / রোগী নিবন্ধন",
+  "patientDetail.title": "রোগীর বিবরণ",
+  "patientDetail.breadcrumb": "অপারেশন / রোগীর বিবরণ",
+  "patientEdit.title": "রোগী সম্পাদনা",
+  "patientEdit.breadcrumb": "অপারেশন / রোগী সম্পাদনা"
 }

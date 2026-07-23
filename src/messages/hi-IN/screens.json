@@ -19,5 +19,13 @@
   "tenantPermissionMatrix.title": "अनुमति मैट्रिक्स",
   "tenantAuditCenter.title": "ऑडिट केंद्र",
   "tenantAuditCenter.breadcrumb": "ऑडिट केंद्र / टenant ऑडिट",
-  "receptionDashboard.title": "रिसेप्शन डैशबोर्ड"
+  "receptionDashboard.title": "रिसेप्शन डैशबोर्ड",
+  "patientSearch.title": "रोगी खोज",
+  "patientSearch.breadcrumb": "ऑपरेशंस / रोगी खोज",
+  "patientRegistration.title": "रोगी पंजीकरण",
+  "patientRegistration.breadcrumb": "ऑपरेशंस / रोगी पंजीकरण",
+  "patientDetail.title": "रोगी विवरण",
+  "patientDetail.breadcrumb": "ऑपरेशंस / रोगी विवरण",
+  "patientEdit.title": "रोगी संपादित करें",
+  "patientEdit.breadcrumb": "ऑपरेशंस / रोगी संपादित करें"
 }

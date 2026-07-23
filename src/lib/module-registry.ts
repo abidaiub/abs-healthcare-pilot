@@ -18,7 +18,7 @@ export const MODULES = {
   patientRegistration: {
     id: "15",
     name: "Patient Registration & MPI",
-    docPath: "docs/15-PatientRegistration/PatientRegistration_v1.md",
+    docPath: "docs/modules/MOD-15-Patient-Registration.md",
     mockupPath: "docs/15-PatientRegistration/Mockups/WireframeMockup.md",
   },
   sampleCollection: {
@@ -346,7 +346,19 @@ export const SCREENS = {
     route: "/patients/new",
     moduleKey: "patientRegistration",
     screenName: "New Registration",
-    workflowRef: "Demographics → Identity → Assign MRN",
+    workflowRef: "Demographics → Identity → Assign patient number",
+  },
+  patientDetail: {
+    route: "/patients/[patientId]",
+    moduleKey: "patientRegistration",
+    screenName: "Patient Detail",
+    workflowRef: "View demographics, contacts, and registration branch",
+  },
+  patientEdit: {
+    route: "/patients/[patientId]/edit",
+    moduleKey: "patientRegistration",
+    screenName: "Edit Patient",
+    workflowRef: "Update registration data without changing patient number",
   },
   appointmentBooking: {
     route: "/appointments",

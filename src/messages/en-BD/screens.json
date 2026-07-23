@@ -19,5 +19,13 @@
   "tenantPermissionMatrix.title": "Permission Matrix",
   "tenantAuditCenter.title": "Audit Center",
   "tenantAuditCenter.breadcrumb": "Audit Center / Tenant Audit",
-  "receptionDashboard.title": "Reception Dashboard"
+  "receptionDashboard.title": "Reception Dashboard",
+  "patientSearch.title": "Patient Search",
+  "patientSearch.breadcrumb": "Operations / Patient Search",
+  "patientRegistration.title": "Patient Registration",
+  "patientRegistration.breadcrumb": "Operations / Patient Registration",
+  "patientDetail.title": "Patient Detail",
+  "patientDetail.breadcrumb": "Operations / Patient Detail",
+  "patientEdit.title": "Edit Patient",
+  "patientEdit.breadcrumb": "Operations / Edit Patient"
 }

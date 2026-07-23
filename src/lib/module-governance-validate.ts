@@ -187,3 +187,81 @@ export function validateMod07RegistryCompliance(): {
 
   return { ok: errors.length === 0, errors };
 }
+
+export function validateMod15RegistryCompliance(): {
+  ok: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  const mod15 = getModuleRegistryEntry("MOD-15");
+
+  if (!mod15) {
+    errors.push("MOD-15 entry missing from MODULE_REGISTRY");
+    return { ok: false, errors };
+  }
+
+  if (MODULE_REGISTRY.filter((entry) => entry.moduleCode === "MOD-15").length !== 1) {
+    errors.push("MOD-15 module ID must be unique in MODULE_REGISTRY");
+  }
+
+  if (mod15.displayName !== "Patient Registration") {
+    errors.push("MOD-15 displayName must be Patient Registration");
+  }
+
+  if (mod15.implementationStatus !== "Implemented") {
+    errors.push("MOD-15 implementationStatus must be Implemented");
+  }
+
+  for (const dependency of [
+    "MOD-01",
+    "MOD-01A",
+    "MOD-02",
+    "MOD-03",
+    "MOD-04",
+    "MOD-06",
+    "MOD-07",
+  ]) {
+    if (!mod15.dependencies?.includes(dependency)) {
+      errors.push(`MOD-15 must depend on ${dependency}`);
+    }
+  }
+
+  if (!mod15.verifyCommand?.includes("verify:mod15")) {
+    errors.push("MOD-15 verifyCommand must reference verify:mod15");
+  }
+
+  for (const filePath of [
+    mod15.docPath,
+    mod15.aiQcReportPath,
+    mod15.manualQcGuidePath,
+    mod15.manualQcResultTemplatePath,
+  ]) {
+    if (!filePath || !fs.existsSync(path.join(process.cwd(), filePath))) {
+      errors.push(`MOD-15 documentation path missing: ${filePath ?? "(unset)"}`);
+    }
+  }
+
+  if (mod15.manualQcStatus !== "NOT TESTED" || mod15.browserUatStatus !== "NOT TESTED") {
+    errors.push("MOD-15 QC statuses must remain NOT TESTED until manual UAT");
+  }
+
+  if (mod15.productionApprovalStatus !== "Pending Manual QC") {
+    errors.push("MOD-15 must not claim production approval");
+  }
+
+  const requiredCapabilities = [
+    "Tenant-isolated Patient Master",
+    "Branch-aware registration",
+    "Duplicate-patient detection",
+    "Localization",
+    "RTL support",
+  ];
+
+  for (const capability of requiredCapabilities) {
+    if (!mod15.capabilities?.includes(capability)) {
+      errors.push(`MOD-15 capabilities missing: ${capability}`);
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}
