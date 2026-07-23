@@ -16,9 +16,11 @@ AI Re-QC passed (`reports/001-Foundation-ReQC-01.md`). Final module approval req
 manual-qc/
 ├── README.md                          # This file
 ├── source/
-│   └── 001-CompanyTenant-Manual-QC-v1.0.md   # Editable guide (English + Bangla notes)
+│   ├── 001-CompanyTenant-Manual-QC-v1.0.md   # Editable guide (English + Bangla notes)
+│   └── 001-QC-Engineer-QuickStart-v1.0.md    # Setup + workflow for QC engineers
 ├── pdf/
-│   └── 001-CompanyTenant-Manual-QC-v1.0.pdf  # Distributable PDF (no passwords)
+│   ├── 001-CompanyTenant-Manual-QC-v1.0.pdf  # Full test cases (distributable)
+│   └── 001-QC-Engineer-QuickStart-v1.0.pdf # Setup, commands, workflow (distributable)
 ├── results/
 │   └── 001-CompanyTenant-Manual-QC-Result-Template.md
 ├── evidence/
@@ -52,6 +54,7 @@ manual-qc/
 | Independent AI Review | PASS (Re-QC-01) |
 | Manual QC Guide | **READY** |
 | Manual QC PDF | **READY** — 19 pages (`pdf/001-CompanyTenant-Manual-QC-v1.0.pdf`) |
+| QC Engineer Quick Start PDF | **READY** — (`pdf/001-QC-Engineer-QuickStart-v1.0.pdf`) |
 | QC Docker Deployment | **BLOCKED** — see `evidence/001-CompanyTenant/deployment/` |
 | Manual QC Execution | **PENDING** |
 | UAT | **PENDING** |

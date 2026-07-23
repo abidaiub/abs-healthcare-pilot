@@ -1,0 +1,6 @@
+Generated: D:\Al Baraka Soft\ABS_ERP_Cursour AI\ABSHealthCareLite\abs-healthcare-pilot\docs\AI-QC\manual-qc\pdf\001-QC-Engineer-QuickStart-v1.0.pdf
+Timestamp: 2026-07-19T17:28:33.181Z
+Size bytes: 115241
+Estimated page count: 6
+
+Result: PASS (QC Engineer Quick Start PDF generated)
