@@ -124,8 +124,15 @@ model Tenant {
   city                String?
   district            String?
   country             String           @default("Bangladesh")
+  countryCode         String           @default("BD") @map("country_code")
   timezone            String           @default("Asia/Dhaka")
   defaultLanguage     String           @default("EN") @map("default_language")
+  defaultLocale       String           @default("en-BD") @map("default_locale")
+  supportedLocales    Json             @default("[\"bn-BD\",\"en-BD\"]") @map("supported_locales")
+  currencyCode        String           @default("BDT") @map("currency_code")
+  dateFormat          String           @default("DD/MM/YYYY") @map("date_format")
+  numberFormat        String           @default("en-IN") @map("number_format")
+  textDirection       String           @default("ltr") @map("text_direction")
   tenantType          TenantType       @map("tenant_type")
   tenantStatus        TenantStatus     @default(TRIAL) @map("tenant_status")
   onboardingStatus    OnboardingStatus @default(DRAFT) @map("onboarding_status")

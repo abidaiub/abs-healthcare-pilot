@@ -17,6 +17,7 @@
     "screenshots": "node scripts/capture-screenshots.mjs",
     "daily:sync": "powershell -ExecutionPolicy Bypass -File scripts/daily-git-sync.ps1",
     "verify:mod01": "tsx scripts/verify-mod01-auth.ts",
+    "verify:mod01a": "tsx scripts/verify-mod01a-locale.ts",
     "verify:mod02": "tsx scripts/verify-mod02-rbac.ts",
     "verify:mod04": "tsx scripts/verify-mod04-audit.ts",
     "postinstall": "prisma generate"

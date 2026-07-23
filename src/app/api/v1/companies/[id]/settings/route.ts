@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import {
+  mapLocaleToLegacyLanguage,
+  parseStoredSupportedLocales,
+  validateTenantLocaleProfile,
+} from "@/lib/locale/validation";
 import { writeAuditLog } from "@/lib/saas/audit";
 import { getTenantSettingsPayload } from "@/lib/saas/queries";
 
@@ -13,6 +18,14 @@ const ALLOWED_FIELDS = new Set([
   "reportHeaderLogoUrl",
   "reportFooterText",
   "defaultLanguage",
+  "defaultLocale",
+  "supportedLocales",
+  "countryCode",
+  "country",
+  "currencyCode",
+  "dateFormat",
+  "numberFormat",
+  "textDirection",
   "timezone",
   "contactPerson",
   "contactMobile",
@@ -46,6 +59,25 @@ async function authorizeTenantAccess(tenantId: string) {
   return { session, tenantId, isHost: false as const };
 }
 
+function parsePatchValue(key: string, value: unknown): unknown {
+  if (key === "supportedLocales") {
+    if (Array.isArray(value)) return value.map(String);
+    if (typeof value === "string") {
+      try {
+        const parsed = JSON.parse(value) as unknown;
+        if (Array.isArray(parsed)) return parsed.map(String);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  return value === null || value === undefined
+    ? null
+    : String(value).trim() || null;
+}
+
 export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params;
   const auth = await authorizeTenantAccess(id);
@@ -65,12 +97,11 @@ export async function PATCH(request: Request, context: RouteContext) {
   if ("error" in auth && auth.error) return auth.error;
 
   const body = (await request.json()) as Record<string, unknown>;
-  const data: Record<string, string | null> = {};
+  const data: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(body)) {
     if (!ALLOWED_FIELDS.has(key)) continue;
-    data[key] =
-      value === null || value === undefined ? null : String(value).trim() || null;
+    data[key] = parsePatchValue(key, value);
   }
 
   if (Object.keys(data).length === 0) {
@@ -82,12 +113,68 @@ export async function PATCH(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  const localePatch = validateTenantLocaleProfile({
+    countryCode: String(data.countryCode ?? existing.countryCode),
+    countryName: String(data.country ?? existing.country),
+    defaultLocale: String(data.defaultLocale ?? existing.defaultLocale),
+    supportedLocales: Array.isArray(data.supportedLocales)
+      ? (data.supportedLocales as string[])
+      : parseStoredSupportedLocales(existing.supportedLocales),
+    timezone: String(data.timezone ?? existing.timezone),
+    currencyCode: String(data.currencyCode ?? existing.currencyCode),
+    dateFormat: String(data.dateFormat ?? existing.dateFormat),
+    numberFormat: String(data.numberFormat ?? existing.numberFormat),
+    textDirection:
+      String(data.textDirection ?? existing.textDirection).toLowerCase() === "rtl"
+        ? "rtl"
+        : "ltr",
+  });
+
+  if (
+    "defaultLocale" in data ||
+    "supportedLocales" in data ||
+    "countryCode" in data ||
+    "currencyCode" in data ||
+    "dateFormat" in data ||
+    "numberFormat" in data ||
+    "textDirection" in data ||
+    "timezone" in data
+  ) {
+    if (!localePatch.ok) {
+      return NextResponse.json({ error: localePatch.error }, { status: 400 });
+    }
+  }
+
+  const updateData: Record<string, unknown> = {
+    updatedBy: auth.session!.user.name,
+  };
+
+  for (const [key, value] of Object.entries(data)) {
+    if (key === "supportedLocales" && Array.isArray(value)) {
+      updateData.supportedLocales = value;
+      continue;
+    }
+    updateData[key] = value;
+  }
+
+  if (localePatch.ok) {
+    updateData.country = localePatch.profile.countryName;
+    updateData.countryCode = localePatch.profile.countryCode;
+    updateData.defaultLocale = localePatch.profile.defaultLocale;
+    updateData.supportedLocales = localePatch.profile.supportedLocales;
+    updateData.timezone = localePatch.profile.timezone;
+    updateData.currencyCode = localePatch.profile.currencyCode;
+    updateData.dateFormat = localePatch.profile.dateFormat;
+    updateData.numberFormat = localePatch.profile.numberFormat;
+    updateData.textDirection = localePatch.profile.textDirection;
+    updateData.defaultLanguage = mapLocaleToLegacyLanguage(
+      localePatch.profile.defaultLocale,
+    );
+  }
+
   const updated = await prisma.tenant.update({
     where: { id },
-    data: {
-      ...data,
-      updatedBy: auth.session!.user.name,
-    },
+    data: updateData,
   });
 
   await writeAuditLog({

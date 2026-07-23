@@ -1,5 +1,6 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
+import { parseStoredSupportedLocales } from "@/lib/locale/validation";
 import {
   formatBillingCycle,
   formatDate,
@@ -178,8 +179,15 @@ export async function getTenantDetailById(
     city: tenant.city,
     district: tenant.district,
     country: tenant.country,
+    countryCode: tenant.countryCode,
     timezone: tenant.timezone,
     defaultLanguage: tenant.defaultLanguage,
+    defaultLocale: tenant.defaultLocale,
+    supportedLocales: parseStoredSupportedLocales(tenant.supportedLocales),
+    currencyCode: tenant.currencyCode,
+    dateFormat: tenant.dateFormat,
+    numberFormat: tenant.numberFormat,
+    textDirection: tenant.textDirection === "rtl" ? "rtl" : "ltr",
     tenantType: formatTenantType(tenant.tenantType),
     tenantStatus: formatTenantStatus(tenant.tenantStatus),
     onboardingStatus: formatOnboardingStatus(tenant.onboardingStatus),
@@ -411,6 +419,14 @@ export async function getTenantSettingsPayload(
     reportHeaderLogoUrl: tenant.reportHeaderLogoUrl,
     reportFooterText: tenant.reportFooterText,
     defaultLanguage: tenant.defaultLanguage,
+    defaultLocale: tenant.defaultLocale,
+    supportedLocales: parseStoredSupportedLocales(tenant.supportedLocales),
+    countryCode: tenant.countryCode,
+    country: tenant.country,
+    currencyCode: tenant.currencyCode,
+    dateFormat: tenant.dateFormat,
+    numberFormat: tenant.numberFormat,
+    textDirection: tenant.textDirection === "rtl" ? "rtl" : "ltr",
     timezone: tenant.timezone,
     contactPerson: tenant.contactPerson,
     contactMobile: tenant.contactMobile,

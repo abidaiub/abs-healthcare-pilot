@@ -7,6 +7,7 @@ import {
   createTenantAction,
   updateTenantAction,
 } from "@/app/actions/host-tenant";
+import { TenantRegionalProfileFields } from "@/components/host/TenantRegionalProfileFields";
 import { Badge, Button, Card, CardBody, Input, Select, Textarea } from "@/components/ui";
 import type { SubscriptionPackageRow, TenantDetailRecord } from "@/lib/saas/types";
 
@@ -83,15 +84,6 @@ export function TenantFormPanel({
                 <Input label="Address" name="address" defaultValue={tenant?.address ?? ""} className="sm:col-span-2" />
                 <Input label="City" name="city" defaultValue={tenant?.city ?? ""} />
                 <Input label="District" name="district" defaultValue={tenant?.district ?? ""} />
-                <Input label="Country" name="country" defaultValue={tenant?.country ?? "Bangladesh"} />
-                <Select label="Timezone" name="timezone" defaultValue={tenant?.timezone ?? "Asia/Dhaka"}>
-                  <option value="Asia/Dhaka">Asia/Dhaka</option>
-                  <option value="Asia/Kolkata">Asia/Kolkata</option>
-                </Select>
-                <Select label="Default language" name="defaultLanguage" defaultValue={tenant?.defaultLanguage ?? "EN"}>
-                  <option value="EN">English</option>
-                  <option value="BN">Bangla</option>
-                </Select>
                 <Select label="Tenant type" name="tenantType" defaultValue={tenant?.tenantType ?? "Multi-Specialty"}>
                   <option>Hospital</option>
                   <option>Diagnostic Center</option>
@@ -117,6 +109,24 @@ export function TenantFormPanel({
                 )}
               </div>
             </section>
+
+            <TenantRegionalProfileFields
+              initial={
+                tenant
+                  ? {
+                      countryCode: tenant.countryCode,
+                      countryName: tenant.country,
+                      defaultLocale: tenant.defaultLocale,
+                      supportedLocales: tenant.supportedLocales,
+                      timezone: tenant.timezone,
+                      currencyCode: tenant.currencyCode,
+                      dateFormat: tenant.dateFormat,
+                      numberFormat: tenant.numberFormat,
+                      textDirection: tenant.textDirection,
+                    }
+                  : undefined
+              }
+            />
 
             <section className="space-y-4">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">

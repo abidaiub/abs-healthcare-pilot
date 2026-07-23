@@ -25,6 +25,10 @@ import {
   assertTenantOwnsBranch,
   getTenantDetailById,
 } from "@/lib/saas/queries";
+import {
+  mapLocaleToLegacyLanguage,
+  parseTenantLocaleProfileFromForm,
+} from "@/lib/locale/validation";
 
 export type HostActionResult =
   | { ok: true; tenantId?: string; branchId?: string }
@@ -57,6 +61,30 @@ async function revalidateTenantPaths(tenantId: string) {
   revalidatePath(`/host/tenants/${tenantId}/edit`);
   revalidatePath(`/host/tenants/${tenantId}/branches`);
   revalidatePath("/host/audit");
+}
+
+function tenantLocaleDataFromForm(formData: FormData) {
+  const parsed = parseTenantLocaleProfileFromForm(formData);
+  if (!parsed.ok) {
+    return parsed;
+  }
+
+  return {
+    ok: true as const,
+    profile: parsed.profile,
+    data: {
+      country: parsed.profile.countryName,
+      countryCode: parsed.profile.countryCode,
+      defaultLocale: parsed.profile.defaultLocale,
+      supportedLocales: parsed.profile.supportedLocales,
+      timezone: parsed.profile.timezone,
+      currencyCode: parsed.profile.currencyCode,
+      dateFormat: parsed.profile.dateFormat,
+      numberFormat: parsed.profile.numberFormat,
+      textDirection: parsed.profile.textDirection,
+      defaultLanguage: mapLocaleToLegacyLanguage(parsed.profile.defaultLocale),
+    },
+  };
 }
 
 export async function createTenantAction(
@@ -121,6 +149,11 @@ export async function createTenantAction(
     return { ok: false, error: "Primary tenant admin name and email are required." };
   }
 
+  const localeResult = tenantLocaleDataFromForm(formData);
+  if (!localeResult.ok) {
+    return { ok: false, error: localeResult.error };
+  }
+
   const tenant = await prisma.$transaction(async (tx) => {
     const created = await tx.tenant.create({
       data: {
@@ -136,9 +169,7 @@ export async function createTenantAction(
         address: String(formData.get("address") ?? "").trim() || null,
         city: String(formData.get("city") ?? "").trim() || null,
         district: String(formData.get("district") ?? "").trim() || null,
-        country: String(formData.get("country") ?? "Bangladesh").trim(),
-        timezone: String(formData.get("timezone") ?? "Asia/Dhaka").trim(),
-        defaultLanguage: String(formData.get("defaultLanguage") ?? "EN").trim(),
+        ...localeResult.data,
         tenantType,
         tenantStatus: "TRIAL",
         onboardingStatus: "SETUP_PENDING",
@@ -289,6 +320,11 @@ export async function updateTenantAction(
     return { ok: false, error: "Required tenant profile fields are missing." };
   }
 
+  const localeResult = tenantLocaleDataFromForm(formData);
+  if (!localeResult.ok) {
+    return { ok: false, error: localeResult.error };
+  }
+
   const tenantType =
     parseTenantType(String(formData.get("tenantType") ?? "")) ?? existing.tenantType;
   const tenantStatus =
@@ -311,9 +347,7 @@ export async function updateTenantAction(
       address: String(formData.get("address") ?? "").trim() || null,
       city: String(formData.get("city") ?? "").trim() || null,
       district: String(formData.get("district") ?? "").trim() || null,
-      country: String(formData.get("country") ?? existing.country).trim(),
-      timezone: String(formData.get("timezone") ?? existing.timezone).trim(),
-      defaultLanguage: String(formData.get("defaultLanguage") ?? existing.defaultLanguage).trim(),
+      ...localeResult.data,
       tenantType,
       tenantStatus,
       onboardingStatus,
@@ -663,6 +697,11 @@ export async function updateTenantSettingsAction(
   const existing = await prisma.tenant.findUnique({ where: { id: tenantId } });
   if (!existing) return { ok: false, error: "Tenant not found." };
 
+  const localeResult = tenantLocaleDataFromForm(formData);
+  if (!localeResult.ok) {
+    return { ok: false, error: localeResult.error };
+  }
+
   const updated = await prisma.tenant.update({
     where: { id: tenantId },
     data: {
@@ -671,10 +710,7 @@ export async function updateTenantSettingsAction(
         String(formData.get("reportHeaderLogoUrl") ?? "").trim() || null,
       reportFooterText:
         String(formData.get("reportFooterText") ?? "").trim() || null,
-      defaultLanguage: String(
-        formData.get("defaultLanguage") ?? existing.defaultLanguage,
-      ).trim(),
-      timezone: String(formData.get("timezone") ?? existing.timezone).trim(),
+      ...localeResult.data,
       contactPerson: String(formData.get("contactPerson") ?? existing.contactPerson).trim(),
       contactMobile: String(formData.get("contactMobile") ?? existing.contactMobile).trim(),
       contactEmail: String(formData.get("contactEmail") ?? existing.contactEmail).trim(),
