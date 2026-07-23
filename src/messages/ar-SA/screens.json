@@ -10,6 +10,8 @@
   "subscriptionPackages.title": "باقات الاشتراك",
   "hostAuditLog.title": "سجل تدقيق المضيف",
   "tenantUserList.title": "إدارة المستخدمين",
+  "tenantBranchList.title": "إدارة الفروع",
+  "tenantBranchDetail.title": "تفاصيل الفرع",
   "tenantUserCreate.title": "إنشاء مستخدم",
   "tenantUserEdit.title": "تعديل مستخدم",
   "tenantRoleList.title": "الأدوار والصلاحيات",

@@ -16,6 +16,7 @@ import {
   migrateTenantLocaleProfiles,
 } from "./seed/tenant-locale-migration";
 import { seedLocalizationFoundation } from "./seed/localization-foundation";
+import { seedBranchFoundation } from "./seed/branch-foundation";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -52,14 +53,23 @@ async function main() {
         code: "BR-DHK-01",
       },
     },
-    update: {},
+    update: {
+      isDefault: false,
+      branchType: "HOSPITAL",
+      addressLine1: "12/A Dhanmondi, Dhaka 1209",
+    },
     create: {
       tenantId: tenant.id,
       code: "BR-DHK-01",
       name: "Dhaka Central Hospital",
+      branchType: "HOSPITAL",
       address: "12/A Dhanmondi, Dhaka 1209",
+      addressLine1: "12/A Dhanmondi, Dhaka 1209",
       phone: "+880 17 0000 0001",
       email: "dhaka@albarakamedical.com",
+      isDefault: false,
+      timezone: "Asia/Dhaka",
+      countryCode: "BD",
     },
   });
 
@@ -69,6 +79,7 @@ async function main() {
   await seedLocalizationFoundation(prisma);
   await seedSaasFoundation(prisma, tenant.id);
   await seedTenantRbacFoundation(prisma, tenant.id, branch.id);
+  await seedBranchFoundation(prisma, tenant.id);
 
   const adminUser = await prisma.user.findUnique({
     where: { username: "laila.hasan" },

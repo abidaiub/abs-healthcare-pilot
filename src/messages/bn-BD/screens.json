@@ -10,6 +10,8 @@
   "subscriptionPackages.title": "সাবস্ক্রিপশন প্যাকেজ",
   "hostAuditLog.title": "হোস্ট অডিট লগ",
   "tenantUserList.title": "ব্যবহারকারী ব্যবস্থাপনা",
+  "tenantBranchList.title": "শাখা ব্যবস্থাপনা",
+  "tenantBranchDetail.title": "শাখার বিবরণ",
   "tenantUserCreate.title": "ব্যবহারকারী তৈরি",
   "tenantUserEdit.title": "ব্যবহারকারী সম্পাদনা",
   "tenantRoleList.title": "ভূমিকা ও অনুমতি",

@@ -10,6 +10,8 @@
   "subscriptionPackages.title": "सदस्यता पैकेज",
   "hostAuditLog.title": "होस्ट ऑडिट लॉग",
   "tenantUserList.title": "उपयोगकर्ता प्रबंधन",
+  "tenantBranchList.title": "शाखा प्रबंधन",
+  "tenantBranchDetail.title": "शाखा विवरण",
   "tenantUserCreate.title": "उपयोगकर्ता बनाएँ",
   "tenantUserEdit.title": "उपयोगकर्ता संपादित",
   "tenantRoleList.title": "भूमिकाएँ और अनुमतियाँ",

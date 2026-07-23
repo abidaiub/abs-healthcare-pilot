@@ -53,6 +53,14 @@ export const TENANT_PERMISSION_RESOURCES: PermissionResource[] = [
     group: "Security & IAM",
   },
   {
+    resourceKey: "/settings/branches",
+    moduleCode: "MOD-07",
+    permissionCode: "BRANCH_MGMT",
+    label: "Branch Management",
+    route: "/settings/branches",
+    group: "Security & IAM",
+  },
+  {
     resourceKey: "/settings/service-catalog",
     moduleCode: "MOD-10",
     permissionCode: "SERVICE_CATALOG",

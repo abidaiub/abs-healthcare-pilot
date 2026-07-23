@@ -10,6 +10,8 @@
   "subscriptionPackages.title": "سبسکرپشن پیکج",
   "hostAuditLog.title": "میزبان آڈٹ لاگ",
   "tenantUserList.title": "صارف انتظام",
+  "tenantBranchList.title": "برانچ مینجمنٹ",
+  "tenantBranchDetail.title": "برانچ کی تفصیل",
   "tenantUserCreate.title": "صارف بنائیں",
   "tenantUserEdit.title": "صارف ترمیم",
   "tenantRoleList.title": "کردار و اجازت",

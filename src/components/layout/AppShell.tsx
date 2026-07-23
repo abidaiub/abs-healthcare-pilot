@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logoutAction } from "@/app/actions/auth";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
+import { BranchSwitcher, type SwitchableBranchOption } from "@/components/layout/BranchSwitcher";
 import { Badge, Button, cn } from "@/components/ui";
 import { useI18n } from "@/lib/i18n/client";
 import { getNavGroups } from "@/lib/navigation";
@@ -78,7 +79,13 @@ export function Sidebar({ session }: { session: SessionContext }) {
   );
 }
 
-export function TopBar({ session }: { session: SessionContext }) {
+export function TopBar({
+  session,
+  switchableBranches = [],
+}: {
+  session: SessionContext;
+  switchableBranches?: SwitchableBranchOption[];
+}) {
   const hostMode = isHostSession(session);
   const { t } = useI18n();
 
@@ -97,6 +104,12 @@ export function TopBar({ session }: { session: SessionContext }) {
         </div>
 
         <div className="flex items-center gap-4">
+          {!hostMode && (
+            <BranchSwitcher
+              currentBranchId={session.branchId}
+              branches={switchableBranches}
+            />
+          )}
           <LanguageSwitcher compact />
           <div className="hidden text-right sm:block">
             <p className="text-sm font-medium text-slate-900">
@@ -137,16 +150,18 @@ export function TopBar({ session }: { session: SessionContext }) {
 
 export function AppShell({
   session,
+  switchableBranches = [],
   children,
 }: {
   session: SessionContext;
+  switchableBranches?: SwitchableBranchOption[];
   children: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar session={session} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <TopBar session={session} />
+        <TopBar session={session} switchableBranches={switchableBranches} />
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
     </div>

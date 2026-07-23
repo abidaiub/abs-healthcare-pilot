@@ -15,6 +15,7 @@
   "hostTestCatalog": "Host Test Catalog",
   "saasSettings": "SaaS Settings",
   "userManagement": "User Management",
+  "branchManagement": "Branch Management",
   "rolesPermissions": "Roles & Permissions",
   "auditCenter": "Audit Center",
   "serviceCatalog": "Service Catalog",

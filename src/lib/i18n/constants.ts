@@ -26,6 +26,7 @@ export const REQUIRED_MESSAGE_NAMESPACES = [
   "system",
   "profile",
   "screens",
+  "branch",
 ] as const;
 
 export type MessageNamespace = (typeof REQUIRED_MESSAGE_NAMESPACES)[number];

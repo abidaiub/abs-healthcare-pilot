@@ -86,6 +86,11 @@ export const MODULES = {
     name: "Localization Engine",
     docPath: "docs/modules/MOD-06-Localization.md",
   },
+  branchLocation: {
+    id: "07",
+    name: "Branch / Location Management",
+    docPath: "docs/modules/MOD-07-Branch-Location-Management.md",
+  },
 } as const satisfies Record<string, ModuleDefinition>;
 
 export type ScreenDefinition = {
@@ -173,6 +178,18 @@ export const SCREENS = {
     moduleKey: "userManagement",
     screenName: "User List",
     workflowRef: "Search users → Edit profile → Assign role/branch",
+  },
+  tenantBranchList: {
+    route: "/settings/branches",
+    moduleKey: "branchLocation",
+    screenName: "Branch List",
+    workflowRef: "Create, activate, and manage tenant branches",
+  },
+  tenantBranchDetail: {
+    route: "/settings/branches/[branchId]",
+    moduleKey: "branchLocation",
+    screenName: "Branch Detail",
+    workflowRef: "View branch profile, assignments, and defaults",
   },
   tenantUserCreate: {
     route: "/settings/users/new",

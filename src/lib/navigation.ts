@@ -80,6 +80,8 @@ const TENANT_ADMIN_NAV: NavGroup[] = [
 
       { href: "/settings/users", labelKey: "userManagement", icon: "◌" },
 
+      { href: "/settings/branches", labelKey: "branchManagement", icon: "⌂" },
+
       { href: "/settings/roles", labelKey: "rolesPermissions", icon: "◍" },
 
       { href: "/settings/audit", labelKey: "auditCenter", icon: "◎" },

@@ -84,6 +84,17 @@ enum EntityStatus {
   ARCHIVED
 }
 
+enum BranchType {
+  HEAD_OFFICE
+  HOSPITAL
+  CLINIC
+  DIAGNOSTIC_CENTER
+  COLLECTION_CENTER
+  PHARMACY
+  CORPORATE_OFFICE
+  OTHER
+}
+
 /// Subscription tier classification (SubscriptionPackage.packageType)
 enum PackageType {
   TRIAL
@@ -180,21 +191,31 @@ model Tenant {
 
 /// Physical location / branch within a tenant
 model Branch {
-  id        String       @id @default(cuid())
-  tenantId  String       @map("tenant_id")
-  code      String
-  name      String
-  address   String?
-  city      String?
-  district  String?
-  phone     String?
-  email     String?
-  status    EntityStatus @default(ACTIVE)
-  isActive  Boolean      @default(true) @map("is_active")
-  createdAt DateTime     @default(now()) @map("created_at")
-  createdBy String?      @map("created_by")
-  updatedAt DateTime     @updatedAt @map("updated_at")
-  updatedBy String?      @map("updated_by")
+  id           String       @id @default(cuid())
+  tenantId     String       @map("tenant_id")
+  code         String
+  name         String
+  branchType   BranchType   @default(OTHER) @map("branch_type")
+  address      String?
+  addressLine1 String?      @map("address_line1")
+  addressLine2 String?      @map("address_line2")
+  city         String?
+  district     String?
+  postalCode   String?      @map("postal_code")
+  countryCode  String?      @map("country_code")
+  phone        String?
+  email        String?
+  timezone     String?
+  openingTime  String?      @map("opening_time")
+  closingTime  String?      @map("closing_time")
+  isDefault    Boolean      @default(false) @map("is_default")
+  notes        String?
+  status       EntityStatus @default(ACTIVE)
+  isActive     Boolean      @default(true) @map("is_active")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  createdBy    String?      @map("created_by")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  updatedBy    String?      @map("updated_by")
 
   tenant                   Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   userBranches             UserBranch[]
@@ -210,6 +231,7 @@ model Branch {
   @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, isActive])
+  @@index([tenantId, isDefault])
   @@index([status])
   @@index([createdAt])
   @@map("branches")
