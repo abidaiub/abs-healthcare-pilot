@@ -81,6 +81,11 @@ export const MODULES = {
     name: "Audit Center",
     docPath: "docs/04-AuditCenter/AuditCenter_v1.md",
   },
+  localizationEngine: {
+    id: "06",
+    name: "Localization Engine",
+    docPath: "docs/modules/MOD-06-Localization.md",
+  },
 } as const satisfies Record<string, ModuleDefinition>;
 
 export type ScreenDefinition = {

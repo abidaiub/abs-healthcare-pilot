@@ -164,13 +164,30 @@ export type SubscriptionPackage = {
   defaultLimits: Partial<TenantUsageLimits>;
 };
 
+export type ModuleQcStatus = "PASS" | "FAIL" | "NOT RUN" | "NOT TESTED";
+
 export type ModuleRegistryEntry = {
   moduleCode: string;
   moduleName: string;
+  displayName?: string;
   moduleGroup: string;
   coreModule: boolean;
   status: "Active" | "Inactive" | "Deprecated";
   description: string;
+  implementationStatus?: "Implemented" | "Planned" | "Deprecated";
+  dependencies?: string[];
+  capabilities?: string[];
+  supportedLocales?: string[];
+  verifyCommand?: string;
+  docPath?: string;
+  aiQcReportPath?: string;
+  manualQcGuidePath?: string;
+  manualQcResultTemplatePath?: string;
+  implementationCommit?: string;
+  automatedQcStatus?: ModuleQcStatus;
+  manualQcStatus?: ModuleQcStatus;
+  browserUatStatus?: ModuleQcStatus;
+  productionApprovalStatus?: "Approved" | "Pending Manual QC" | "Blocked";
 };
 
 export type AuditLogEntry = {
@@ -274,6 +291,7 @@ const ABMG_MODULES: TenantModuleAssignment[] = [
   { moduleCode: "MOD-01", moduleName: "Company/Tenant", moduleGroup: "Foundation", enabled: true, status: "Active", enabledFrom: "01-Jan-2026", enabledTo: "—", coreModule: true },
   { moduleCode: "MOD-02", moduleName: "User/RBAC", moduleGroup: "Foundation", enabled: true, status: "Active", enabledFrom: "01-Jan-2026", enabledTo: "—", coreModule: true },
   { moduleCode: "MOD-04", moduleName: "Audit Center", moduleGroup: "Foundation", enabled: true, status: "Active", enabledFrom: "01-Jan-2026", enabledTo: "—", coreModule: true },
+  { moduleCode: "MOD-06", moduleName: "Localization Engine", moduleGroup: "Foundation", enabled: true, status: "Active", enabledFrom: "01-Jan-2026", enabledTo: "—", coreModule: true },
   { moduleCode: "MOD-10", moduleName: "Service Catalog", moduleGroup: "Master Data", enabled: true, status: "Active", enabledFrom: "01-Jan-2026", enabledTo: "—", coreModule: false },
   { moduleCode: "MOD-15", moduleName: "Patient Registration", moduleGroup: "Front Office", enabled: true, status: "Active", enabledFrom: "01-Jan-2026", enabledTo: "—", coreModule: false },
   { moduleCode: "MOD-21", moduleName: "Sample Collection", moduleGroup: "Diagnostic", enabled: true, status: "Active", enabledFrom: "01-Jan-2026", enabledTo: "—", coreModule: false },
@@ -542,6 +560,40 @@ export const MODULE_REGISTRY: ModuleRegistryEntry[] = [
   { moduleCode: "MOD-01", moduleName: "Company/Tenant Management", moduleGroup: "Foundation", coreModule: true, status: "Active", description: "Tenant lifecycle, branding, deployment" },
   { moduleCode: "MOD-02", moduleName: "User Management & RBAC", moduleGroup: "Foundation", coreModule: true, status: "Active", description: "Users, roles, permissions" },
   { moduleCode: "MOD-04", moduleName: "Audit Center", moduleGroup: "Foundation", coreModule: true, status: "Active", description: "Immutable audit trail" },
+  {
+    moduleCode: "MOD-06",
+    moduleName: "Localization Engine",
+    displayName: "Localization",
+    moduleGroup: "Foundation",
+    coreModule: true,
+    status: "Active",
+    description: "Tenant-aware localization, language switching, RTL, and formatting",
+    implementationStatus: "Implemented",
+    dependencies: ["MOD-01", "MOD-01A", "MOD-02", "MOD-03"],
+    capabilities: [
+      "Tenant-aware locale resolution",
+      "User language preference",
+      "Tenant-supported locale restriction",
+      "Translation dictionaries",
+      "Language switcher",
+      "RTL rendering",
+      "Localized navigation and validation",
+      "Tenant-aware date, number, and currency formatting",
+      "English fallback",
+    ],
+    supportedLocales: ["en-BD", "bn-BD", "ar-SA", "ur-PK", "hi-IN"],
+    verifyCommand: "npm run verify:mod06",
+    docPath: "docs/modules/MOD-06-Localization.md",
+    aiQcReportPath: "docs/AI-QC/reports/006-Localization-AI-QC-v1.0.md",
+    manualQcGuidePath: "docs/AI-QC/manual-qc/source/006-Localization-Manual-QC-v1.0.md",
+    manualQcResultTemplatePath:
+      "docs/AI-QC/manual-qc/results/006-Localization-Manual-QC-Result-Template.md",
+    implementationCommit: "a8ee1fc",
+    automatedQcStatus: "PASS",
+    manualQcStatus: "NOT TESTED",
+    browserUatStatus: "NOT TESTED",
+    productionApprovalStatus: "Pending Manual QC",
+  },
   { moduleCode: "MOD-10", moduleName: "Master Service Catalog", moduleGroup: "Master Data", coreModule: false, status: "Active", description: "Host + tenant service catalog" },
   { moduleCode: "MOD-15", moduleName: "Patient Registration & MPI", moduleGroup: "Front Office", coreModule: false, status: "Active", description: "Patient demographics and search" },
   { moduleCode: "MOD-17", moduleName: "Appointment Management", moduleGroup: "Clinical", coreModule: false, status: "Active", description: "OPD appointments and queue" },

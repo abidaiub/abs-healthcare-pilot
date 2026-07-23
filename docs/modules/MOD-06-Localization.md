@@ -140,10 +140,11 @@ Updated only through `switchLocaleAction` with tenant and active-user validation
 
 ## Adding translations (developer)
 
-1. Add key to `src/messages/en-BD/{namespace}.json`.
-2. Mirror key in all MOD-06 primary locale folders.
-3. Use `t('namespace.key')` in server (`getServerI18n`) or client (`useI18n`).
-4. Run `npm run verify:mod06`.
+1. Add keys to `src/messages/en-BD/{namespace}.json`.
+2. Mirror keys across MOD-06 primary locale folders.
+3. Register new module namespaces in module documentation; update `MODULE_REGISTRY` when the module becomes part of the platform catalog.
+4. Use `t('namespace.key')` in server (`getServerI18n`) or client (`useI18n`).
+5. Run `npm run verify:mod06`.
 
 ---
 
@@ -154,6 +155,39 @@ npm run verify:mod06
 npm run verify:mod01a
 npm run build
 ```
+
+---
+
+## Module Registry metadata
+
+MOD-06 is registered in the authoritative application module catalog:
+
+| Field | Value |
+|-------|-------|
+| **Registry source** | `src/lib/saas-foundation-data.ts` → `MODULE_REGISTRY` |
+| **Database table** | `module_registry` (seeded via `seedModuleRegistry`) |
+| **Screen/doc registry** | `src/lib/module-registry.ts` → `localizationEngine` |
+| **Governance helper** | `src/lib/module-governance.ts` |
+| **Module ID** | `MOD-06` |
+| **Display name** | Localization |
+| **Module name** | Localization Engine |
+| **Category** | Foundation |
+| **Core module** | Yes |
+| **Implementation status** | Implemented |
+| **Dependencies** | MOD-01, MOD-01A, MOD-02, MOD-03 |
+| **Supported locales** | en-BD, bn-BD, ar-SA, ur-PK, hi-IN |
+| **Verify command** | `npm run verify:mod06` |
+| **Documentation** | `docs/modules/MOD-06-Localization.md` |
+| **AI QC report** | `docs/AI-QC/reports/006-Localization-AI-QC-v1.0.md` |
+| **Manual QC guide** | `docs/AI-QC/manual-qc/source/006-Localization-Manual-QC-v1.0.md` |
+| **Manual QC template** | `docs/AI-QC/manual-qc/results/006-Localization-Manual-QC-Result-Template.md` |
+| **Implementation commit** | `a8ee1fc` |
+| **Automated QC** | PASS |
+| **Manual QC** | NOT TESTED |
+| **Browser UAT** | NOT TESTED |
+| **Production approval** | Pending Manual QC |
+
+Host Module Registry UI (`/host/modules`) reads the database catalog and merges governance metadata for implementation and automated QC columns. Filesystem paths are not shown in the UI.
 
 ---
 

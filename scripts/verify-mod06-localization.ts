@@ -25,6 +25,7 @@ import {
   resolveLocale,
 } from "../src/lib/i18n/resolve";
 import { getTenantLocaleSettings } from "../src/lib/i18n/tenant-context";
+import { validateMod06RegistryCompliance } from "../src/lib/module-governance-validate";
 import { resolveTextDirectionForLocale } from "../src/lib/locale/registry";
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -182,6 +183,17 @@ async function main() {
 
   assert(listMessageLocales().length >= MOD06_PRIMARY_LOCALES.length, "Message locales discovered");
   assert(APP_FALLBACK_LOCALE === "en-BD", "Application fallback locale is en-BD");
+
+  const registryCompliance = validateMod06RegistryCompliance();
+  assert(registryCompliance.ok, "MOD-06 module registry metadata is complete");
+  if (!registryCompliance.ok) {
+    throw new Error(registryCompliance.errors.join("; "));
+  }
+
+  const dbMod06 = await prisma.moduleRegistry.findUnique({
+    where: { moduleCode: "MOD-06" },
+  });
+  assert(Boolean(dbMod06?.isActive), "MOD-06 exists in database module_registry after seed");
 
   console.log("\nAll MOD-06 localization checks passed.");
 }
