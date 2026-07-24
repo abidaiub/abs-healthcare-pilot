@@ -116,6 +116,28 @@ const TENANT_ADMIN_NAV: NavGroup[] = [
 
   },
 
+  {
+
+    titleKey: "groups.pharmacy",
+
+    items: [
+
+      { href: "/pharmacy/medications", labelKey: "medicationCatalog", icon: "💊" },
+
+      { href: "/pharmacy/generics", labelKey: "genericMaster", icon: "◈" },
+
+      { href: "/pharmacy/manufacturers", labelKey: "manufacturerMaster", icon: "◇" },
+
+      { href: "/pharmacy/reference-data", labelKey: "medicationReferenceData", icon: "▦" },
+
+      { href: "/pharmacy/branch-availability", labelKey: "branchMedicationAvailability", icon: "⌂" },
+
+      { href: "/pharmacy/import", labelKey: "medicationImport", icon: "⬇" },
+
+    ],
+
+  },
+
 ];
 
 

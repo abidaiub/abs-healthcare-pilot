@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import { useEffect, useState, useTransition, type FormEvent } from "react";
 import {
   addPrescriptionMedicineAction,
   cancelPrescriptionAction,
@@ -11,6 +11,7 @@ import {
   syncPrescriptionFromEncounterAction,
   updatePrescriptionDraftAction,
 } from "@/app/actions/tenant-prescriptions";
+import { searchMedicationCatalogAction } from "@/app/actions/tenant-medications";
 import { Badge, Button, Card, CardBody, Input, Select, Textarea } from "@/components/ui";
 import type { PrescriptionDurationUnit, PrescriptionStatus } from "@/lib/prescription/types";
 import type { DiagnosisType } from "@/lib/consultation/types";
@@ -88,6 +89,38 @@ export type PrescriptionEditorData = {
 
 const DURATION_UNITS: PrescriptionDurationUnit[] = ["DAY", "WEEK", "MONTH"];
 
+type CatalogSearchResult = Awaited<ReturnType<typeof searchMedicationCatalogAction>>[number];
+
+type MedicineDraft = {
+  medicationCatalogItemId: string;
+  medicineName: string;
+  genericName: string;
+  strength: string;
+  dose: string;
+  route: string;
+  frequency: string;
+  durationValue: string;
+  durationUnit: string;
+  quantity: string;
+  foodTiming: string;
+  instructions: string;
+};
+
+const EMPTY_MEDICINE_DRAFT: MedicineDraft = {
+  medicationCatalogItemId: "",
+  medicineName: "",
+  genericName: "",
+  strength: "",
+  dose: "",
+  route: "",
+  frequency: "",
+  durationValue: "",
+  durationUnit: "",
+  quantity: "",
+  foodTiming: "",
+  instructions: "",
+};
+
 export function PrescriptionEditor({
   prescription,
   canEdit,
@@ -104,8 +137,60 @@ export function PrescriptionEditor({
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [catalogQuery, setCatalogQuery] = useState("");
+  const [catalogResults, setCatalogResults] = useState<CatalogSearchResult[]>([]);
+  const [catalogSearching, setCatalogSearching] = useState(false);
+  const [medicineDraft, setMedicineDraft] = useState<MedicineDraft>(EMPTY_MEDICINE_DRAFT);
   const [pending, startTransition] = useTransition();
   const disabled = !canEdit || pending;
+
+  useEffect(() => {
+    const term = catalogQuery.trim();
+    if (term.length < 2) {
+      setCatalogResults([]);
+      setCatalogSearching(false);
+      return;
+    }
+
+    setCatalogSearching(true);
+    const timer = window.setTimeout(() => {
+      void searchMedicationCatalogAction(term)
+        .then((rows) => setCatalogResults(rows))
+        .finally(() => setCatalogSearching(false));
+    }, 300);
+
+    return () => window.clearTimeout(timer);
+  }, [catalogQuery]);
+
+  function selectCatalogItem(item: CatalogSearchResult) {
+    setMedicineDraft({
+      medicationCatalogItemId: item.id,
+      medicineName: item.brandName,
+      genericName: item.genericName ?? "",
+      strength: item.strength ?? "",
+      dose: item.defaultDose ?? "",
+      route: item.route ?? "",
+      frequency: item.defaultFrequency ?? "",
+      durationValue: "",
+      durationUnit: "",
+      quantity: "",
+      foodTiming: "",
+      instructions: item.defaultInstructions ?? "",
+    });
+    setCatalogQuery(item.displayName);
+    setCatalogResults([]);
+    setWarning(t("pharmacy.messages.catalogSelected"));
+  }
+
+  function clearCatalogSelection() {
+    setCatalogQuery("");
+    setCatalogResults([]);
+    setMedicineDraft(EMPTY_MEDICINE_DRAFT);
+  }
+
+  function updateMedicineDraft<K extends keyof MedicineDraft>(key: K, value: MedicineDraft[K]) {
+    setMedicineDraft((current) => ({ ...current, [key]: value }));
+  }
 
   function handleError(result: { ok: boolean; errorCode?: string; duplicateWarning?: boolean }) {
     if (!result.ok) {
@@ -135,7 +220,9 @@ export function PrescriptionEditor({
     const formData = new FormData(e.currentTarget);
     startTransition(async () => {
       if (handleError(await addPrescriptionMedicineAction(prescription.id, formData))) {
-        e.currentTarget.reset();
+        setMedicineDraft(EMPTY_MEDICINE_DRAFT);
+        setCatalogQuery("");
+        setCatalogResults([]);
       }
     });
   }
@@ -290,27 +377,62 @@ export function PrescriptionEditor({
 
           {canEdit && (
             <form onSubmit={submitMedicine} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 border-t border-slate-100 pt-4">
-              <Input label={t("prescription.fields.medicineName")} name="medicineName" required disabled={disabled} />
-              <Input label={t("prescription.fields.genericName")} name="genericName" disabled={disabled} />
-              <Input label={t("prescription.fields.strength")} name="strength" disabled={disabled} />
-              <Input label={t("prescription.fields.dose")} name="dose" disabled={disabled} />
-              <Input label={t("prescription.fields.route")} name="route" disabled={disabled} />
-              <Select label={t("prescription.fields.frequency")} name="frequency" disabled={disabled} defaultValue="">
+              <div className="relative sm:col-span-2 lg:col-span-3">
+                <Input
+                  label={t("pharmacy.actions.searchCatalog")}
+                  value={catalogQuery}
+                  onChange={(event) => setCatalogQuery(event.target.value)}
+                  disabled={disabled}
+                  placeholder={t("pharmacy.fields.query")}
+                />
+                {catalogSearching && (
+                  <p className="mt-1 text-xs text-slate-500">{t("pharmacy.fields.search")}…</p>
+                )}
+                {catalogResults.length > 0 && (
+                  <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                    {catalogResults.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className="block w-full px-3 py-2 text-left text-sm hover:bg-teal-50"
+                        onClick={() => selectCatalogItem(item)}
+                      >
+                        {item.displayName}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {medicineDraft.medicationCatalogItemId && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-teal-700">{medicineDraft.medicationCatalogItemId}</span>
+                    <Button type="button" variant="ghost" disabled={disabled} onClick={clearCatalogSelection}>
+                      {t("pharmacy.actions.clearSelection")}
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <input type="hidden" name="medicationCatalogItemId" value={medicineDraft.medicationCatalogItemId} />
+              <Input label={t("prescription.fields.medicineName")} name="medicineName" value={medicineDraft.medicineName} onChange={(event) => updateMedicineDraft("medicineName", event.target.value)} required disabled={disabled} />
+              <Input label={t("prescription.fields.genericName")} name="genericName" value={medicineDraft.genericName} onChange={(event) => updateMedicineDraft("genericName", event.target.value)} disabled={disabled} />
+              <Input label={t("prescription.fields.strength")} name="strength" value={medicineDraft.strength} onChange={(event) => updateMedicineDraft("strength", event.target.value)} disabled={disabled} />
+              <Input label={t("prescription.fields.dose")} name="dose" value={medicineDraft.dose} onChange={(event) => updateMedicineDraft("dose", event.target.value)} disabled={disabled} />
+              <Input label={t("prescription.fields.route")} name="route" value={medicineDraft.route} onChange={(event) => updateMedicineDraft("route", event.target.value)} disabled={disabled} />
+              <Select label={t("prescription.fields.frequency")} name="frequency" value={medicineDraft.frequency} onChange={(event) => updateMedicineDraft("frequency", event.target.value)} disabled={disabled}>
                 <option value="">—</option>
                 {STRUCTURED_FREQUENCIES.map((freq) => (
                   <option key={freq} value={freq}>{t(FREQUENCY_I18N_KEYS[freq])}</option>
                 ))}
               </Select>
-              <Input label={t("prescription.fields.durationValue")} name="durationValue" type="number" min={1} disabled={disabled} />
-              <Select label={t("prescription.fields.durationUnit")} name="durationUnit" disabled={disabled} defaultValue="">
+              <Input label={t("prescription.fields.durationValue")} name="durationValue" type="number" min={1} value={medicineDraft.durationValue} onChange={(event) => updateMedicineDraft("durationValue", event.target.value)} disabled={disabled} />
+              <Select label={t("prescription.fields.durationUnit")} name="durationUnit" value={medicineDraft.durationUnit} onChange={(event) => updateMedicineDraft("durationUnit", event.target.value)} disabled={disabled}>
                 <option value="">—</option>
                 {DURATION_UNITS.map((unit) => (
                   <option key={unit} value={unit}>{t(`prescription.durationUnit.${unit.toLowerCase()}`)}</option>
                 ))}
               </Select>
-              <Input label={t("prescription.fields.quantity")} name="quantity" disabled={disabled} />
-              <Input label={t("prescription.fields.foodTiming")} name="foodTiming" disabled={disabled} />
-              <Textarea label={t("prescription.fields.instructions")} name="instructions" disabled={disabled} rows={2} className="sm:col-span-2 lg:col-span-3" />
+              <Input label={t("prescription.fields.quantity")} name="quantity" value={medicineDraft.quantity} onChange={(event) => updateMedicineDraft("quantity", event.target.value)} disabled={disabled} />
+              <Input label={t("prescription.fields.foodTiming")} name="foodTiming" value={medicineDraft.foodTiming} onChange={(event) => updateMedicineDraft("foodTiming", event.target.value)} disabled={disabled} />
+              <Textarea label={t("prescription.fields.instructions")} name="instructions" value={medicineDraft.instructions} onChange={(event) => updateMedicineDraft("instructions", event.target.value)} disabled={disabled} rows={2} className="sm:col-span-2 lg:col-span-3" />
               <div className="sm:col-span-2 lg:col-span-3">
                 <Button type="submit" disabled={pending}>{t("prescription.actions.addMedicine")}</Button>
               </div>

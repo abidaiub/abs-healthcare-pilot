@@ -7,6 +7,7 @@ import {
 
 export type PrescriptionMedicineInput = {
   medicineName: string;
+  medicationCatalogItemId: string | null;
   genericName: string | null;
   strength: string | null;
   dose: string | null;
@@ -73,6 +74,7 @@ export function parseMedicineFormData(
 
   return {
     medicineName,
+    medicationCatalogItemId: trimOrNull(formData.get("medicationCatalogItemId"), 50),
     genericName: trimOrNull(formData.get("genericName"), 200),
     strength: trimOrNull(formData.get("strength"), 100),
     dose,

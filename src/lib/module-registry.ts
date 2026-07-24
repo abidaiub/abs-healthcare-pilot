@@ -39,6 +39,11 @@ export const MODULES = {
     docPath: "docs/19-PrescriptionManagement/PrescriptionManagement_v1.md",
     mockupPath: "docs/19-PrescriptionManagement/Mockups/WireframeMockup.md",
   },
+  pharmacyMedicationCatalog: {
+    id: "20",
+    name: "Pharmacy & Medication Catalog",
+    docPath: "docs/modules/MOD-20-Pharmacy-Medication-Catalog.md",
+  },
   sampleCollection: {
     id: "21",
     name: "Sample Collection & Laboratory Workflow",
@@ -485,6 +490,60 @@ export const SCREENS = {
     moduleKey: "prescriptionManagement",
     screenName: "Prescription History",
     workflowRef: "Version history by prescription number",
+  },
+  medicationList: {
+    route: "/pharmacy/medications",
+    moduleKey: "pharmacyMedicationCatalog",
+    screenName: "Medication Catalog",
+    workflowRef: "Browse and manage medication catalog items",
+  },
+  medicationNew: {
+    route: "/pharmacy/medications/new",
+    moduleKey: "pharmacyMedicationCatalog",
+    screenName: "Create Medication",
+    workflowRef: "Register new catalog item",
+  },
+  medicationDetail: {
+    route: "/pharmacy/medications/[medicationId]",
+    moduleKey: "pharmacyMedicationCatalog",
+    screenName: "Medication Detail",
+    workflowRef: "Read-only catalog item summary",
+  },
+  medicationEdit: {
+    route: "/pharmacy/medications/[medicationId]/edit",
+    moduleKey: "pharmacyMedicationCatalog",
+    screenName: "Edit Medication",
+    workflowRef: "Update catalog item details",
+  },
+  genericManagement: {
+    route: "/pharmacy/generics",
+    moduleKey: "pharmacyMedicationCatalog",
+    screenName: "Generic Master",
+    workflowRef: "Manage generic (API) records",
+  },
+  manufacturerManagement: {
+    route: "/pharmacy/manufacturers",
+    moduleKey: "pharmacyMedicationCatalog",
+    screenName: "Manufacturer Master",
+    workflowRef: "Manage medication manufacturers",
+  },
+  medicationReferenceData: {
+    route: "/pharmacy/reference-data",
+    moduleKey: "pharmacyMedicationCatalog",
+    screenName: "Reference Data",
+    workflowRef: "Dosage forms, routes, categories, units",
+  },
+  branchMedicationAvailability: {
+    route: "/pharmacy/branch-availability",
+    moduleKey: "pharmacyMedicationCatalog",
+    screenName: "Branch Availability",
+    workflowRef: "Branch-level medication availability",
+  },
+  medicationImport: {
+    route: "/pharmacy/import",
+    moduleKey: "pharmacyMedicationCatalog",
+    screenName: "Medication Import",
+    workflowRef: "Bulk CSV import",
   },
   diagnosticBilling: {
     route: "/diagnostic/billing",

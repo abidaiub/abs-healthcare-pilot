@@ -520,3 +520,84 @@ export function validateMod19RegistryCompliance(): {
 
   return { ok: errors.length === 0, errors };
 }
+
+export function validateMod20RegistryCompliance(): {
+  ok: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  const mod20 = getModuleRegistryEntry("MOD-20");
+
+  if (!mod20) {
+    errors.push("MOD-20 entry missing from MODULE_REGISTRY");
+    return { ok: false, errors };
+  }
+
+  if (MODULE_REGISTRY.filter((entry) => entry.moduleCode === "MOD-20").length !== 1) {
+    errors.push("MOD-20 module ID must be unique in MODULE_REGISTRY");
+  }
+
+  if (mod20.displayName !== "Pharmacy & Medication Catalog") {
+    errors.push("MOD-20 displayName must be Pharmacy & Medication Catalog");
+  }
+
+  if (mod20.implementationStatus !== "Implemented") {
+    errors.push("MOD-20 implementationStatus must be Implemented");
+  }
+
+  for (const dependency of [
+    "MOD-01",
+    "MOD-01A",
+    "MOD-02",
+    "MOD-03",
+    "MOD-04",
+    "MOD-06",
+    "MOD-07",
+    "MOD-18",
+    "MOD-19",
+  ]) {
+    if (!mod20.dependencies?.includes(dependency)) {
+      errors.push(`MOD-20 must depend on ${dependency}`);
+    }
+  }
+
+  if (!mod20.verifyCommand?.includes("verify:mod20")) {
+    errors.push("MOD-20 verifyCommand must reference verify:mod20");
+  }
+
+  for (const filePath of [
+    mod20.docPath,
+    mod20.aiQcReportPath,
+    mod20.manualQcGuidePath,
+    mod20.manualQcResultTemplatePath,
+  ]) {
+    if (!filePath || !fs.existsSync(path.join(process.cwd(), filePath))) {
+      errors.push(`MOD-20 documentation path missing: ${filePath ?? "(unset)"}`);
+    }
+  }
+
+  if (mod20.manualQcStatus !== "NOT TESTED" || mod20.browserUatStatus !== "NOT TESTED") {
+    errors.push("MOD-20 QC statuses must remain NOT TESTED until manual UAT");
+  }
+
+  if (mod20.productionApprovalStatus !== "Pending Manual QC") {
+    errors.push("MOD-20 must not claim production approval");
+  }
+
+  const requiredCapabilities = [
+    "Tenant medication catalog",
+    "Generic and brand distinction",
+    "Prescription catalog lookup",
+    "Branch availability mapping",
+    "Localization",
+    "RTL support",
+  ];
+
+  for (const capability of requiredCapabilities) {
+    if (!mod20.capabilities?.includes(capability)) {
+      errors.push(`MOD-20 capabilities missing: ${capability}`);
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}

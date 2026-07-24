@@ -26,6 +26,7 @@
     "verify:mod17": "tsx scripts/verify-mod17-appointment-queue.ts",
     "verify:mod18": "tsx scripts/verify-mod18-doctor-consultation.ts",
     "verify:mod19": "tsx scripts/verify-mod19-prescription-management.ts",
+    "verify:mod20": "tsx scripts/verify-mod20-pharmacy-medication-catalog.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
