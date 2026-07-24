@@ -1,39 +1,63 @@
-# MOD-24 Architecture Audit — Report Release & Delivery
+# MOD-24 Architecture Audit — Report Release & Delivery (v1.1)
 
-## Routes
+## Phase 1 audit table
 
-| Route | Screen key | Permission |
-|-------|------------|------------|
-| `/lab/report-release` | reportRelease | `/lab/report-release` |
-| `/lab/report-release/[releaseId]` | reportReleaseDetail | `/lab/report-release` |
-| `/lab/report-release/[releaseId]/print` | reportReleasePrint | `/lab/report-release/print` |
-| `/lab/report-release/history` | reportReleaseHistory | `/lab/report-release/history` |
-| `/verify/report/[token]` | Public | None (QR verify) |
+| Concern | Existing implementation | Gap (pre-polish) | Planned change (v1.1) |
+| --- | --- | --- | --- |
+| Verified-result check | `assertReleaseEligibility()` | Not centralized | `evaluateReportReleaseEligibility()` |
+| Open correction check | correctionRequests filter | OK | Reused in matrix |
+| Tenant scope | action queries | OK | Reused in matrix |
+| Branch scope | session.branchId | OK | Reused in matrix |
+| Record version check | verification vs recordVersion | OK | Reused in matrix |
+| Billing hold | None (billing panel mock) | No integration | Manual hold + tenant policy flag |
+| Quality hold | None | No field | `LabReportRelease` quality hold fields |
+| Critical-result acknowledgment | MOD-22 events | Not enforced on release | Policy-driven block |
+| QR token | `LabReportVerificationToken` | OK | Reused |
+| QR image in HTML | URL text only | No image | `qrcode` SVG data URL in footer |
+| QR image in PDF | Text-only minimal PDF | No image | `pdfkit` + PNG QR embed |
 
-## Server actions
+## Release flow
 
-`src/app/actions/tenant-lab-report-release.ts` — queue, prepare, authorize, print, download PDF, portal publish, withdraw, amend, QR verify.
+```text
+Release Queue (VERIFIED + no release OR release RELEASE_PENDING/AMENDED)
+    ↓
+Prepare Release → LabReportRelease RELEASE_PENDING (LabResult stays VERIFIED)
+    ↓
+evaluateReportReleaseEligibility (policy + holds + clinical checks)
+    ↓
+Authorize Release (optimistic stateVersion lock + transaction recheck)
+    ↓
+Create Immutable LabReportVersion snapshot
+    ↓
+Generate LabReportVerificationToken
+    ↓
+Print HTML (QR SVG) / PDF (QR PNG) / Portal publish flag
+```
 
-## Data model
+## Clinical vs release state
 
-- `LabReportRelease` — release header, portal flags, counters
-- `LabReportVersion` — immutable JSON snapshot versions
-- `LabReportDelivery` — delivery log
-- `LabReportAccessAudit` — view/download/QR audit
-- `LabReportReprintAudit` — reprint governance
-- `LabReportVerificationToken` — QR token
-- `TenantLabReportCounter` — tenant-scoped `RPT-` numbering
+- **LabResult.status** remains `VERIFIED` after clinical approval (MOD-23 source of truth).
+- **LabReportRelease.status** owns `RELEASE_PENDING`, `RELEASED`, `WITHDRAWN`, `AMENDED`.
+- Migration backfills any legacy `LabResult` rows that were set to `RELEASE_PENDING` / `RELEASED`.
 
-## RBAC
+## RBAC decision
 
-- **REPORT_OFFICER** / **LAB_SUPERVISOR**: authorize, print, portal publish
-- **LAB_TECH**: view/prepare/print only (no authorize)
-- **RECEPTION**: view/print only when granted
+- **TENANT_ADMIN**: `fullAccess` retained for administration, but seed `denyActions` remove clinical release authorization (`canApprove` on release/withdraw/amend/portal).
+- **REPORT_OFFICER** / **LAB_SUPERVISOR**: authorize release.
+- **LAB_TECH**: prepare and print only.
+- **RECEPTION**: view/print only.
 
-## Dependencies
+## QR dependency
 
-MOD-23 verified results (`VERIFIED`) required before release authorization.
+- Package: **`qrcode`** (server SVG/PNG, no external API).
+- PDF: **`pdfkit`** for embedded QR image.
+- Payload: public verification URL only (`/verify/report/<token>`).
 
-## Verification
+## Known limitations
 
-`npm run verify:mod24` — registry, workflow guards, PDF, QR, RBAC, i18n, tenant isolation checks.
+- PDF text remains Latin/Helvetica; multilingual/RTL PDF deferred (HTML print supports RTL `dir`).
+- Automated billing integration deferred; manual billing hold + tenant policy foundation only.
+
+## Status
+
+**AI COMPLETE — MANUAL QC PENDING**

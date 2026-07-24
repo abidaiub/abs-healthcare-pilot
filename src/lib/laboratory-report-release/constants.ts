@@ -20,14 +20,8 @@ export const RELEASE_STATUS_I18N: Record<LabReportReleaseStatus, string> = {
 
 export const RESULT_RELEASE_ELIGIBLE_STATUSES: LabResultStatus[] = ["VERIFIED"];
 
-export const RESULT_RELEASE_PIPELINE_STATUSES: LabResultStatus[] = [
-  "VERIFIED",
-  "RELEASE_PENDING",
-  "RELEASED",
-];
-
 export function isResultEligibleForReleaseQueue(status: LabResultStatus): boolean {
-  return status === "VERIFIED" || status === "RELEASE_PENDING";
+  return status === "VERIFIED";
 }
 
 export function isReleaseAuthorizable(releaseStatus: LabReportReleaseStatus): boolean {

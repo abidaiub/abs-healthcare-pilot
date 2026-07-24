@@ -25,8 +25,8 @@ const RESULT_TRANSITIONS: Record<LabResultStatus, LabResultStatus[]> = {
   IN_PROGRESS: ["ENTRY_COMPLETED", "CANCELLED"],
   ENTRY_COMPLETED: ["READY_FOR_VERIFICATION", "IN_PROGRESS"],
   READY_FOR_VERIFICATION: ["IN_PROGRESS"],
-  VERIFIED: ["RELEASE_PENDING"],
-  RELEASE_PENDING: ["RELEASED", "VERIFIED"],
+  VERIFIED: [],
+  RELEASE_PENDING: [],
   RELEASED: [],
   REJECTED_FOR_CORRECTION: [],
   AMENDED: [],
@@ -41,8 +41,8 @@ export function isLabResultEditable(status: LabResultStatus): boolean {
   return status === "DRAFT" || status === "IN_PROGRESS" || status === "ENTRY_COMPLETED";
 }
 
-export function isLabResultReleased(status: LabResultStatus): boolean {
-  return status === "RELEASED" || status === "RELEASE_PENDING";
+export function isLabResultReleased(_status: LabResultStatus): boolean {
+  return false;
 }
 
 export function isLabResultCorrectable(status: LabResultStatus): boolean {

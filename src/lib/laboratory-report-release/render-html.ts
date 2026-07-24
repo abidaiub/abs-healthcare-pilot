@@ -1,7 +1,13 @@
 import type { LabReportSnapshot } from "@/lib/laboratory-report-release/snapshot";
 
-export function renderReportHtml(snapshot: LabReportSnapshot, options?: { watermark?: string | null }): string {
+export function renderReportHtml(
+  snapshot: LabReportSnapshot,
+  options?: { watermark?: string | null; verificationUrl?: string | null; qrDataUrl?: string | null; dir?: "ltr" | "rtl" },
+): string {
   const watermark = options?.watermark ?? null;
+  const verificationUrl = options?.verificationUrl ?? null;
+  const qrDataUrl = options?.qrDataUrl ?? null;
+  const dir = options?.dir ?? "ltr";
   const resultRows = snapshot.results
     .map(
       (item) => `
@@ -15,7 +21,7 @@ export function renderReportHtml(snapshot: LabReportSnapshot, options?: { waterm
     .join("");
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="${dir}">
 <head>
   <meta charset="utf-8" />
   <title>${escapeHtml(snapshot.reportNumber)}</title>
@@ -35,6 +41,9 @@ export function renderReportHtml(snapshot: LabReportSnapshot, options?: { waterm
     th { background: #f8fafc; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
     .value { font-weight: 600; }
     footer { margin-top: 24px; border-top: 1px solid #e5e7eb; padding-top: 16px; font-size: 12px; color: #4b5563; }
+    .qr-block { display: flex; gap: 16px; align-items: flex-start; page-break-inside: avoid; break-inside: avoid; margin-top: 12px; }
+    .qr-block img { width: 120px; height: 120px; flex-shrink: 0; }
+    .qr-meta { font-size: 11px; line-height: 1.5; }
     .signature { margin-top: 24px; }
     .amended { color: #7c3aed; font-weight: 700; }
     @media print {
@@ -110,7 +119,19 @@ export function renderReportHtml(snapshot: LabReportSnapshot, options?: { waterm
     </section>
 
     <footer>
-      <div>This report was generated electronically. Scan QR token for authenticity verification.</div>
+      <div>This report was generated electronically.</div>
+      ${
+        qrDataUrl
+          ? `<div class="qr-block">
+        <img src="${qrDataUrl}" alt="Report verification QR code" />
+        <div class="qr-meta">
+          <div><strong>Report:</strong> ${escapeHtml(snapshot.reportNumber)} · <strong>Version:</strong> ${snapshot.versionNumber}</div>
+          <div>Scan this QR code to verify report authenticity.</div>
+          ${verificationUrl ? `<div class="break-all">${escapeHtml(verificationUrl)}</div>` : ""}
+        </div>
+      </div>`
+          : `<div>Scan QR token for authenticity verification when available.</div>`
+      }
     </footer>
   </div>
 </body>

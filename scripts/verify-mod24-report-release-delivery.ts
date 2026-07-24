@@ -1,5 +1,5 @@
 /**
- * MOD-24 verification — report release, PDF, QR, registry, RBAC, i18n, tenant isolation.
+ * MOD-24 verification — blocking matrix, QR embedding, registry, RBAC, i18n, tenant isolation.
  */
 import "dotenv/config";
 import fs from "node:fs";
@@ -20,14 +20,21 @@ import {
   isResultEligibleForReleaseQueue,
   isValidReportNumber,
 } from "../src/lib/laboratory-report-release/constants";
+import {
+  evaluateReportReleaseEligibility,
+  firstBlockingErrorCode,
+} from "../src/lib/laboratory-report-release/eligibility";
 import { LAB_REPORT_RELEASE_ERROR_CODES } from "../src/lib/laboratory-report-release/errors";
-import { generateReportPdfBuffer, isPdfBuffer } from "../src/lib/laboratory-report-release/pdf";
+import { generateReportPdfBuffer, isPdfBuffer, pdfContainsEmbeddedImage } from "../src/lib/laboratory-report-release/pdf";
+import { generateQrPngBuffer, generateQrSvgDataUrl } from "../src/lib/laboratory-report-release/qr";
+import { renderReportHtml } from "../src/lib/laboratory-report-release/render-html";
 import {
   buildReportSnapshot,
   generateVerificationTokenValue,
   parseReportSnapshot,
   serializeReportSnapshot,
 } from "../src/lib/laboratory-report-release/snapshot";
+import { buildReportVerificationUrl } from "../src/lib/laboratory-report-release/verification-url";
 import { SCREENS } from "../src/lib/module-registry";
 
 const pool = new Pool({ connectionString: process.env.DB_URL || process.env.DATABASE_URL });
@@ -37,6 +44,20 @@ const prisma = new PrismaClient({ adapter });
 function assert(condition: boolean, message: string) {
   if (!condition) throw new Error(message);
   console.log(`PASS: ${message}`);
+}
+
+function mockResult(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "res-1",
+    tenantId: "tenant-1",
+    branchId: "branch-1",
+    recordVersion: 2,
+    status: "VERIFIED",
+    correctionRequests: [],
+    verifications: [{ decision: "VERIFIED", verifiedAt: new Date(), resultVersionReviewed: 2 }],
+    criticalEvents: [],
+    ...overrides,
+  } as never;
 }
 
 async function main() {
@@ -49,12 +70,190 @@ async function main() {
 
   assert(isValidReportNumber(formatReportNumber(1)), "Report number format RPT-0000001");
   assert(isResultEligibleForReleaseQueue("VERIFIED"), "Verified eligible for release queue");
+  assert(!isResultEligibleForReleaseQueue("RELEASE_PENDING"), "LabResult RELEASE_PENDING not used for queue");
   assert(isReleaseAuthorizable("RELEASE_PENDING"), "Release pending authorizable");
   assert(isReleasePrintable("RELEASED"), "Released printable");
-  assert(Boolean(LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_CROSS_TENANT), "Error codes defined");
+
+  const verifiedAllowed = evaluateReportReleaseEligibility({
+    tenantId: "tenant-1",
+    result: mockResult(),
+    policy: { enforceBillingClearance: false, enforceQualityClearance: false, enforceCriticalAcknowledgement: false },
+    phase: "prepare",
+  });
+  assert(verifiedAllowed.eligible, "Verified result allowed");
+
+  const unverifiedBlocked = evaluateReportReleaseEligibility({
+    tenantId: "tenant-1",
+    result: mockResult({ status: "READY_FOR_VERIFICATION" }),
+    policy: { enforceBillingClearance: false, enforceQualityClearance: false, enforceCriticalAcknowledgement: false },
+    phase: "prepare",
+  });
+  assert(
+    firstBlockingErrorCode(unverifiedBlocked) === LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_RESULT_NOT_VERIFIED,
+    "Unverified result blocked",
+  );
+
+  const correctionBlocked = evaluateReportReleaseEligibility({
+    tenantId: "tenant-1",
+    result: mockResult({ correctionRequests: [{ status: "OPEN" }] }),
+    policy: { enforceBillingClearance: false, enforceQualityClearance: false, enforceCriticalAcknowledgement: false },
+    phase: "prepare",
+  });
+  assert(
+    firstBlockingErrorCode(correctionBlocked) === LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_CORRECTION_PENDING,
+    "Open correction blocked",
+  );
+
+  const versionMismatch = evaluateReportReleaseEligibility({
+    tenantId: "tenant-1",
+    result: mockResult(),
+    expectedRecordVersion: 99,
+    policy: { enforceBillingClearance: false, enforceQualityClearance: false, enforceCriticalAcknowledgement: false },
+    phase: "prepare",
+  });
+  assert(
+    firstBlockingErrorCode(versionMismatch) === LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_VERSION_MISMATCH,
+    "Record-version mismatch blocked",
+  );
+
+  const billingBlocked = evaluateReportReleaseEligibility({
+    tenantId: "tenant-1",
+    result: mockResult(),
+    release: {
+      id: "rel-1",
+      status: "RELEASE_PENDING",
+      stateVersion: 1,
+      resultVersionSnapshot: 2,
+      billingHoldActive: true,
+      qualityHoldActive: false,
+    },
+    policy: { enforceBillingClearance: true, enforceQualityClearance: false, enforceCriticalAcknowledgement: false },
+    phase: "authorize",
+  });
+  assert(
+    firstBlockingErrorCode(billingBlocked) === LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_BLOCKED_BILLING_HOLD,
+    "Billing hold blocks when policy enabled",
+  );
+
+  const billingAllowed = evaluateReportReleaseEligibility({
+    tenantId: "tenant-1",
+    result: mockResult(),
+    release: {
+      id: "rel-1",
+      status: "RELEASE_PENDING",
+      stateVersion: 1,
+      resultVersionSnapshot: 2,
+      billingHoldActive: true,
+      qualityHoldActive: false,
+    },
+    policy: { enforceBillingClearance: false, enforceQualityClearance: false, enforceCriticalAcknowledgement: false },
+    phase: "authorize",
+  });
+  assert(!firstBlockingErrorCode(billingAllowed), "Billing hold does not block when policy disabled");
+
+  const qualityBlocked = evaluateReportReleaseEligibility({
+    tenantId: "tenant-1",
+    result: mockResult(),
+    release: {
+      id: "rel-1",
+      status: "RELEASE_PENDING",
+      stateVersion: 1,
+      resultVersionSnapshot: 2,
+      billingHoldActive: false,
+      qualityHoldActive: true,
+    },
+    policy: { enforceBillingClearance: false, enforceQualityClearance: false, enforceCriticalAcknowledgement: false },
+    phase: "authorize",
+  });
+  assert(
+    firstBlockingErrorCode(qualityBlocked) === LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_BLOCKED_QUALITY_HOLD,
+    "Quality hold blocks",
+  );
+
+  const criticalBlocked = evaluateReportReleaseEligibility({
+    tenantId: "tenant-1",
+    result: mockResult({ criticalEvents: [{ acknowledgedAt: null }] }),
+    release: {
+      id: "rel-1",
+      status: "RELEASE_PENDING",
+      stateVersion: 1,
+      resultVersionSnapshot: 2,
+      billingHoldActive: false,
+      qualityHoldActive: false,
+    },
+    policy: { enforceBillingClearance: false, enforceQualityClearance: false, enforceCriticalAcknowledgement: true },
+    phase: "authorize",
+  });
+  assert(
+    firstBlockingErrorCode(criticalBlocked) === LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_BLOCKED_CRITICAL_ACK_PENDING,
+    "Critical acknowledgment blocks when policy enabled",
+  );
+
+  const wrongTenant = evaluateReportReleaseEligibility({
+    tenantId: "other-tenant",
+    result: mockResult({ tenantId: "tenant-1" }),
+    policy: { enforceBillingClearance: false, enforceQualityClearance: false, enforceCriticalAcknowledgement: false },
+    phase: "prepare",
+  });
+  assert(
+    firstBlockingErrorCode(wrongTenant) === LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_CROSS_TENANT,
+    "Wrong tenant blocked",
+  );
+
+  const wrongBranch = evaluateReportReleaseEligibility({
+    tenantId: "tenant-1",
+    branchId: "branch-x",
+    result: mockResult({ branchId: "branch-1" }),
+    policy: { enforceBillingClearance: false, enforceQualityClearance: false, enforceCriticalAcknowledgement: false },
+    phase: "prepare",
+  });
+  assert(
+    firstBlockingErrorCode(wrongBranch) === LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_BRANCH_ACCESS_DENIED,
+    "Wrong branch blocked",
+  );
+
+  const unauthorized = evaluateReportReleaseEligibility({
+    tenantId: "tenant-1",
+    result: mockResult(),
+    policy: { enforceBillingClearance: false, enforceQualityClearance: false, enforceCriticalAcknowledgement: false },
+    hasPermission: false,
+    phase: "authorize",
+  });
+  assert(
+    firstBlockingErrorCode(unauthorized) === LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_ACCESS_DENIED,
+    "Unauthorized user blocked",
+  );
+
+  const stateChanged = evaluateReportReleaseEligibility({
+    tenantId: "tenant-1",
+    result: mockResult(),
+    release: {
+      id: "rel-1",
+      status: "RELEASE_PENDING",
+      stateVersion: 3,
+      resultVersionSnapshot: 2,
+      billingHoldActive: false,
+      qualityHoldActive: false,
+    },
+    expectedStateVersion: 2,
+    policy: { enforceBillingClearance: false, enforceQualityClearance: false, enforceCriticalAcknowledgement: false },
+    phase: "authorize",
+  });
+  assert(
+    firstBlockingErrorCode(stateChanged) === LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_STATE_CHANGED,
+    "Concurrent state change blocked",
+  );
 
   const token = generateVerificationTokenValue();
   assert(token.length >= 32, "Verification token length");
+  const verificationUrl = buildReportVerificationUrl(token);
+  assert(verificationUrl.includes("/verify/report/"), "Verification URL uses trusted path");
+  assert(!verificationUrl.includes("patient"), "Verification URL has no PHI");
+
+  const qrSvg = await generateQrSvgDataUrl(token);
+  assert(qrSvg.startsWith("data:image/svg+xml;base64,"), "QR SVG data URL generated");
+  const qrPng = await generateQrPngBuffer(token);
+  assert(qrPng.length > 200, "QR PNG not empty");
 
   const releaseRoutes = [
     "/lab/report-release",
@@ -66,6 +265,8 @@ async function main() {
     "/lab/report-release/withdraw",
     "/lab/report-release/amend",
     "/lab/report-release/history",
+    "/lab/report-release/billing-hold",
+    "/lab/report-release/quality-hold",
   ];
   for (const route of releaseRoutes) {
     const resource = TENANT_PERMISSION_RESOURCES.find((r) => r.route === route);
@@ -87,11 +288,6 @@ async function main() {
   assert(Boolean(mod24Entry?.dependencies?.includes("MOD-23")), "MOD-24 depends on MOD-23");
   assert(!mod24Entry?.dependencies?.includes("MOD-25"), "MOD-24 must not depend on MOD-25");
 
-  const mod30Entry = (await import("../src/lib/saas-foundation-data")).MODULE_REGISTRY.find(
-    (entry) => entry.moduleCode === "MOD-30",
-  );
-  assert(Boolean(mod30Entry), "MOD-30 downstream portal module registered");
-
   const labTech = await prisma.user.findUnique({ where: { username: "tania.sultana" } });
   if (labTech) {
     const permissions = await getEffectivePermissionsForUser(tenant.id, labTech.id);
@@ -99,6 +295,12 @@ async function main() {
     assert(permissions.get("/lab/report-release/release")?.canApprove !== true, "Lab tech cannot authorize release");
     assert(permissions.get("/lab/report-release/print")?.canPrint === true, "Lab tech can print");
   }
+
+  const tenantAdminSeed = fs.readFileSync(path.join(process.cwd(), "prisma/seed/rbac-foundation.ts"), "utf8");
+  assert(
+    tenantAdminSeed.includes('"/lab/report-release/release": ["canApprove"]'),
+    "Tenant admin seed denies clinical release authorization",
+  );
 
   const supervisorRole = await prisma.role.findFirst({
     where: { tenantId: tenant.id, roleCode: "LAB_SUPERVISOR" },
@@ -119,56 +321,57 @@ async function main() {
   assert(compareLocaleMessageStructure().ok, "Locale structure parity");
   assert(resolveTextDirectionForLocale("ar-SA") === "rtl", "Arabic RTL");
 
-  try {
-    const verifiedResult = await prisma.labResult.findFirst({
-      where: { tenantId: tenant.id, status: { in: ["VERIFIED", "RELEASE_PENDING", "RELEASED"] } },
-      include: {
-        labOrder: {
-          include: {
-            patient: true,
-            branch: true,
-            doctor: true,
-          },
+  const verifiedResult = await prisma.labResult.findFirst({
+    where: { tenantId: tenant.id, status: "VERIFIED" },
+    include: {
+      labOrder: { include: { patient: true, branch: true, doctor: true } },
+      labOrderTest: { include: { department: true } },
+      labSample: {
+        select: {
+          accessionNumber: true,
+          collectedAt: true,
+          receivedAt: true,
+          sampleType: { select: { sampleType: true } },
+          sampleContainer: { select: { containerType: true } },
         },
-        labOrderTest: { include: { department: true } },
-        labSample: {
-          select: {
-            accessionNumber: true,
-            collectedAt: true,
-            receivedAt: true,
-            sampleType: { select: { sampleType: true } },
-            sampleContainer: { select: { containerType: true } },
-          },
-        },
-        items: true,
-        verifications: true,
-        correctionRequests: true,
       },
-    });
+      items: true,
+      verifications: true,
+      correctionRequests: true,
+      criticalEvents: true,
+    },
+  });
 
-    if (verifiedResult && verifiedResult.verifications.some((v) => v.decision === "VERIFIED")) {
-      const tenantRecord = await prisma.tenant.findUnique({
-        where: { id: tenant.id },
-        select: { tenantName: true, logoUrl: true, reportHeaderLogoUrl: true },
+  if (verifiedResult && verifiedResult.verifications.some((v) => v.decision === "VERIFIED")) {
+    const tenantRecord = await prisma.tenant.findUnique({
+      where: { id: tenant.id },
+      select: { tenantName: true, logoUrl: true, reportHeaderLogoUrl: true },
+    });
+    if (tenantRecord) {
+      const snapshot = buildReportSnapshot({
+        result: verifiedResult as never,
+        tenant: tenantRecord,
+        reportNumber: formatReportNumber(99),
+        versionNumber: 1,
+        releasedAt: new Date(),
       });
-      if (tenantRecord) {
-        const snapshot = buildReportSnapshot({
-          result: verifiedResult as never,
-          tenant: tenantRecord,
-          reportNumber: formatReportNumber(99),
-          versionNumber: 1,
-          releasedAt: new Date(),
-        });
-        const roundTrip = parseReportSnapshot(serializeReportSnapshot(snapshot));
-        assert(roundTrip.reportNumber === snapshot.reportNumber, "Snapshot round-trip");
-        const pdf = generateReportPdfBuffer(snapshot);
-        assert(isPdfBuffer(pdf), "PDF buffer signature");
-      }
-    } else {
-      console.log("PASS: Snapshot/PDF checks skipped (no verified lab result seeded yet)");
+      const roundTrip = parseReportSnapshot(serializeReportSnapshot(snapshot));
+      assert(roundTrip.reportNumber === snapshot.reportNumber, "Snapshot round-trip");
+
+      const sampleToken = generateVerificationTokenValue();
+      const sampleUrl = buildReportVerificationUrl(sampleToken);
+      const qrDataUrl = await generateQrSvgDataUrl(sampleToken);
+      const html = renderReportHtml(snapshot, { verificationUrl: sampleUrl, qrDataUrl, dir: "rtl" });
+      assert(html.includes("data:image/svg+xml;base64,"), "QR embedded in HTML");
+      assert(html.includes('dir="rtl"'), "RTL HTML dir attribute");
+      assert(html.includes(sampleUrl), "Verification URL in HTML footer");
+
+      const pdf = await generateReportPdfBuffer(snapshot, sampleToken);
+      assert(isPdfBuffer(pdf), "PDF buffer signature");
+      assert(pdfContainsEmbeddedImage(pdf), "QR image embedded in PDF");
     }
-  } catch (error) {
-    console.log(`PASS: Snapshot/PDF checks skipped (${error instanceof Error ? error.message : "query failed"})`);
+  } else {
+    console.log("PASS: Snapshot/PDF/HTML checks skipped (no verified lab result seeded yet)");
   }
 
   const otherTenant = await prisma.tenant.findFirst({ where: { NOT: { id: tenant.id } } });

@@ -22,6 +22,12 @@ const TENANT_ROLE_SEEDS: RoleSeed[] = [
     roleName: "Primary Tenant Admin",
     description: "Full tenant administration including users, roles, and setup",
     fullAccess: true,
+    denyActions: {
+      "/lab/report-release/release": ["canApprove"],
+      "/lab/report-release/portal-publish": ["canApprove"],
+      "/lab/report-release/withdraw": ["canApprove"],
+      "/lab/report-release/amend": ["canApprove"],
+    },
   },
   {
     roleCode: "RECEPTION",
@@ -166,6 +172,8 @@ const TENANT_ROLE_SEEDS: RoleSeed[] = [
       "/lab/report-release/portal-publish",
       "/lab/report-release/withdraw",
       "/lab/report-release/amend",
+      "/lab/report-release/billing-hold",
+      "/lab/report-release/quality-hold",
       "/lab/report-release/history",
       "/lab/verification",
       "/lab/verification/history",

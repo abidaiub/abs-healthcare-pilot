@@ -1,69 +1,68 @@
+import PDFDocument from "pdfkit";
 import type { LabReportSnapshot } from "@/lib/laboratory-report-release/snapshot";
-
-function escapePdfText(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
-}
+import { generateQrPngBuffer } from "@/lib/laboratory-report-release/qr";
 
 /**
- * Minimal server-side PDF generator (no browser print-to-PDF dependency).
+ * Server-side PDF with embedded QR image (pdfkit).
+ * Latin text only; multilingual/RTL PDF remains a known pilot limitation.
  */
-export function generateReportPdfBuffer(snapshot: LabReportSnapshot): Buffer {
-  const lines: string[] = [
-    snapshot.tenant.name,
-    snapshot.branch.name,
-    `Report: ${snapshot.reportNumber}`,
-    `Patient: ${snapshot.patient.fullName} (${snapshot.patient.patientNumber})`,
-    `Test: ${snapshot.test.testName}`,
-    `Sample: ${snapshot.sample.accessionNumber}`,
-    "",
-    "Results:",
-  ];
+export async function generateReportPdfBuffer(
+  snapshot: LabReportSnapshot,
+  verificationToken?: string | null,
+): Promise<Buffer> {
+  const qrBuffer = verificationToken ? await generateQrPngBuffer(verificationToken, 100) : null;
 
-  for (const item of snapshot.results) {
-    lines.push(
-      `${item.parameterName}: ${item.valueDisplay}${item.unit ? ` ${item.unit}` : ""} [${item.abnormalFlag}]`,
-    );
-  }
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: "A4", margin: 50 });
+    const chunks: Buffer[] = [];
+    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
 
-  lines.push(
-    "",
-    `Verified by: ${snapshot.verifier.displayName}`,
-    snapshot.verifier.verifiedAt ? `Verified at: ${snapshot.verifier.verifiedAt}` : "",
-    snapshot.isAmended ? "AMENDED REPORT" : "",
-  );
+    doc.fontSize(16).text(snapshot.tenant.name, { align: "center" });
+    doc.fontSize(10).text(`${snapshot.branch.name} · Laboratory Diagnostic Report`, { align: "center" });
+    doc.moveDown();
 
-  const contentLines = lines
-    .filter(Boolean)
-    .map((line, index) => `BT /F1 10 Tf 50 ${780 - index * 14} Td (${escapePdfText(line)}) Tj ET`)
-    .join("\n");
+    doc.fontSize(11).text(`Report: ${snapshot.reportNumber}  Version: ${snapshot.versionNumber}`);
+    doc.text(`Patient: ${snapshot.patient.fullName} (${snapshot.patient.patientNumber})`);
+    doc.text(`Test: ${snapshot.test.testName}`);
+    doc.text(`Sample: ${snapshot.sample.accessionNumber}`);
+    doc.moveDown();
 
-  const content = `${contentLines}\n`;
-  const objects = [
-    "1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj",
-    "2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj",
-    "3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj",
-    "4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj",
-    `5 0 obj << /Length ${Buffer.byteLength(content, "utf8")} >> stream\n${content}endstream endobj`,
-  ];
+    doc.fontSize(12).text("Results", { underline: true });
+    doc.moveDown(0.5);
+    for (const item of snapshot.results) {
+      doc.fontSize(10).text(
+        `${item.parameterName}: ${item.valueDisplay}${item.unit ? ` ${item.unit}` : ""} [${item.abnormalFlag}]`,
+      );
+    }
 
-  let pdf = "%PDF-1.4\n";
-  const offsets: number[] = [0];
-  for (const object of objects) {
-    offsets.push(Buffer.byteLength(pdf, "utf8"));
-    pdf += `${object}\n`;
-  }
+    doc.moveDown();
+    doc.text(`Verified by: ${snapshot.verifier.displayName}`);
+    if (snapshot.verifier.verifiedAt) {
+      doc.text(`Verified at: ${new Date(snapshot.verifier.verifiedAt).toLocaleString()}`);
+    }
+    if (snapshot.isAmended) {
+      doc.fillColor("#7c3aed").text("AMENDED REPORT").fillColor("#000000");
+    }
 
-  const xrefOffset = Buffer.byteLength(pdf, "utf8");
-  pdf += `xref\n0 ${objects.length + 1}\n`;
-  pdf += "0000000000 65535 f \n";
-  for (let index = 1; index <= objects.length; index += 1) {
-    pdf += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
-  }
-  pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+    if (qrBuffer) {
+      doc.moveDown();
+      doc.fontSize(10).text("Scan QR code to verify report authenticity:");
+      doc.image(qrBuffer, 50, doc.y, { width: 100 });
+      doc.moveDown(5);
+      doc.fontSize(8).text(`Report ${snapshot.reportNumber} · Version ${snapshot.versionNumber}`);
+    }
 
-  return Buffer.from(pdf, "utf8");
+    doc.end();
+  });
 }
 
 export function isPdfBuffer(buffer: Buffer): boolean {
   return buffer.subarray(0, 4).toString("utf8") === "%PDF";
+}
+
+export function pdfContainsEmbeddedImage(buffer: Buffer): boolean {
+  const text = buffer.toString("latin1");
+  return text.includes("/Subtype /Image") || text.includes("/XObject");
 }

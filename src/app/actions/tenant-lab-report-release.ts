@@ -5,9 +5,14 @@ import { prisma } from "@/lib/db";
 import { requireTenantSession } from "@/lib/auth";
 import { requireTenantPermission } from "@/lib/rbac/auth";
 import { writeAuditLog } from "@/lib/saas/audit";
-import { assertReleaseEligibility, assertReleaseStatus } from "@/lib/laboratory-report-release/eligibility";
+import {
+  evaluateReportReleaseEligibility,
+  firstBlockingErrorCode,
+  assertReleaseStatus,
+} from "@/lib/laboratory-report-release/eligibility";
 import { LAB_REPORT_RELEASE_ERROR_CODES } from "@/lib/laboratory-report-release/errors";
 import { allocateReportNumber } from "@/lib/laboratory-report-release/number";
+import { loadReportReleasePolicy } from "@/lib/laboratory-report-release/policy";
 import {
   assertTenantOwnsRelease,
   assertTenantOwnsReleaseByResult,
@@ -15,6 +20,7 @@ import {
   listReleaseHistory,
   listReleaseQueue,
 } from "@/lib/laboratory-report-release/queries";
+import { generateQrSvgDataUrl } from "@/lib/laboratory-report-release/qr";
 import {
   buildReportSnapshot,
   generateVerificationTokenValue,
@@ -22,6 +28,8 @@ import {
   serializeReportSnapshot,
 } from "@/lib/laboratory-report-release/snapshot";
 import { generateReportPdfBuffer } from "@/lib/laboratory-report-release/pdf";
+import { buildReportVerificationUrl } from "@/lib/laboratory-report-release/verification-url";
+import type { ReportReleaseEligibility } from "@/lib/laboratory-report-release/types";
 import { verificationReviewInclude } from "@/lib/laboratory-verification/queries";
 
 export type LabReportReleaseActionResult =
@@ -71,6 +79,24 @@ async function loadReleaseResult(tenantId: string, labResultId: string) {
   return result;
 }
 
+function releaseEligibilityContext(release: {
+  id: string;
+  status: import("@/generated/prisma/client").LabReportReleaseStatus;
+  stateVersion: number;
+  resultVersionSnapshot: number;
+  billingHoldActive: boolean;
+  qualityHoldActive: boolean;
+}) {
+  return {
+    id: release.id,
+    status: release.status,
+    stateVersion: release.stateVersion,
+    resultVersionSnapshot: release.resultVersionSnapshot,
+    billingHoldActive: release.billingHoldActive,
+    qualityHoldActive: release.qualityHoldActive,
+  };
+}
+
 export async function listReleaseQueueAction() {
   const session = await requireTenantPermission("/lab/report-release");
   return listReleaseQueue(session.tenantId, session.branchId);
@@ -90,29 +116,91 @@ export async function getReleaseDetailAction(releaseId: string) {
   return release;
 }
 
+export async function getReleaseEligibilityAction(input: {
+  labResultId?: string;
+  releaseId?: string;
+  recordVersion?: number;
+  stateVersion?: number;
+  phase?: "prepare" | "authorize";
+}): Promise<ReportReleaseEligibility> {
+  const session = await requireTenantPermission("/lab/report-release");
+  const policy = await loadReportReleasePolicy(session.tenantId);
+  const phase = input.phase ?? (input.releaseId ? "authorize" : "prepare");
+
+  let result = null;
+  let release = null;
+
+  if (input.releaseId) {
+    release = await assertTenantOwnsRelease(session.tenantId, input.releaseId);
+    result = release.labResult;
+  } else if (input.labResultId) {
+    result = await loadReleaseResult(session.tenantId, input.labResultId);
+    release = result ? await assertTenantOwnsReleaseByResult(session.tenantId, input.labResultId) : null;
+  }
+
+  return evaluateReportReleaseEligibility({
+    tenantId: session.tenantId,
+    branchId: session.branchId,
+    result,
+    release: release ? releaseEligibilityContext(release) : null,
+    expectedRecordVersion: input.recordVersion,
+    expectedStateVersion: input.stateVersion,
+    policy,
+    hasPermission: true,
+    phase,
+  });
+}
+
 export async function prepareReleaseAction(
   labResultId: string,
   recordVersion: number,
 ): Promise<LabReportReleaseActionResult> {
   await requireTenantPermission("/lab/report-release/prepare", "canEdit");
   const session = await requireTenantSession();
+  const policy = await loadReportReleasePolicy(session.tenantId);
   const result = await loadReleaseResult(session.tenantId, labResultId);
   if (!result) return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_NOT_FOUND };
 
-  const eligibilityError = assertReleaseEligibility({
-    result,
-    branchId: session.branchId,
-    expectedRecordVersion: recordVersion,
-  });
-  if (eligibilityError) return { ok: false, errorCode: eligibilityError };
-
   const existing = await assertTenantOwnsReleaseByResult(session.tenantId, labResultId);
+  const eligibility = evaluateReportReleaseEligibility({
+    tenantId: session.tenantId,
+    branchId: session.branchId,
+    result,
+    release: existing ? releaseEligibilityContext(existing) : null,
+    expectedRecordVersion: recordVersion,
+    policy,
+    hasPermission: true,
+    phase: "prepare",
+  });
+  const eligibilityError = firstBlockingErrorCode(eligibility);
+  if (eligibilityError) {
+    if (existing && eligibilityError === LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_ALREADY_RELEASED) {
+      return { ok: true, releaseId: existing.id, reportNumber: existing.reportNumber };
+    }
+    await auditReleaseEvent({
+      tenantId: session.tenantId,
+      branchId: result.branchId,
+      userId: session.userId,
+      actorName: session.user.name,
+      actionType: "UPDATE",
+      event: "LAB_REPORT_RELEASE_ELIGIBILITY_FAILED",
+      entityId: existing?.id ?? labResultId,
+      changeData: { phase: "prepare", codes: eligibility.blockingReasons.map((r) => r.code) },
+    });
+    return { ok: false, errorCode: eligibilityError };
+  }
+
   if (existing) {
     return { ok: true, releaseId: existing.id, reportNumber: existing.reportNumber };
   }
 
   const release = await prisma.$transaction(async (tx) => {
-    const created = await tx.labReportRelease.create({
+    const duplicate = await tx.labReportRelease.findFirst({
+      where: { tenantId: session.tenantId, labResultId: result.id },
+    });
+    if (duplicate) return duplicate;
+
+    return tx.labReportRelease.create({
       data: {
         tenantId: session.tenantId,
         branchId: result.branchId,
@@ -120,17 +208,11 @@ export async function prepareReleaseAction(
         reportNumber: `QUEUED-${result.id.slice(-12)}`,
         status: "RELEASE_PENDING",
         resultVersionSnapshot: result.recordVersion,
+        stateVersion: 1,
         createdById: session.userId,
         updatedById: session.userId,
       },
     });
-
-    await tx.labResult.update({
-      where: { id: result.id },
-      data: { status: "RELEASE_PENDING" },
-    });
-
-    return created;
   });
 
   await auditReleaseEvent({
@@ -151,24 +233,42 @@ export async function prepareReleaseAction(
 export async function authorizeReleaseAction(
   releaseId: string,
   recordVersion: number,
+  stateVersion?: number,
 ): Promise<LabReportReleaseActionResult> {
   await requireTenantPermission("/lab/report-release/release", "canApprove");
   const session = await requireTenantSession();
+  const policy = await loadReportReleasePolicy(session.tenantId);
   const release = await assertTenantOwnsRelease(session.tenantId, releaseId);
 
   if (session.branchId && release.branchId !== session.branchId) {
     return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_BRANCH_ACCESS_DENIED };
   }
 
-  const statusError = assertReleaseStatus(release.status, ["RELEASE_PENDING", "AMENDED"]);
-  if (statusError) return { ok: false, errorCode: statusError };
-
-  const eligibilityError = assertReleaseEligibility({
-    result: release.labResult,
+  const eligibility = evaluateReportReleaseEligibility({
+    tenantId: session.tenantId,
     branchId: session.branchId,
+    result: release.labResult,
+    release: releaseEligibilityContext(release),
     expectedRecordVersion: recordVersion,
+    expectedStateVersion: stateVersion ?? release.stateVersion,
+    policy,
+    hasPermission: true,
+    phase: "authorize",
   });
-  if (eligibilityError) return { ok: false, errorCode: eligibilityError };
+  const eligibilityError = firstBlockingErrorCode(eligibility);
+  if (eligibilityError) {
+    await auditReleaseEvent({
+      tenantId: session.tenantId,
+      branchId: release.branchId,
+      userId: session.userId,
+      actorName: session.user.name,
+      actionType: "UPDATE",
+      event: "LAB_REPORT_RELEASE_ELIGIBILITY_FAILED",
+      entityId: release.id,
+      changeData: { phase: "authorize", codes: eligibility.blockingReasons.map((r) => r.code) },
+    });
+    return { ok: false, errorCode: eligibilityError };
+  }
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: session.tenantId },
@@ -181,90 +281,192 @@ export async function authorizeReleaseAction(
   const amendmentReason =
     release.status === "AMENDED" ? release.versions.find((v) => v.isCurrent)?.amendmentReason ?? null : null;
 
-  const outcome = await prisma.$transaction(async (tx) => {
-    const reportNumber = await allocateReportNumber(tx, session.tenantId);
-    const snapshot = buildReportSnapshot({
-      result: release.labResult,
-      tenant,
-      reportNumber,
-      versionNumber: nextVersionNumber,
-      amendmentReason,
-      releasedAt: now,
-    });
-
-    if (release.currentVersionId) {
-      await tx.labReportVersion.updateMany({
-        where: { releaseId: release.id, isCurrent: true },
-        data: { isCurrent: false, status: "SUPERSEDED" },
+  try {
+    const outcome = await prisma.$transaction(async (tx) => {
+      const locked = await tx.labReportRelease.updateMany({
+        where: {
+          id: release.id,
+          tenantId: session.tenantId,
+          stateVersion: stateVersion ?? release.stateVersion,
+          status: { in: ["RELEASE_PENDING", "AMENDED"] },
+        },
+        data: {
+          updatedById: session.userId,
+          stateVersion: { increment: 1 },
+        },
       });
-    }
+      if (locked.count !== 1) {
+        throw new Error(LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_STATE_CHANGED);
+      }
 
-    const version = await tx.labReportVersion.create({
-      data: {
+      const freshRelease = await tx.labReportRelease.findUniqueOrThrow({
+        where: { id: release.id },
+        include: { labResult: { include: verificationReviewInclude } },
+      });
+
+      const recheck = evaluateReportReleaseEligibility({
         tenantId: session.tenantId,
-        branchId: release.branchId,
-        releaseId: release.id,
-        versionNumber: nextVersionNumber,
-        status: "RELEASED",
-        isCurrent: true,
-        snapshotJson: serializeReportSnapshot(snapshot),
-        amendmentReason,
-        amendedFromId: release.currentVersionId,
-        releasedById: session.userId,
-        releasedAt: now,
-        createdById: session.userId,
-      },
-    });
+        branchId: session.branchId,
+        result: freshRelease.labResult,
+        release: releaseEligibilityContext(freshRelease),
+        expectedRecordVersion: recordVersion,
+        policy,
+        hasPermission: true,
+        phase: "authorize",
+      });
+      const recheckError = firstBlockingErrorCode(recheck);
+      if (recheckError) throw new Error(recheckError);
 
-    await tx.labReportVerificationToken.updateMany({
-      where: { releaseId: release.id, isRevoked: false },
-      data: { isRevoked: true },
-    });
-
-    const tokenValue = generateVerificationTokenValue();
-    await tx.labReportVerificationToken.create({
-      data: {
-        tenantId: session.tenantId,
-        branchId: release.branchId,
-        releaseId: release.id,
-        versionId: version.id,
-        token: tokenValue,
-      },
-    });
-
-    const updatedRelease = await tx.labReportRelease.update({
-      where: { id: release.id },
-      data: {
+      const reportNumber = await allocateReportNumber(tx, session.tenantId);
+      const snapshot = buildReportSnapshot({
+        result: freshRelease.labResult,
+        tenant,
         reportNumber,
-        status: "RELEASED",
-        resultVersionSnapshot: release.labResult.recordVersion,
-        currentVersionId: version.id,
-        portalPublishEligible: true,
-        releasedById: session.userId,
+        versionNumber: nextVersionNumber,
+        amendmentReason,
         releasedAt: now,
-        updatedById: session.userId,
+      });
+
+      if (freshRelease.currentVersionId) {
+        await tx.labReportVersion.updateMany({
+          where: { releaseId: freshRelease.id, isCurrent: true },
+          data: { isCurrent: false, status: "SUPERSEDED" },
+        });
+      }
+
+      const version = await tx.labReportVersion.create({
+        data: {
+          tenantId: session.tenantId,
+          branchId: freshRelease.branchId,
+          releaseId: freshRelease.id,
+          versionNumber: nextVersionNumber,
+          status: "RELEASED",
+          isCurrent: true,
+          snapshotJson: serializeReportSnapshot(snapshot),
+          amendmentReason,
+          amendedFromId: freshRelease.currentVersionId,
+          releasedById: session.userId,
+          releasedAt: now,
+          createdById: session.userId,
+        },
+      });
+
+      await tx.labReportVerificationToken.updateMany({
+        where: { releaseId: freshRelease.id, isRevoked: false },
+        data: { isRevoked: true },
+      });
+
+      const tokenValue = generateVerificationTokenValue();
+      await tx.labReportVerificationToken.create({
+        data: {
+          tenantId: session.tenantId,
+          branchId: freshRelease.branchId,
+          releaseId: freshRelease.id,
+          versionId: version.id,
+          token: tokenValue,
+        },
+      });
+
+      const updatedRelease = await tx.labReportRelease.update({
+        where: { id: freshRelease.id },
+        data: {
+          reportNumber,
+          status: "RELEASED",
+          resultVersionSnapshot: freshRelease.labResult.recordVersion,
+          currentVersionId: version.id,
+          portalPublishEligible: true,
+          releasedById: session.userId,
+          releasedAt: now,
+          updatedById: session.userId,
+        },
+      });
+
+      await tx.labReportDelivery.create({
+        data: {
+          tenantId: session.tenantId,
+          branchId: freshRelease.branchId,
+          releaseId: freshRelease.id,
+          versionId: version.id,
+          deliveryMethod: "PORTAL",
+          deliveredTo: freshRelease.labResult.labOrder.patient.fullName,
+          deliveredById: session.userId,
+          referenceNote: "Release authorization",
+        },
+      });
+
+      return { updatedRelease, version, tokenValue, reportNumber };
+    });
+
+    await auditReleaseEvent({
+      tenantId: session.tenantId,
+      branchId: release.branchId,
+      userId: session.userId,
+      actorName: session.user.name,
+      actionType: "UPDATE",
+      event: "LAB_REPORT_RELEASED",
+      entityId: release.id,
+      changeData: {
+        reportNumber: outcome.reportNumber,
+        versionNumber: nextVersionNumber,
+        recordVersion,
       },
     });
 
-    await tx.labResult.update({
-      where: { id: release.labResultId },
-      data: { status: "RELEASED" },
+    await auditReleaseEvent({
+      tenantId: session.tenantId,
+      branchId: release.branchId,
+      userId: session.userId,
+      actorName: session.user.name,
+      actionType: "UPDATE",
+      event: "LAB_REPORT_QR_GENERATED",
+      entityId: release.id,
+      changeData: { versionNumber: nextVersionNumber },
     });
 
-    await tx.labReportDelivery.create({
-      data: {
-        tenantId: session.tenantId,
-        branchId: release.branchId,
-        releaseId: release.id,
-        versionId: version.id,
-        deliveryMethod: "PORTAL",
-        deliveredTo: release.labResult.labOrder.patient.fullName,
-        deliveredById: session.userId,
-        referenceNote: "Release authorization",
-      },
-    });
+    revalidateReleasePaths(release.id, release.labResultId);
+    return {
+      ok: true,
+      releaseId: release.id,
+      reportNumber: outcome.reportNumber,
+      versionId: outcome.version.id,
+      token: outcome.tokenValue,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    const code = Object.values(LAB_REPORT_RELEASE_ERROR_CODES).includes(
+      message as (typeof LAB_REPORT_RELEASE_ERROR_CODES)[keyof typeof LAB_REPORT_RELEASE_ERROR_CODES],
+    )
+      ? message
+      : LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_STATE_CHANGED;
+    return { ok: false, errorCode: code };
+  }
+}
 
-    return { updatedRelease, version, tokenValue, reportNumber };
+export async function addBillingHoldAction(
+  releaseId: string,
+  reason: string,
+): Promise<LabReportReleaseActionResult> {
+  await requireTenantPermission("/lab/report-release/billing-hold", "canApprove");
+  const session = await requireTenantSession();
+  const release = await assertTenantOwnsRelease(session.tenantId, releaseId);
+  if (!reason.trim()) {
+    return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_HOLD_REASON_REQUIRED };
+  }
+
+  const now = new Date();
+  await prisma.labReportRelease.update({
+    where: { id: release.id },
+    data: {
+      billingHoldActive: true,
+      billingHoldReason: reason.trim(),
+      billingHoldAt: now,
+      billingHoldById: session.userId,
+      billingHoldClearedAt: null,
+      billingHoldClearedById: null,
+      billingHoldClearReason: null,
+      stateVersion: { increment: 1 },
+      updatedById: session.userId,
+    },
   });
 
   await auditReleaseEvent({
@@ -273,23 +475,123 @@ export async function authorizeReleaseAction(
     userId: session.userId,
     actorName: session.user.name,
     actionType: "UPDATE",
-    event: "LAB_REPORT_RELEASED",
+    event: "LAB_REPORT_BILLING_HOLD_DETECTED",
     entityId: release.id,
-    changeData: {
-      reportNumber: outcome.reportNumber,
-      versionNumber: nextVersionNumber,
-      recordVersion,
+    changeData: { holdType: "MANUAL_BILLING" },
+  });
+
+  revalidateReleasePaths(release.id);
+  return { ok: true, releaseId: release.id };
+}
+
+export async function clearBillingHoldAction(
+  releaseId: string,
+  clearReason: string,
+): Promise<LabReportReleaseActionResult> {
+  await requireTenantPermission("/lab/report-release/billing-hold", "canApprove");
+  const session = await requireTenantSession();
+  const release = await assertTenantOwnsRelease(session.tenantId, releaseId);
+  if (!release.billingHoldActive) {
+    return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_HOLD_NOT_ACTIVE };
+  }
+  if (!clearReason.trim()) {
+    return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_HOLD_REASON_REQUIRED };
+  }
+
+  await prisma.labReportRelease.update({
+    where: { id: release.id },
+    data: {
+      billingHoldActive: false,
+      billingHoldClearedAt: new Date(),
+      billingHoldClearedById: session.userId,
+      billingHoldClearReason: clearReason.trim(),
+      stateVersion: { increment: 1 },
+      updatedById: session.userId,
     },
   });
 
-  revalidateReleasePaths(release.id, release.labResultId);
-  return {
-    ok: true,
-    releaseId: release.id,
-    reportNumber: outcome.reportNumber,
-    versionId: outcome.version.id,
-    token: outcome.tokenValue,
-  };
+  revalidateReleasePaths(release.id);
+  return { ok: true, releaseId: release.id };
+}
+
+export async function addQualityHoldAction(
+  releaseId: string,
+  reason: string,
+): Promise<LabReportReleaseActionResult> {
+  await requireTenantPermission("/lab/report-release/quality-hold", "canApprove");
+  const session = await requireTenantSession();
+  const release = await assertTenantOwnsRelease(session.tenantId, releaseId);
+  if (!reason.trim()) {
+    return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_HOLD_REASON_REQUIRED };
+  }
+
+  await prisma.labReportRelease.update({
+    where: { id: release.id },
+    data: {
+      qualityHoldActive: true,
+      qualityHoldReason: reason.trim(),
+      qualityHoldAt: new Date(),
+      qualityHoldById: session.userId,
+      qualityHoldClearedAt: null,
+      qualityHoldClearedById: null,
+      qualityHoldClearReason: null,
+      stateVersion: { increment: 1 },
+      updatedById: session.userId,
+    },
+  });
+
+  await auditReleaseEvent({
+    tenantId: session.tenantId,
+    branchId: release.branchId,
+    userId: session.userId,
+    actorName: session.user.name,
+    actionType: "UPDATE",
+    event: "LAB_REPORT_QUALITY_HOLD_ADDED",
+    entityId: release.id,
+  });
+
+  revalidateReleasePaths(release.id);
+  return { ok: true, releaseId: release.id };
+}
+
+export async function clearQualityHoldAction(
+  releaseId: string,
+  clearReason: string,
+): Promise<LabReportReleaseActionResult> {
+  await requireTenantPermission("/lab/report-release/quality-hold", "canApprove");
+  const session = await requireTenantSession();
+  const release = await assertTenantOwnsRelease(session.tenantId, releaseId);
+  if (!release.qualityHoldActive) {
+    return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_HOLD_NOT_ACTIVE };
+  }
+  if (!clearReason.trim()) {
+    return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.REPORT_RELEASE_HOLD_REASON_REQUIRED };
+  }
+
+  await prisma.labReportRelease.update({
+    where: { id: release.id },
+    data: {
+      qualityHoldActive: false,
+      qualityHoldClearedAt: new Date(),
+      qualityHoldClearedById: session.userId,
+      qualityHoldClearReason: clearReason.trim(),
+      stateVersion: { increment: 1 },
+      updatedById: session.userId,
+    },
+  });
+
+  await auditReleaseEvent({
+    tenantId: session.tenantId,
+    branchId: release.branchId,
+    userId: session.userId,
+    actorName: session.user.name,
+    actionType: "UPDATE",
+    event: "LAB_REPORT_QUALITY_HOLD_CLEARED",
+    entityId: release.id,
+  });
+
+  revalidateReleasePaths(release.id);
+  return { ok: true, releaseId: release.id };
 }
 
 export async function printReportAction(
@@ -392,7 +694,8 @@ export async function downloadReportPdfAction(
   }
 
   const snapshot = parseReportSnapshot(release.currentVersion.snapshotJson);
-  const pdfBuffer = generateReportPdfBuffer(snapshot);
+  const token = release.verificationTokens[0]?.token ?? null;
+  const pdfBuffer = await generateReportPdfBuffer(snapshot, token);
 
   await prisma.$transaction(async (tx) => {
     await tx.labReportRelease.update({
@@ -445,15 +748,25 @@ export async function downloadReportPdfAction(
 export async function publishPortalAction(releaseId: string): Promise<LabReportReleaseActionResult> {
   await requireTenantPermission("/lab/report-release/portal-publish", "canApprove");
   const session = await requireTenantSession();
+  const policy = await loadReportReleasePolicy(session.tenantId);
   const release = await assertTenantOwnsRelease(session.tenantId, releaseId);
 
   if (session.branchId && release.branchId !== session.branchId) {
     return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_BRANCH_ACCESS_DENIED };
   }
 
-  if (release.status !== "RELEASED") {
-    return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_NOT_RELEASED };
-  }
+  const eligibility = evaluateReportReleaseEligibility({
+    tenantId: session.tenantId,
+    branchId: session.branchId,
+    result: release.labResult,
+    release: releaseEligibilityContext(release),
+    policy,
+    hasPermission: true,
+    phase: "portal",
+  });
+  const eligibilityError = firstBlockingErrorCode(eligibility);
+  if (eligibilityError) return { ok: false, errorCode: eligibilityError };
+
   if (!release.portalPublishEligible) {
     return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_PORTAL_NOT_ELIGIBLE };
   }
@@ -528,6 +841,7 @@ export async function withdrawReleaseAction(
         withdrawnAt: now,
         withdrawnById: session.userId,
         withdrawalReason: reason.trim(),
+        stateVersion: { increment: 1 },
         updatedById: session.userId,
       },
     });
@@ -543,11 +857,6 @@ export async function withdrawReleaseAction(
       where: { releaseId: release.id, isRevoked: false },
       data: { isRevoked: true },
     });
-
-    await tx.labResult.update({
-      where: { id: release.labResultId },
-      data: { status: "VERIFIED" },
-    });
   });
 
   await auditReleaseEvent({
@@ -559,6 +868,16 @@ export async function withdrawReleaseAction(
     event: "LAB_REPORT_WITHDRAWN",
     entityId: release.id,
     changeData: { reason: reason.trim() },
+  });
+
+  await auditReleaseEvent({
+    tenantId: session.tenantId,
+    branchId: release.branchId,
+    userId: session.userId,
+    actorName: session.user.name,
+    actionType: "UPDATE",
+    event: "LAB_REPORT_QR_REVOKED",
+    entityId: release.id,
   });
 
   revalidateReleasePaths(release.id, release.labResultId);
@@ -599,6 +918,7 @@ export async function initiateAmendmentAction(
         portalPublishEligible: false,
         portalPublishedAt: null,
         portalPublishedById: null,
+        stateVersion: { increment: 1 },
         updatedById: session.userId,
       },
     });
@@ -616,11 +936,6 @@ export async function initiateAmendmentAction(
         amendedFromId: release.currentVersionId,
         createdById: session.userId,
       },
-    });
-
-    await tx.labResult.update({
-      where: { id: release.labResultId },
-      data: { status: "RELEASE_PENDING" },
     });
   });
 
@@ -644,11 +959,34 @@ export async function verifyReportTokenAction(token: string) {
   if (!record) {
     return { ok: false as const, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_VERIFICATION_TOKEN_INVALID };
   }
+
+  const oneMinuteAgo = new Date(Date.now() - 60_000);
+  const recentAttempts = await prisma.labReportAccessAudit.count({
+    where: {
+      releaseId: record.releaseId,
+      accessMethod: "QR_VERIFY",
+      accessedAt: { gte: oneMinuteAgo },
+    },
+  });
+  if (recentAttempts > 30) {
+    return { ok: false as const, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_VERIFICATION_RATE_LIMITED };
+  }
+
   if (record.isRevoked || record.release.status === "WITHDRAWN") {
     return { ok: false as const, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_VERIFICATION_TOKEN_REVOKED };
   }
   if (record.expiresAt && record.expiresAt < new Date()) {
     return { ok: false as const, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_VERIFICATION_TOKEN_EXPIRED };
+  }
+  if (
+    !record.version.isCurrent ||
+    record.version.status === "SUPERSEDED" ||
+    record.release.currentVersionId !== record.version.id
+  ) {
+    return {
+      ok: false as const,
+      errorCode: LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_VERIFICATION_TOKEN_SUPERSEDED,
+    };
   }
 
   await prisma.labReportAccessAudit.create({
@@ -679,6 +1017,7 @@ export async function verifyReportTokenAction(token: string) {
     versionNumber: record.version.versionNumber,
     portalPublishEligible: record.release.portalPublishEligible,
     isValid: record.release.status === "RELEASED",
+    isSuperseded: false,
   };
 }
 
@@ -691,9 +1030,16 @@ export async function getReportSnapshotForPrintAction(releaseId: string) {
   if (!release.currentVersion) {
     throw new Error(LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_NOT_FOUND);
   }
+
+  const token = release.verificationTokens[0]?.token ?? null;
+  const verificationUrl = token ? buildReportVerificationUrl(token) : null;
+  const qrDataUrl = token ? await generateQrSvgDataUrl(token) : null;
+
   return {
     release,
     snapshot: parseReportSnapshot(release.currentVersion.snapshotJson),
-    verificationToken: release.verificationTokens[0]?.token ?? null,
+    verificationToken: token,
+    verificationUrl,
+    qrDataUrl,
   };
 }

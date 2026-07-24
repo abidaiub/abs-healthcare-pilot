@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
+  addBillingHoldAction,
+  addQualityHoldAction,
+  clearBillingHoldAction,
+  clearQualityHoldAction,
   downloadReportPdfAction,
   initiateAmendmentAction,
   printReportAction,
@@ -12,6 +16,7 @@ import {
 } from "@/app/actions/tenant-lab-report-release";
 import { Badge, Button, Card, CardBody, Input } from "@/components/ui";
 import { useI18n } from "@/lib/i18n/client";
+import type { ReportReleaseEligibility } from "@/lib/laboratory-report-release/types";
 import type { LabReportSnapshot } from "@/lib/laboratory-report-release/snapshot";
 
 type ReleaseDetailProps = {
@@ -19,6 +24,11 @@ type ReleaseDetailProps = {
     id: string;
     reportNumber: string;
     status: string;
+    stateVersion: number;
+    billingHoldActive: boolean;
+    billingHoldReason: string | null;
+    qualityHoldActive: boolean;
+    qualityHoldReason: string | null;
     portalPublishEligible: boolean;
     portalPublishedAt: Date | null;
     printCount: number;
@@ -42,12 +52,17 @@ type ReleaseDetailProps = {
     verificationTokens: Array<{ token: string }>;
   };
   snapshot: LabReportSnapshot | null;
+  eligibility: ReportReleaseEligibility;
+  verificationUrl: string | null;
+  qrDataUrl: string | null;
   permissions: {
     canPrint: boolean;
     canDownload: boolean;
     canPublishPortal: boolean;
     canWithdraw: boolean;
     canAmend: boolean;
+    canManageBillingHold: boolean;
+    canManageQualityHold: boolean;
   };
 };
 
@@ -58,7 +73,14 @@ function statusVariant(status: string) {
   return "default" as const;
 }
 
-export function ReleaseDetailPanel({ release, snapshot, permissions }: ReleaseDetailProps) {
+export function ReleaseDetailPanel({
+  release,
+  snapshot,
+  eligibility,
+  verificationUrl,
+  qrDataUrl,
+  permissions,
+}: ReleaseDetailProps) {
   const { t } = useI18n();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -66,6 +88,9 @@ export function ReleaseDetailPanel({ release, snapshot, permissions }: ReleaseDe
   const [reprintReason, setReprintReason] = useState("");
   const [withdrawReason, setWithdrawReason] = useState("");
   const [amendReason, setAmendReason] = useState("");
+  const [billingHoldReason, setBillingHoldReason] = useState("");
+  const [qualityHoldReason, setQualityHoldReason] = useState("");
+  const [holdClearReason, setHoldClearReason] = useState("");
 
   function runAction(action: () => Promise<{ ok: boolean; errorCode?: string }>, refresh = true) {
     setErrorCode(null);
@@ -104,10 +129,13 @@ export function ReleaseDetailPanel({ release, snapshot, permissions }: ReleaseDe
     }, false);
   }
 
-  const verifyUrl =
-    release.verificationTokens[0]?.token != null
-      ? `/verify/report/${release.verificationTokens[0].token}`
-      : null;
+  const verifyUrl = verificationUrl;
+  const qrValidityLabel =
+    release.status === "WITHDRAWN"
+      ? t("laboratoryReportRelease.qr.withdrawn")
+      : release.status === "RELEASED" && qrDataUrl
+        ? t("laboratoryReportRelease.qr.valid")
+        : t("laboratoryReportRelease.qr.invalid");
 
   return (
     <div className="space-y-6">
@@ -124,6 +152,82 @@ export function ReleaseDetailPanel({ release, snapshot, permissions }: ReleaseDe
         {release.portalPublishEligible ? <Badge variant="success">{t("laboratoryReportRelease.badges.portalEligible")}</Badge> : null}
         {release.portalPublishedAt ? <Badge variant="info">{t("laboratoryReportRelease.badges.portalPublished")}</Badge> : null}
       </div>
+
+      <Card>
+        <div className="border-b border-slate-100 px-6 py-4">
+          <h2 className="text-base font-semibold text-slate-900">{t("laboratoryReportRelease.sections.eligibility")}</h2>
+        </div>
+        <CardBody className="space-y-2 text-sm">
+          <Badge variant={eligibility.eligible ? "success" : "danger"}>
+            {eligibility.eligible
+              ? t("laboratoryReportRelease.eligibility.passed")
+              : t("laboratoryReportRelease.eligibility.blocked")}
+          </Badge>
+          {eligibility.blockingReasons.map((reason) => (
+            <p key={reason.code} className="text-rose-700">
+              {t(reason.messageKey, t(`laboratoryReportRelease.errors.${reason.code}`))}
+            </p>
+          ))}
+          {eligibility.warnings.length > 0 ? (
+            <div>
+              <p className="font-medium text-amber-700">{t("laboratoryReportRelease.eligibility.warnings")}</p>
+              {eligibility.warnings.map((warning) => (
+                <p key={warning.code} className="text-amber-700">{t(warning.messageKey)}</p>
+              ))}
+            </div>
+          ) : null}
+        </CardBody>
+      </Card>
+
+      <Card>
+        <div className="border-b border-slate-100 px-6 py-4">
+          <h2 className="text-base font-semibold text-slate-900">{t("laboratoryReportRelease.sections.holds")}</h2>
+        </div>
+        <CardBody className="space-y-3 text-sm">
+          {release.billingHoldActive ? (
+            <p className="text-rose-700">{t("laboratoryReportRelease.holds.billingActive")}: {release.billingHoldReason}</p>
+          ) : null}
+          {release.qualityHoldActive ? (
+            <p className="text-rose-700">{t("laboratoryReportRelease.holds.qualityActive")}: {release.qualityHoldReason}</p>
+          ) : null}
+          {!release.billingHoldActive && !release.qualityHoldActive ? (
+            <p className="text-slate-600">{t("laboratoryReportRelease.holds.none")}</p>
+          ) : null}
+          {permissions.canManageBillingHold ? (
+            <div className="space-y-2 border-t border-slate-100 pt-3">
+              <Input label={t("laboratoryReportRelease.holds.billingReason")} value={billingHoldReason} onChange={(e) => setBillingHoldReason(e.target.value)} />
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" disabled={pending} onClick={() => runAction(() => addBillingHoldAction(release.id, billingHoldReason))}>
+                  {t("laboratoryReportRelease.actions.addBillingHold")}
+                </Button>
+                {release.billingHoldActive ? (
+                  <>
+                    <Input label={t("laboratoryReportRelease.holds.clearReason")} value={holdClearReason} onChange={(e) => setHoldClearReason(e.target.value)} />
+                    <Button type="button" variant="ghost" disabled={pending} onClick={() => runAction(() => clearBillingHoldAction(release.id, holdClearReason))}>
+                      {t("laboratoryReportRelease.actions.clearBillingHold")}
+                    </Button>
+                  </>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+          {permissions.canManageQualityHold ? (
+            <div className="space-y-2 border-t border-slate-100 pt-3">
+              <Input label={t("laboratoryReportRelease.holds.qualityReason")} value={qualityHoldReason} onChange={(e) => setQualityHoldReason(e.target.value)} />
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" variant="secondary" disabled={pending} onClick={() => runAction(() => addQualityHoldAction(release.id, qualityHoldReason))}>
+                  {t("laboratoryReportRelease.actions.addQualityHold")}
+                </Button>
+                {release.qualityHoldActive ? (
+                  <Button type="button" variant="ghost" disabled={pending} onClick={() => runAction(() => clearQualityHoldAction(release.id, holdClearReason))}>
+                    {t("laboratoryReportRelease.actions.clearQualityHold")}
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </CardBody>
+      </Card>
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardBody><p className="text-sm text-slate-500">{t("laboratoryReportRelease.fields.reportNumber")}</p><p className="mt-1 text-lg font-semibold">{release.reportNumber.startsWith("QUEUED-") ? "—" : release.reportNumber}</p></CardBody></Card>
@@ -150,7 +254,23 @@ export function ReleaseDetailPanel({ release, snapshot, permissions }: ReleaseDe
             <p>{snapshot.tenant.name} · {snapshot.branch.name}</p>
             <p>{snapshot.patient.fullName} · {snapshot.test.testName}</p>
             <p>{t("laboratoryReportRelease.fields.parameterCount")}: {snapshot.results.length}</p>
-            {verifyUrl ? <p className="text-xs text-slate-500">{t("laboratoryReportRelease.fields.qrVerify")}: {verifyUrl}</p> : null}
+            {verifyUrl ? <p className="text-xs text-slate-500 break-all">{t("laboratoryReportRelease.fields.qrVerify")}: {verifyUrl}</p> : null}
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {qrDataUrl ? (
+        <Card>
+          <div className="border-b border-slate-100 px-6 py-4">
+            <h2 className="text-base font-semibold text-slate-900">{t("laboratoryReportRelease.sections.qrVerification")}</h2>
+          </div>
+          <CardBody className="flex flex-wrap items-start gap-4 text-sm">
+            <img src={qrDataUrl} alt={t("laboratoryReportRelease.qr.preview")} className="h-28 w-28 border border-slate-200" />
+            <div>
+              <p>{qrValidityLabel}</p>
+              <p>{t("laboratoryReportRelease.fields.version")}: {release.currentVersion?.versionNumber ?? "—"}</p>
+              {verifyUrl ? <p className="break-all text-xs text-slate-500">{verifyUrl}</p> : null}
+            </div>
           </CardBody>
         </Card>
       ) : null}

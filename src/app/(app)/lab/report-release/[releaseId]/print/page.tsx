@@ -20,6 +20,8 @@ export default async function ReportReleasePrintPage({ params, searchParams }: P
 
   const html = renderReportHtml(payload.snapshot, {
     watermark: payload.snapshot.isAmended ? "AMENDED" : null,
+    verificationUrl: payload.verificationUrl,
+    qrDataUrl: payload.qrDataUrl,
   });
 
   const autoPrint = query.auto === "1";

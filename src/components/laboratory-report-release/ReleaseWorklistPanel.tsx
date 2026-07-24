@@ -15,6 +15,7 @@ type QueueProps = {
     id: string;
     reportNumber: string;
     status: string;
+    stateVersion: number;
     resultVersionSnapshot: number;
     portalPublishEligible: boolean;
     portalPublishedAt: Date | null;
@@ -76,10 +77,10 @@ export function ReleaseWorklistPanel({
     });
   }
 
-  function handleAuthorize(releaseId: string, recordVersion: number) {
+  function handleAuthorize(releaseId: string, recordVersion: number, stateVersion: number) {
     setErrorCode(null);
     startTransition(async () => {
-      const result = await authorizeReleaseAction(releaseId, recordVersion);
+      const result = await authorizeReleaseAction(releaseId, recordVersion, stateVersion);
       if (!result.ok) {
         setErrorCode(result.errorCode);
         return;
@@ -164,7 +165,7 @@ export function ReleaseWorklistPanel({
                       <Button
                         type="button"
                         disabled={pending}
-                        onClick={() => handleAuthorize(release.id, release.labResult.recordVersion)}
+                        onClick={() => handleAuthorize(release.id, release.labResult.recordVersion, release.stateVersion)}
                       >
                         {t("laboratoryReportRelease.actions.authorizeRelease")}
                       </Button>

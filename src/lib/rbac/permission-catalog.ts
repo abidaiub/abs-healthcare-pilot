@@ -678,6 +678,22 @@ export const TENANT_PERMISSION_RESOURCES: PermissionResource[] = [
     group: "Laboratory",
   },
   {
+    resourceKey: "/lab/report-release/billing-hold",
+    moduleCode: "MOD-24",
+    permissionCode: "REPORT_RELEASE_BILLING_HOLD",
+    label: "Report Release Billing Hold",
+    route: "/lab/report-release/billing-hold",
+    group: "Laboratory",
+  },
+  {
+    resourceKey: "/lab/report-release/quality-hold",
+    moduleCode: "MOD-24",
+    permissionCode: "REPORT_RELEASE_QUALITY_HOLD",
+    label: "Report Release Quality Hold",
+    route: "/lab/report-release/quality-hold",
+    group: "Laboratory",
+  },
+  {
     resourceKey: "/portal/reports",
     moduleCode: "MOD-30",
     permissionCode: "PORTAL_REPORTS",

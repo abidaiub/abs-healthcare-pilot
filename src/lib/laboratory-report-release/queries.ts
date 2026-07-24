@@ -130,6 +130,7 @@ export async function findVerificationToken(token: string) {
           status: true,
           portalPublishEligible: true,
           withdrawnAt: true,
+          currentVersionId: true,
         },
       },
       version: {
@@ -137,6 +138,7 @@ export async function findVerificationToken(token: string) {
           id: true,
           versionNumber: true,
           status: true,
+          isCurrent: true,
         },
       },
     },
