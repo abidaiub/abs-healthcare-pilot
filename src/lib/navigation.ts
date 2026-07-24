@@ -140,6 +140,8 @@ const RECEPTION_NAV: NavGroup[] = [
 
       { href: "/consultations", labelKey: "consultationList", icon: "☰" },
 
+      { href: "/prescriptions", labelKey: "prescriptionList", icon: "Rx" },
+
       {
 
         href: "/diagnostic/billing",
@@ -169,6 +171,8 @@ const DOCTOR_NAV: NavGroup[] = [
       { href: "/doctor/worklist", labelKey: "doctorWorklist", icon: "✚" },
 
       { href: "/consultations", labelKey: "consultationList", icon: "☰" },
+
+      { href: "/prescriptions", labelKey: "prescriptionList", icon: "Rx" },
 
     ],
 

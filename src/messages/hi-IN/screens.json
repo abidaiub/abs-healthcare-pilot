@@ -51,5 +51,17 @@
   "consultationEdit.title": "परामर्श वर्कस्पेस",
   "consultationEdit.breadcrumb": "क्लिनिकल / परामर्श वर्कस्पेस",
   "consultationPrint.title": "परामर्श प्रिंट",
-  "consultationPrint.breadcrumb": "क्लिनिकल / परामर्श प्रिंट"
+    "consultationPrint.breadcrumb": "Clinical / Consultation Print",
+  "prescriptionList.title": "Prescription List",
+  "prescriptionList.breadcrumb": "Clinical / Prescriptions",
+  "prescriptionNew.title": "Create Prescription",
+  "prescriptionNew.breadcrumb": "Clinical / Create Prescription",
+  "prescriptionDetail.title": "Prescription Detail",
+  "prescriptionDetail.breadcrumb": "Clinical / Prescription Detail",
+  "prescriptionEdit.title": "Prescription Editor",
+  "prescriptionEdit.breadcrumb": "Clinical / Prescription Editor",
+  "prescriptionPrint.title": "Prescription Print",
+  "prescriptionPrint.breadcrumb": "Clinical / Prescription Print",
+  "prescriptionHistory.title": "Prescription History",
+  "prescriptionHistory.breadcrumb": "Clinical / Prescription History"
 }

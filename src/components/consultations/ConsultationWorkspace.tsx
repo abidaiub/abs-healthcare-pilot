@@ -111,11 +111,15 @@ export function ConsultationWorkspace({
   encounter,
   canEdit,
   canComplete,
+  encounterPrescription,
+  canCreatePrescription,
 }: {
   encounter: EncounterData;
   canEdit: boolean;
   canComplete: boolean;
   canReopen?: boolean;
+  encounterPrescription?: { id: string; status: "DRAFT" | "FINALIZED" | "CANCELLED" | "SUPERSEDED" } | null;
+  canCreatePrescription?: boolean;
 }) {
   const router = useRouter();
   const { t } = useI18n();
@@ -220,6 +224,21 @@ export function ConsultationWorkspace({
           <Link href={`/consultations/${encounter.id}`}>
             <Button type="button" variant="secondary">{t("consultation.actions.viewDetail")}</Button>
           </Link>
+          {encounterPrescription?.status === "DRAFT" && (
+            <Link href={`/prescriptions/${encounterPrescription.id}/edit`}>
+              <Button type="button" variant="secondary">{t("prescription.actions.openDraft")}</Button>
+            </Link>
+          )}
+          {encounterPrescription && encounterPrescription.status !== "DRAFT" && (
+            <Link href={`/prescriptions/${encounterPrescription.id}`}>
+              <Button type="button" variant="secondary">{t("prescription.actions.viewPrescription")}</Button>
+            </Link>
+          )}
+          {canCreatePrescription && !encounterPrescription && (
+            <Link href={`/prescriptions/new?encounterId=${encounter.id}`}>
+              <Button type="button" variant="secondary">{t("prescription.actions.create")}</Button>
+            </Link>
+          )}
           {canComplete && (
             <Button type="button" disabled={pending} onClick={completeConsultation}>
               {t("consultation.actions.complete")}

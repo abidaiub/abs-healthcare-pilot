@@ -33,6 +33,12 @@ export const MODULES = {
     docPath: "docs/modules/MOD-18-Doctor-Consultation.md",
     mockupPath: "docs/18-DoctorWorklistEncounter/Mockups/WireframeMockup.md",
   },
+  prescriptionManagement: {
+    id: "19",
+    name: "Prescription Management",
+    docPath: "docs/19-PrescriptionManagement/PrescriptionManagement_v1.md",
+    mockupPath: "docs/19-PrescriptionManagement/Mockups/WireframeMockup.md",
+  },
   sampleCollection: {
     id: "21",
     name: "Sample Collection & Laboratory Workflow",
@@ -443,6 +449,42 @@ export const SCREENS = {
     moduleKey: "doctorConsultation",
     screenName: "Consultation Print",
     workflowRef: "Printable prescription and summary",
+  },
+  prescriptionList: {
+    route: "/prescriptions",
+    moduleKey: "prescriptionManagement",
+    screenName: "Prescription List",
+    workflowRef: "View prescription worklist and history",
+  },
+  prescriptionNew: {
+    route: "/prescriptions/new",
+    moduleKey: "prescriptionManagement",
+    screenName: "Create Prescription",
+    workflowRef: "Create draft from clinical encounter",
+  },
+  prescriptionDetail: {
+    route: "/prescriptions/[prescriptionId]",
+    moduleKey: "prescriptionManagement",
+    screenName: "Prescription Detail",
+    workflowRef: "Read-only finalized or cancelled prescription",
+  },
+  prescriptionEdit: {
+    route: "/prescriptions/[prescriptionId]/edit",
+    moduleKey: "prescriptionManagement",
+    screenName: "Prescription Editor",
+    workflowRef: "Draft medicines, advice, finalize",
+  },
+  prescriptionPrint: {
+    route: "/prescriptions/[prescriptionId]/print",
+    moduleKey: "prescriptionManagement",
+    screenName: "Prescription Print",
+    workflowRef: "Printable finalized prescription",
+  },
+  prescriptionHistory: {
+    route: "/prescriptions/[prescriptionId]/history",
+    moduleKey: "prescriptionManagement",
+    screenName: "Prescription History",
+    workflowRef: "Version history by prescription number",
   },
   diagnosticBilling: {
     route: "/diagnostic/billing",

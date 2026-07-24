@@ -34,6 +34,7 @@
   "queueDashboard": "Queue Dashboard",
   "doctorWorklist": "Doctor Worklist",
   "consultationList": "Consultations",
+  "prescriptionList": "Prescriptions",
   "diagnosticBilling": "Diagnostic Billing / Test Order",
   "sampleCollection": "Sample Collection",
   "labelPrint": "Label Print",

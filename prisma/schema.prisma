@@ -222,6 +222,11 @@ model Tenant {
   encounterDiagnoses        EncounterDiagnosis[]
   encounterMedicineAdvices  EncounterMedicineAdvice[]
   encounterInvestigationAdvices EncounterInvestigationAdvice[]
+  prescriptions             Prescription[]
+  prescriptionCounter       TenantPrescriptionCounter?
+  prescriptionMedicines     PrescriptionMedicine[]
+  prescriptionDiagnoses     PrescriptionDiagnosis[]
+  prescriptionInvestigations PrescriptionInvestigation[]
 
   @@index([tenantStatus])
   @@index([createdAt])
@@ -270,6 +275,7 @@ model Branch {
   appointments             Appointment[]
   queueCounters            BranchDoctorQueueCounter[]
   clinicalEncounters       ClinicalEncounter[]
+  prescriptions            Prescription[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -345,6 +351,7 @@ model Patient {
   registrationBranch Branch @relation("PatientRegistrationBranch", fields: [registrationBranchId], references: [id])
   appointments       Appointment[]
   clinicalEncounters ClinicalEncounter[]
+  prescriptions      Prescription[]
 
   @@unique([tenantId, patientNumber])
   @@index([tenantId])
@@ -435,6 +442,7 @@ model Appointment {
   department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
   clinicalEncounters ClinicalEncounter[]
+  prescriptions      Prescription[]
 
   @@unique([tenantId, appointmentNumber])
   @@index([tenantId])
@@ -532,6 +540,7 @@ model ClinicalEncounter {
   diagnoses    EncounterDiagnosis[]
   medicines    EncounterMedicineAdvice[]
   investigations EncounterInvestigationAdvice[]
+  prescriptions  Prescription[]
 
   @@unique([tenantId, encounterNumber])
   @@index([tenantId])
@@ -646,6 +655,159 @@ model EncounterInvestigationAdvice {
   @@index([tenantId])
   @@index([tenantId, encounterId])
   @@map("encounter_investigation_advices")
+}
+
+enum PrescriptionStatus {
+  DRAFT
+  FINALIZED
+  CANCELLED
+  SUPERSEDED
+}
+
+enum PrescriptionDurationUnit {
+  DAY
+  WEEK
+  MONTH
+}
+
+/// Tenant-scoped sequential counter for prescription numbers (MOD-19)
+model TenantPrescriptionCounter {
+  tenantId   String @id @map("tenant_id")
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_prescription_counters")
+}
+
+/// Prescription record with versioning (MOD-19)
+model Prescription {
+  id                     String             @id @default(cuid())
+  tenantId               String             @map("tenant_id")
+  branchId               String             @map("branch_id")
+  patientId              String             @map("patient_id")
+  doctorId               String             @map("doctor_id")
+  encounterId            String             @map("encounter_id")
+  appointmentId          String?            @map("appointment_id")
+  departmentId           String?            @map("department_id")
+  prescriptionNumber     String             @map("prescription_number")
+  status                 PrescriptionStatus @default(DRAFT)
+  versionNumber          Int                @default(1) @map("version_number")
+  isCurrentVersion       Boolean            @default(true) @map("is_current_version")
+  supersedesPrescriptionId String?          @map("supersedes_prescription_id")
+  prescribedAt           DateTime           @default(now()) @map("prescribed_at")
+  finalizedAt            DateTime?          @map("finalized_at")
+  cancelledAt            DateTime?          @map("cancelled_at")
+  generalAdvice          String?            @map("general_advice")
+  followUpDate           DateTime?          @map("follow_up_date") @db.Date
+  followUpIntervalDays   Int?               @map("follow_up_interval_days")
+  followUpInstructions   String?            @map("follow_up_instructions")
+  clinicalSummary        String?            @map("clinical_summary")
+  revisionReason         String?            @map("revision_reason")
+  cancellationReason     String?            @map("cancellation_reason")
+  createdAt              DateTime           @default(now()) @map("created_at")
+  createdById            String?            @map("created_by_id")
+  createdBy              String?            @map("created_by")
+  updatedAt              DateTime           @updatedAt @map("updated_at")
+  updatedById            String?            @map("updated_by_id")
+  updatedBy              String?            @map("updated_by")
+
+  tenant              Tenant                      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch              Branch                      @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  patient             Patient                     @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor              Doctor                      @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  encounter           ClinicalEncounter           @relation(fields: [encounterId], references: [id], onDelete: Restrict)
+  appointment         Appointment?                @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  department          Department?                 @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  supersedesPrescription Prescription?            @relation("PrescriptionRevision", fields: [supersedesPrescriptionId], references: [id], onDelete: SetNull)
+  supersededBy        Prescription[]              @relation("PrescriptionRevision")
+  medicines           PrescriptionMedicine[]
+  diagnoses           PrescriptionDiagnosis[]
+  investigations      PrescriptionInvestigation[]
+
+  @@unique([tenantId, prescriptionNumber, versionNumber])
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, patientId])
+  @@index([tenantId, doctorId])
+  @@index([tenantId, encounterId])
+  @@index([tenantId, status])
+  @@index([tenantId, isCurrentVersion])
+  @@index([tenantId, prescriptionNumber])
+  @@map("prescriptions")
+}
+
+model PrescriptionMedicine {
+  id                            String   @id @default(cuid())
+  tenantId                      String   @map("tenant_id")
+  prescriptionId                String   @map("prescription_id")
+  sourceEncounterMedicineAdviceId String? @map("source_encounter_medicine_advice_id")
+  medicineName                  String   @map("medicine_name")
+  genericName                   String?  @map("generic_name")
+  strength                      String?
+  dose                          String?
+  route                         String?
+  frequency                     String?
+  durationValue                 Int?     @map("duration_value")
+  durationUnit                  PrescriptionDurationUnit? @map("duration_unit")
+  durationText                  String?  @map("duration_text")
+  quantity                      String?
+  foodTiming                    String?  @map("food_timing")
+  instructions                  String?
+  sequence                      Int      @default(0)
+  isActive                      Boolean  @default(true) @map("is_active")
+  createdAt                     DateTime @default(now()) @map("created_at")
+  updatedAt                     DateTime @updatedAt @map("updated_at")
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, prescriptionId])
+  @@map("prescription_medicines")
+}
+
+model PrescriptionDiagnosis {
+  id              String        @id @default(cuid())
+  tenantId        String        @map("tenant_id")
+  prescriptionId  String        @map("prescription_id")
+  sourceEncounterDiagnosisId String? @map("source_encounter_diagnosis_id")
+  diagnosisType   DiagnosisType @map("diagnosis_type")
+  diagnosisText   String        @map("diagnosis_text")
+  icdCode         String?       @map("icd_code")
+  notes           String?
+  sequence        Int           @default(0)
+  isActive        Boolean       @default(true) @map("is_active")
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, prescriptionId])
+  @@map("prescription_diagnoses")
+}
+
+model PrescriptionInvestigation {
+  id                              String                    @id @default(cuid())
+  tenantId                        String                    @map("tenant_id")
+  prescriptionId                  String                    @map("prescription_id")
+  sourceEncounterInvestigationId  String?                   @map("source_encounter_investigation_id")
+  investigationText               String                    @map("investigation_text")
+  priority                        String?
+  instructions                    String?
+  clinicalNote                    String?                   @map("clinical_note")
+  status                          InvestigationAdviceStatus @default(ADVISED)
+  sequence                        Int                       @default(0)
+  isActive                        Boolean                   @default(true) @map("is_active")
+  createdAt                       DateTime                  @default(now()) @map("created_at")
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, prescriptionId])
+  @@map("prescription_investigations")
 }
 
 /// Host/global subscription package master (tenant_id not applicable)
@@ -1014,6 +1176,7 @@ model Department {
   reportSignatureTemplates ReportSignatureTemplate[]
   appointments             Appointment[]
   clinicalEncounters       ClinicalEncounter[]
+  prescriptions            Prescription[]
 
   @@unique([tenantId, deptCode])
   @@index([tenantId])
@@ -1450,6 +1613,7 @@ model Doctor {
   appointments             Appointment[]
   queueCounters            BranchDoctorQueueCounter[]
   clinicalEncounters       ClinicalEncounter[]
+  prescriptions            Prescription[]
 
   @@unique([tenantId, doctorCode])
   @@index([tenantId])

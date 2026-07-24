@@ -35,7 +35,8 @@ function isPrismaClientReady(client: PrismaClient | undefined): client is Prisma
       typeof client.userBranch?.findFirst === "function" &&
       typeof client.patient?.findFirst === "function" &&
       typeof client.appointment?.findFirst === "function" &&
-      typeof client.clinicalEncounter?.findFirst === "function",
+      typeof client.clinicalEncounter?.findFirst === "function" &&
+      typeof client.prescription?.findFirst === "function",
   );
 }
 
