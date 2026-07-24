@@ -244,6 +244,8 @@ const LAB_NAV: NavGroup[] = [
 
       { href: "/lab/verification", labelKey: "verification", icon: "✓" },
 
+      { href: "/lab/corrections", labelKey: "corrections", icon: "↺" },
+
       { href: "/lab/report-release", labelKey: "reportRelease", icon: "⎙" },
 
     ],

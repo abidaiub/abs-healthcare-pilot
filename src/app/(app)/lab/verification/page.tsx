@@ -1,17 +1,21 @@
-import { VerificationPanel } from "@/components/diagnostic/VerificationPanel";
 import { ModulePageHeader } from "@/components/layout/ModulePageHeader";
-import { requireSession } from "@/lib/auth";
+import { VerificationWorklistPanel } from "@/components/laboratory-verification/VerificationWorklistPanel";
+import { listVerificationWorklistAction } from "@/app/actions/tenant-lab-verification";
+import { getServerI18n } from "@/lib/i18n/server";
+import { requireTenantPermission } from "@/lib/rbac/auth";
 
-export default async function VerificationPage() {
-  await requireSession();
+export default async function VerificationWorklistPage() {
+  const session = await requireTenantPermission("/lab/verification");
+  const { t } = await getServerI18n(session);
+  const rows = await listVerificationWorklistAction();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <ModulePageHeader
         screenKey="verification"
-        description="Senior technologist and pathologist verification queue with critical value governance."
+        description={t("laboratoryVerification.worklist.description")}
       />
-      <VerificationPanel />
+      <VerificationWorklistPanel rows={rows} />
     </div>
   );
 }

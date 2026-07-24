@@ -37,6 +37,10 @@ export function isLabResultEditable(status: LabResultStatus): boolean {
   return status === "DRAFT" || status === "IN_PROGRESS" || status === "ENTRY_COMPLETED";
 }
 
+export function isLabResultCorrectable(status: LabResultStatus): boolean {
+  return status === "REJECTED_FOR_CORRECTION" || status === "IN_PROGRESS";
+}
+
 export function canReopenLabResult(status: LabResultStatus): boolean {
   return status === "ENTRY_COMPLETED" || status === "READY_FOR_VERIFICATION";
 }

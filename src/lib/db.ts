@@ -39,7 +39,8 @@ function isPrismaClientReady(client: PrismaClient | undefined): client is Prisma
       typeof client.prescription?.findFirst === "function" &&
       typeof client.medicationCatalogItem?.findFirst === "function" &&
       typeof client.labOrder?.findFirst === "function" &&
-      typeof client.labResult?.findFirst === "function",
+      typeof client.labResult?.findFirst === "function" &&
+      typeof client.labResultVerification?.findFirst === "function",
   );
 }
 

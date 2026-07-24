@@ -11,6 +11,7 @@ import { computeAbnormalFlag } from "@/lib/laboratory-result/abnormal-flags";
 import {
   canReopenLabResult,
   canTransitionLabResultStatus,
+  isLabResultCorrectable,
   isLabResultEditable,
 } from "@/lib/laboratory-result/constants";
 import { LAB_RESULT_ERROR_CODES } from "@/lib/laboratory-result/errors";
@@ -66,6 +67,8 @@ async function auditLabResultEvent(input: {
 function revalidateResultPaths(resultId?: string) {
   revalidatePath("/lab/result-entry");
   revalidatePath("/lab/lis-worklist");
+  revalidatePath("/lab/corrections");
+  revalidatePath("/lab/verification");
   if (resultId) {
     revalidatePath(`/lab/result-entry/${resultId}`);
     revalidatePath(`/lab/result-entry/${resultId}/edit`);
@@ -313,7 +316,7 @@ export async function saveLabResultDraftAction(
   const session = await requireTenantSession();
   const result = await assertTenantOwnsLabResult(session.tenantId, resultId);
 
-  if (!isLabResultEditable(result.status)) {
+  if (!isLabResultEditable(result.status) && !isLabResultCorrectable(result.status)) {
     return { ok: false, errorCode: LAB_RESULT_ERROR_CODES.LAB_RESULT_INVALID_STATUS };
   }
 
@@ -373,7 +376,7 @@ export async function completeLabResultEntryAction(
     return { ok: false, errorCode: LAB_RESULT_ERROR_CODES.LAB_RESULT_VERSION_CONFLICT };
   }
 
-  if (!isLabResultEditable(result.status)) {
+  if (!isLabResultEditable(result.status) && !isLabResultCorrectable(result.status)) {
     return { ok: false, errorCode: LAB_RESULT_ERROR_CODES.LAB_RESULT_INVALID_STATUS };
   }
 

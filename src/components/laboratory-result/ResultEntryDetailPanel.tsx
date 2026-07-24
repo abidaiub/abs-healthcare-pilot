@@ -16,6 +16,7 @@ import {
   ABNORMAL_FLAG_I18N,
   LAB_RESULT_STATUS_I18N,
   canReopenLabResult,
+  isLabResultCorrectable,
   isLabResultEditable,
 } from "@/lib/laboratory-result/constants";
 import { useI18n } from "@/lib/i18n/client";
@@ -58,6 +59,7 @@ export function ResultEntryDetailPanel({
   }
 
   const editable = isLabResultEditable(result.status);
+  const correctable = isLabResultCorrectable(result.status);
   const unacknowledgedEvents = result.criticalEvents.filter((event) => !event.acknowledgedAt);
 
   return (
@@ -174,6 +176,16 @@ export function ResultEntryDetailPanel({
           <Link href={`/lab/result-entry/${result.id}/edit`}>
             <Button type="button">{t("laboratoryResult.actions.edit")}</Button>
           </Link>
+        ) : null}
+        {canEdit && correctable ? (
+          <>
+            <Link href={`/lab/result-entry/${result.id}/edit`}>
+              <Button type="button">{t("laboratoryVerification.actions.correctResult")}</Button>
+            </Link>
+            <Link href="/lab/corrections">
+              <Button type="button" variant="ghost">{t("laboratoryVerification.actions.openCorrections")}</Button>
+            </Link>
+          </>
         ) : null}
         {canComplete && editable && unacknowledgedEvents.length === 0 ? (
           <Button

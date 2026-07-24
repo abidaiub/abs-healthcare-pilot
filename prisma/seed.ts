@@ -22,6 +22,7 @@ import { seedAppointmentFoundation } from "./seed/appointment-foundation";
 import { seedMedicationFoundation } from "./seed/medication-foundation";
 import { seedLabFoundation } from "./seed/lab-foundation";
 import { seedResultFoundation } from "./seed/result-foundation";
+import { seedVerificationFoundation } from "./seed/verification-foundation";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -101,6 +102,7 @@ async function main() {
   await seedTenantImportedServices(prisma, tenant.id, branch.id);
   await seedTenantDiagnosticMasters(prisma, tenant.id, branch.id);
   await seedResultFoundation(prisma, tenant.tenantCode);
+  await seedVerificationFoundation(prisma, tenant.id, branch.id);
 
   console.log(
     "Seed complete: host catalog, module registry, ABMG tenant services, and diagnostic masters",

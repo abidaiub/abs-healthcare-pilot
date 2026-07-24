@@ -19,6 +19,7 @@ import {
   canReopenLabResult,
   canTransitionLabResultStatus,
   isLabResultEditable,
+  isLabResultCorrectable,
   RESULT_ENTRY_WORKLIST_TEST_STATUSES,
 } from "../src/lib/laboratory-result/constants";
 import { LAB_RESULT_ERROR_CODES } from "../src/lib/laboratory-result/errors";
@@ -45,6 +46,9 @@ async function main() {
   assert(isLabResultEditable("DRAFT"), "Draft result editable");
   assert(isLabResultEditable("IN_PROGRESS"), "In-progress result editable");
   assert(!isLabResultEditable("VERIFIED"), "Verified result not editable");
+  assert(isLabResultCorrectable("REJECTED_FOR_CORRECTION"), "Rejected result correctable for MOD-23");
+  assert(isLabResultCorrectable("IN_PROGRESS"), "In-progress correctable during correction");
+  assert(!isLabResultCorrectable("VERIFIED"), "Verified result not correctable");
   assert(canReopenLabResult("ENTRY_COMPLETED"), "Entry completed reopenable");
   assert(canTransitionLabResultStatus("DRAFT", "IN_PROGRESS"), "Draft to in progress");
   assert(!canTransitionLabResultStatus("VERIFIED", "DRAFT"), "Verified to draft blocked");

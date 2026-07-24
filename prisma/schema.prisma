@@ -245,6 +245,8 @@ model Tenant {
   labResults                    LabResult[]
   labCriticalValueEvents        LabCriticalValueEvent[]
   labResultItems                LabResultItem[]
+  labResultVerifications        LabResultVerification[]
+  labResultCorrectionRequests   LabResultCorrectionRequest[]
   labSamples                    LabSample[]
   labSampleTests                LabSampleTest[]
   sampleRejectionReasons        SampleRejectionReason[]
@@ -301,6 +303,7 @@ model Branch {
   labOrders                LabOrder[]
   labSamples               LabSample[]
   labResults               LabResult[]
+  labResultVerifications   LabResultVerification[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -1152,9 +1155,23 @@ enum LabOrderTestStatus {
   READY_FOR_RESULT
   RESULT_IN_PROGRESS
   READY_FOR_VERIFICATION
+  CORRECTION_REQUIRED
   COMPLETED
   CANCELLED
   RECOLLECTION_REQUIRED
+}
+
+enum LabVerificationDecision {
+  VERIFIED
+  REJECTED_FOR_CORRECTION
+}
+
+enum LabCorrectionRequestStatus {
+  OPEN
+  IN_PROGRESS
+  RESUBMITTED
+  RESOLVED
+  CANCELLED
 }
 
 enum LabResultStatus {
@@ -1407,13 +1424,15 @@ model LabResult {
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
-  tenant         Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  branch         Branch                  @relation(fields: [branchId], references: [id], onDelete: Restrict)
-  labOrder       LabOrder                @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
-  labOrderTest   LabOrderTest            @relation(fields: [labOrderTestId], references: [id], onDelete: Cascade)
-  labSample      LabSample               @relation(fields: [labSampleId], references: [id], onDelete: Restrict)
-  items          LabResultItem[]
-  criticalEvents LabCriticalValueEvent[]
+  tenant             Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch             Branch                       @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  labOrder           LabOrder                     @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
+  labOrderTest       LabOrderTest                 @relation(fields: [labOrderTestId], references: [id], onDelete: Cascade)
+  labSample          LabSample                    @relation(fields: [labSampleId], references: [id], onDelete: Restrict)
+  items              LabResultItem[]
+  criticalEvents     LabCriticalValueEvent[]
+  verifications      LabResultVerification[]
+  correctionRequests LabResultCorrectionRequest[]
 
   @@index([tenantId])
   @@index([tenantId, branchId])
@@ -1486,6 +1505,73 @@ model LabCriticalValueEvent {
   @@index([tenantId, labResultId])
   @@index([labResultItemId])
   @@map("lab_critical_value_events")
+}
+
+/// Pathologist verification attempt (MOD-23)
+model LabResultVerification {
+  id                                 String                  @id @default(cuid())
+  tenantId                           String                  @map("tenant_id")
+  branchId                           String                  @map("branch_id")
+  labResultId                        String                  @map("lab_result_id")
+  verificationSequence               Int                     @map("verification_sequence")
+  decision                           LabVerificationDecision
+  verifierUserId                     String                  @map("verifier_user_id")
+  verifierDisplayNameSnapshot        String                  @map("verifier_display_name_snapshot")
+  verifierDesignationSnapshot        String?                 @map("verifier_designation_snapshot")
+  verifierRegistrationNumberSnapshot String?                 @map("verifier_registration_number_snapshot")
+  resultVersionReviewed              Int                     @map("result_version_reviewed")
+  reviewStartedAt                    DateTime?               @map("review_started_at")
+  verifiedAt                         DateTime?               @map("verified_at")
+  rejectedAt                         DateTime?               @map("rejected_at")
+  verificationComment                String?                 @map("verification_comment")
+  rejectionReasonCode                String?                 @map("rejection_reason_code")
+  rejectionReasonText                String?                 @map("rejection_reason_text")
+  affectedParameterIds               String?                 @map("affected_parameter_ids")
+  selfApprovalOverride               Boolean                 @default(false) @map("self_approval_override")
+  selfApprovalReason                 String?                 @map("self_approval_reason")
+  createdAt                          DateTime                @default(now()) @map("created_at")
+  updatedAt                          DateTime                @updatedAt @map("updated_at")
+
+  tenant            Tenant                      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch            Branch                      @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  labResult         LabResult                   @relation(fields: [labResultId], references: [id], onDelete: Cascade)
+  correctionRequest LabResultCorrectionRequest?
+
+  @@unique([labResultId, verificationSequence])
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, labResultId])
+  @@index([tenantId, decision])
+  @@index([tenantId, verifiedAt])
+  @@map("lab_result_verifications")
+}
+
+/// Correction request after verification rejection (MOD-23)
+model LabResultCorrectionRequest {
+  id             String                     @id @default(cuid())
+  tenantId       String                     @map("tenant_id")
+  labResultId    String                     @map("lab_result_id")
+  verificationId String                     @unique @map("verification_id")
+  requestedById  String                     @map("requested_by_id")
+  requestedAt    DateTime                   @default(now()) @map("requested_at")
+  reasonCode     String                     @map("reason_code")
+  reasonText     String                     @map("reason_text")
+  status         LabCorrectionRequestStatus @default(OPEN)
+  technicianNote String?                    @map("technician_note")
+  resolvedById   String?                    @map("resolved_by_id")
+  resolvedAt     DateTime?                  @map("resolved_at")
+  resolutionNote String?                    @map("resolution_note")
+  createdAt      DateTime                   @default(now()) @map("created_at")
+  updatedAt      DateTime                   @updatedAt @map("updated_at")
+
+  tenant       Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  labResult    LabResult             @relation(fields: [labResultId], references: [id], onDelete: Cascade)
+  verification LabResultVerification @relation(fields: [verificationId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, labResultId])
+  @@index([tenantId, status])
+  @@map("lab_result_correction_requests")
 }
 
 /// Host/global subscription package master (tenant_id not applicable)

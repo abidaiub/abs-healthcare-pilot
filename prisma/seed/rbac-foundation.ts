@@ -13,6 +13,7 @@ type RoleSeed = {
   fullAccess?: boolean;
   resourceKeys?: string[];
   actions?: PermissionAction[];
+  denyActions?: Record<string, PermissionAction[]>;
 };
 
 const TENANT_ROLE_SEEDS: RoleSeed[] = [
@@ -115,9 +116,28 @@ const TENANT_ROLE_SEEDS: RoleSeed[] = [
       "/lab/result-entry/reopen",
       "/lab/result-entry/critical-acknowledge",
       "/lab/verification",
+      "/lab/corrections",
+      "/lab/corrections/resubmit",
       "/lab/report-release",
     ],
     actions: ["canView", "canCreate", "canEdit", "canApprove", "canPrint"],
+    denyActions: {
+      "/lab/verification": ["canApprove"],
+    },
+  },
+  {
+    roleCode: "PATHOLOGIST",
+    roleName: "Pathologist",
+    description: "Laboratory result verification and approval",
+    resourceKeys: [
+      "/lab/verification",
+      "/lab/verification/review",
+      "/lab/verification/verify",
+      "/lab/verification/reject",
+      "/lab/verification/history",
+      "/lab/result-entry",
+    ],
+    actions: ["canView", "canEdit", "canApprove", "canPrint"],
   },
   {
     roleCode: "BILLING",
@@ -186,12 +206,12 @@ function buildPermissionPayload(
     permissionCode: resource.permissionCode,
     moduleCode: resource.moduleCode,
     resourceKey: resource.resourceKey,
-    canView: actions.includes("canView"),
-    canCreate: actions.includes("canCreate"),
-    canEdit: actions.includes("canEdit"),
-    canDelete: actions.includes("canDelete"),
-    canApprove: actions.includes("canApprove"),
-    canPrint: actions.includes("canPrint"),
+    canView: actions.includes("canView") && !(seed.denyActions?.[resource.resourceKey]?.includes("canView")),
+    canCreate: actions.includes("canCreate") && !(seed.denyActions?.[resource.resourceKey]?.includes("canCreate")),
+    canEdit: actions.includes("canEdit") && !(seed.denyActions?.[resource.resourceKey]?.includes("canEdit")),
+    canDelete: actions.includes("canDelete") && !(seed.denyActions?.[resource.resourceKey]?.includes("canDelete")),
+    canApprove: actions.includes("canApprove") && !(seed.denyActions?.[resource.resourceKey]?.includes("canApprove")),
+    canPrint: actions.includes("canPrint") && !(seed.denyActions?.[resource.resourceKey]?.includes("canPrint")),
     createdBy: actor,
     updatedBy: actor,
   }));

@@ -770,3 +770,88 @@ export function validateMod22RegistryCompliance(): {
 
   return { ok: errors.length === 0, errors };
 }
+
+export function validateMod23RegistryCompliance(): {
+  ok: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  const mod23 = getModuleRegistryEntry("MOD-23");
+
+  if (!mod23) {
+    errors.push("MOD-23 entry missing from MODULE_REGISTRY");
+    return { ok: false, errors };
+  }
+
+  if (MODULE_REGISTRY.filter((entry) => entry.moduleCode === "MOD-23").length !== 1) {
+    errors.push("MOD-23 module ID must be unique in MODULE_REGISTRY");
+  }
+
+  if (mod23.displayName !== "Pathologist Verification") {
+    errors.push("MOD-23 displayName must be Pathologist Verification");
+  }
+
+  if (mod23.implementationStatus !== "Implemented") {
+    errors.push("MOD-23 implementationStatus must be Implemented");
+  }
+
+  for (const dependency of [
+    "MOD-01",
+    "MOD-01A",
+    "MOD-02",
+    "MOD-03",
+    "MOD-04",
+    "MOD-06",
+    "MOD-07",
+    "MOD-15",
+    "MOD-21",
+    "MOD-22",
+  ]) {
+    if (!mod23.dependencies?.includes(dependency)) {
+      errors.push(`MOD-23 must depend on ${dependency}`);
+    }
+  }
+
+  if (mod23.dependencies?.includes("MOD-20")) {
+    errors.push("MOD-23 must not depend on MOD-20");
+  }
+
+  if (!mod23.verifyCommand?.includes("verify:mod23")) {
+    errors.push("MOD-23 verifyCommand must reference verify:mod23");
+  }
+
+  for (const filePath of [
+    mod23.docPath,
+    mod23.aiQcReportPath,
+    mod23.manualQcGuidePath,
+    mod23.manualQcResultTemplatePath,
+  ]) {
+    if (!filePath || !fs.existsSync(path.join(process.cwd(), filePath))) {
+      errors.push(`MOD-23 documentation path missing: ${filePath ?? "(unset)"}`);
+    }
+  }
+
+  if (mod23.manualQcStatus !== "NOT TESTED" || mod23.browserUatStatus !== "NOT TESTED") {
+    errors.push("MOD-23 QC statuses must remain NOT TESTED until manual UAT");
+  }
+
+  if (mod23.productionApprovalStatus !== "Pending Manual QC") {
+    errors.push("MOD-23 must not claim production approval");
+  }
+
+  const requiredCapabilities = [
+    "Verification worklist",
+    "Pathologist review and approval",
+    "Rejection for correction",
+    "Localization",
+    "RTL support",
+  ];
+
+  for (const capability of requiredCapabilities) {
+    if (!mod23.capabilities?.includes(capability)) {
+      errors.push(`MOD-23 capabilities missing: ${capability}`);
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}

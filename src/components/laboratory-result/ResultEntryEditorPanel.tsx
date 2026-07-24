@@ -11,8 +11,16 @@ import {
   type LabResultEntryData,
   type SaveLabResultItemInput,
 } from "@/app/actions/tenant-lab-results";
+import {
+  resubmitCorrectedLabResultAction,
+  type LabVerificationActionResult,
+} from "@/app/actions/tenant-lab-verification";
 import { Badge, Button, Card, CardBody, Input, Textarea } from "@/components/ui";
 import { ABNORMAL_FLAG_I18N, LAB_RESULT_STATUS_I18N } from "@/lib/laboratory-result/constants";
+import {
+  REJECTION_REASON_I18N,
+  type RejectionReasonCode,
+} from "@/lib/laboratory-verification/constants";
 import { useI18n } from "@/lib/i18n/client";
 
 type ItemDraft = SaveLabResultItemInput & {
@@ -48,11 +56,21 @@ export function ResultEntryEditorPanel({
   canSave,
   canComplete,
   canAcknowledgeCritical,
+  correctionContext,
+  canResubmit,
 }: {
   result: LabResultEntryData;
   canSave: boolean;
   canComplete: boolean;
   canAcknowledgeCritical: boolean;
+  correctionContext?: {
+    correctionRequestId: string;
+    reasonCode: RejectionReasonCode;
+    reasonText: string;
+    affectedParameterIds: string[];
+    verifierName?: string;
+  };
+  canResubmit?: boolean;
 }) {
   const router = useRouter();
   const { t } = useI18n();
@@ -60,6 +78,7 @@ export function ResultEntryEditorPanel({
   const [recordVersion, setRecordVersion] = useState(result.recordVersion);
   const [internalNote, setInternalNote] = useState(result.internalNote ?? "");
   const [reportNote, setReportNote] = useState(result.reportNote ?? "");
+  const [technicianNote, setTechnicianNote] = useState("");
   const [items, setItems] = useState<ItemDraft[]>(() => result.items.map(itemToDraft));
   const [pending, startTransition] = useTransition();
 
@@ -88,7 +107,19 @@ export function ResultEntryEditorPanel({
     setItems((current) => current.map((row) => (row.itemId === itemId ? { ...row, ...patch } : row)));
   }
 
-  function saveDraft(thenComplete = false) {
+  function handleVerificationResult(actionResult: LabVerificationActionResult) {
+    if (!actionResult.ok) {
+      setError(t(`laboratoryVerification.errors.${actionResult.errorCode}`, t("laboratoryVerification.errors.generic")));
+      return;
+    }
+    setError(null);
+    if (actionResult.recordVersion != null) {
+      setRecordVersion(actionResult.recordVersion);
+    }
+    router.push(`/lab/result-entry/${result.id}`);
+  }
+
+  function saveDraft(thenComplete = false, thenResubmit = false) {
     startTransition(async () => {
       const saveResult = await saveLabResultDraftAction(result.id, {
         internalNote,
@@ -108,6 +139,17 @@ export function ResultEntryEditorPanel({
       }
       if (thenComplete) {
         handleResult(await completeLabResultEntryAction(result.id, saveResult.recordVersion ?? recordVersion), true);
+        return;
+      }
+      if (thenResubmit && correctionContext) {
+        handleVerificationResult(
+          await resubmitCorrectedLabResultAction({
+            resultId: result.id,
+            correctionRequestId: correctionContext.correctionRequestId,
+            recordVersion: saveResult.recordVersion ?? recordVersion,
+            technicianNote,
+          }),
+        );
         return;
       }
       handleResult(saveResult);
@@ -130,11 +172,33 @@ export function ResultEntryEditorPanel({
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
+      {correctionContext ? (
+        <Card>
+          <CardBody className="space-y-3 text-sm">
+            <h3 className="font-semibold text-amber-800">{t("laboratoryVerification.sections.correctionContext")}</h3>
+            {correctionContext.verifierName ? (
+              <p>
+                {t("laboratoryVerification.fields.rejectedBy")}: {correctionContext.verifierName}
+              </p>
+            ) : null}
+            <p className="font-medium">{t(REJECTION_REASON_I18N[correctionContext.reasonCode])}</p>
+            <p>{correctionContext.reasonText}</p>
+          </CardBody>
+        </Card>
+      ) : null}
+
       <Card>
         <CardBody className="space-y-4">
           <h3 className="font-semibold text-slate-900">{t("laboratoryResult.sections.parameters")}</h3>
           {items.map((item) => (
-            <div key={item.itemId} className="grid gap-3 rounded-lg border border-slate-200 p-4 md:grid-cols-2">
+            <div
+              key={item.itemId}
+              className={`grid gap-3 rounded-lg border p-4 md:grid-cols-2 ${
+                correctionContext?.affectedParameterIds.includes(item.itemId)
+                  ? "border-amber-300 bg-amber-50"
+                  : "border-slate-200"
+              }`}
+            >
               <div>
                 <p className="font-medium text-slate-900">
                   {item.parameterName}
@@ -211,6 +275,18 @@ export function ResultEntryEditorPanel({
         </CardBody>
       </Card>
 
+      {correctionContext && canResubmit ? (
+        <Card>
+          <CardBody>
+            <Textarea
+              value={technicianNote}
+              onChange={(event) => setTechnicianNote(event.target.value)}
+              placeholder={t("laboratoryVerification.fields.technicianNote")}
+            />
+          </CardBody>
+        </Card>
+      ) : null}
+
       {unacknowledgedEvents.length > 0 ? (
         <Card>
           <CardBody className="space-y-3">
@@ -252,6 +328,11 @@ export function ResultEntryEditorPanel({
         {canComplete && unacknowledgedEvents.length === 0 ? (
           <Button type="button" disabled={pending} onClick={() => saveDraft(true)}>
             {t("laboratoryResult.actions.complete")}
+          </Button>
+        ) : null}
+        {canResubmit && correctionContext && unacknowledgedEvents.length === 0 ? (
+          <Button type="button" disabled={pending} onClick={() => saveDraft(false, true)}>
+            {t("laboratoryVerification.actions.resubmit")}
           </Button>
         ) : null}
       </div>

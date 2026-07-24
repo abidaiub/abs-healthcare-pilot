@@ -653,6 +653,24 @@ export const SCREENS = {
     screenName: "Result Verification / Approval",
     workflowRef: "Verification Pending → Approved → Release Ready",
   },
+  verificationReview: {
+    route: "/lab/verification/[resultId]",
+    moduleKey: "resultVerification",
+    screenName: "Verification Review",
+    workflowRef: "Review parameters → Verify or reject for correction",
+  },
+  verificationHistory: {
+    route: "/lab/verification/[resultId]/history",
+    moduleKey: "resultVerification",
+    screenName: "Verification History",
+    workflowRef: "Audit trail of verification attempts",
+  },
+  correctionWorklist: {
+    route: "/lab/corrections",
+    moduleKey: "resultVerification",
+    screenName: "Result Corrections",
+    workflowRef: "Open correction requests → Resubmit for verification",
+  },
   reportRelease: {
     route: "/lab/report-release",
     moduleKey: "reportRelease",

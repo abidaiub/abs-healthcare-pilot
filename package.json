@@ -29,6 +29,7 @@
     "verify:mod20": "tsx scripts/verify-mod20-pharmacy-medication-catalog.ts",
     "verify:mod21": "tsx scripts/verify-mod21-sample-collection-lab-workflow.ts",
     "verify:mod22": "tsx scripts/verify-mod22-laboratory-result-entry.ts",
+    "verify:mod23": "tsx scripts/verify-mod23-pathologist-verification.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

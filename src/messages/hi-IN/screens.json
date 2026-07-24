@@ -107,5 +107,15 @@
   "labResultEdit.title": "Result Entry Editor",
   "labResultEdit.breadcrumb": "Laboratory / Result Entry Editor",
   "sampleCollection.title": "Sample Collection",
-  "sampleCollection.breadcrumb": "Laboratory / Sample Collection"
+  "sampleCollection.breadcrumb": "Laboratory / Sample Collection",
+  "manualResultEntry.title": "Manual Result Entry",
+  "manualResultEntry.breadcrumb": "Laboratory / Manual Result Entry",
+  "verification.title": "Result Verification",
+  "verification.breadcrumb": "Laboratory / Result Verification",
+  "verificationReview.title": "Verification Review",
+  "verificationReview.breadcrumb": "Laboratory / Verification Review",
+  "verificationHistory.title": "Verification History",
+  "verificationHistory.breadcrumb": "Laboratory / Verification History",
+  "correctionWorklist.title": "Result Corrections",
+  "correctionWorklist.breadcrumb": "Laboratory / Result Corrections"
 }
