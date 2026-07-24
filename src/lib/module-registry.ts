@@ -635,6 +635,18 @@ export const SCREENS = {
     screenName: "Manual Result Entry",
     workflowRef: "Draft → Entered → Submit for Verification",
   },
+  labResultDetail: {
+    route: "/lab/result-entry/[resultId]",
+    moduleKey: "resultEntry",
+    screenName: "Result Entry Detail",
+    workflowRef: "Review entered values and critical events",
+  },
+  labResultEdit: {
+    route: "/lab/result-entry/[resultId]/edit",
+    moduleKey: "resultEntry",
+    screenName: "Result Entry Editor",
+    workflowRef: "Enter parameter values and complete entry",
+  },
   verification: {
     route: "/lab/verification",
     moduleKey: "resultVerification",

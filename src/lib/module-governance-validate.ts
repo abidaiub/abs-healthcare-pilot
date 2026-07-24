@@ -686,3 +686,87 @@ export function validateMod21RegistryCompliance(): {
 
   return { ok: errors.length === 0, errors };
 }
+
+export function validateMod22RegistryCompliance(): {
+  ok: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  const mod22 = getModuleRegistryEntry("MOD-22");
+
+  if (!mod22) {
+    errors.push("MOD-22 entry missing from MODULE_REGISTRY");
+    return { ok: false, errors };
+  }
+
+  if (MODULE_REGISTRY.filter((entry) => entry.moduleCode === "MOD-22").length !== 1) {
+    errors.push("MOD-22 module ID must be unique in MODULE_REGISTRY");
+  }
+
+  if (mod22.displayName !== "Laboratory Result Entry") {
+    errors.push("MOD-22 displayName must be Laboratory Result Entry");
+  }
+
+  if (mod22.implementationStatus !== "Implemented") {
+    errors.push("MOD-22 implementationStatus must be Implemented");
+  }
+
+  for (const dependency of [
+    "MOD-01",
+    "MOD-01A",
+    "MOD-02",
+    "MOD-03",
+    "MOD-04",
+    "MOD-06",
+    "MOD-07",
+    "MOD-15",
+    "MOD-21",
+  ]) {
+    if (!mod22.dependencies?.includes(dependency)) {
+      errors.push(`MOD-22 must depend on ${dependency}`);
+    }
+  }
+
+  if (mod22.dependencies?.includes("MOD-20")) {
+    errors.push("MOD-22 must not depend on MOD-20");
+  }
+
+  if (!mod22.verifyCommand?.includes("verify:mod22")) {
+    errors.push("MOD-22 verifyCommand must reference verify:mod22");
+  }
+
+  for (const filePath of [
+    mod22.docPath,
+    mod22.aiQcReportPath,
+    mod22.manualQcGuidePath,
+    mod22.manualQcResultTemplatePath,
+  ]) {
+    if (!filePath || !fs.existsSync(path.join(process.cwd(), filePath))) {
+      errors.push(`MOD-22 documentation path missing: ${filePath ?? "(unset)"}`);
+    }
+  }
+
+  if (mod22.manualQcStatus !== "NOT TESTED" || mod22.browserUatStatus !== "NOT TESTED") {
+    errors.push("MOD-22 QC statuses must remain NOT TESTED until manual UAT");
+  }
+
+  if (mod22.productionApprovalStatus !== "Pending Manual QC") {
+    errors.push("MOD-22 must not claim production approval");
+  }
+
+  const requiredCapabilities = [
+    "Result entry worklist",
+    "Parameter value validation",
+    "Critical value detection and acknowledgement",
+    "Localization",
+    "RTL support",
+  ];
+
+  for (const capability of requiredCapabilities) {
+    if (!mod22.capabilities?.includes(capability)) {
+      errors.push(`MOD-22 capabilities missing: ${capability}`);
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}

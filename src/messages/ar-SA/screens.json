@@ -102,6 +102,10 @@
   "labSampleDetail.breadcrumb": "Laboratory / Sample Detail",
   "labSampleLabel.title": "Sample Label",
   "labSampleLabel.breadcrumb": "Laboratory / Sample Label",
+  "labResultDetail.title": "Result Entry Detail",
+  "labResultDetail.breadcrumb": "Laboratory / Result Entry Detail",
+  "labResultEdit.title": "Result Entry Editor",
+  "labResultEdit.breadcrumb": "Laboratory / Result Entry Editor",
   "sampleCollection.title": "Sample Collection",
   "sampleCollection.breadcrumb": "Laboratory / Sample Collection"
 }

@@ -59,6 +59,15 @@ async function main() {
   assert(canTransitionLabOrderStatus("DRAFT", "CONFIRMED"), "Draft to confirmed");
   assert(!canTransitionLabOrderStatus("COMPLETED", "DRAFT"), "Completed to draft blocked");
 
+  assert(
+    (["READY_FOR_RESULT", "RESULT_IN_PROGRESS", "READY_FOR_VERIFICATION"] as const).includes("RESULT_IN_PROGRESS"),
+    "LabOrderTestStatus includes RESULT_IN_PROGRESS",
+  );
+  assert(
+    (["READY_FOR_RESULT", "RESULT_IN_PROGRESS", "READY_FOR_VERIFICATION"] as const).includes("READY_FOR_VERIFICATION"),
+    "LabOrderTestStatus includes READY_FOR_VERIFICATION",
+  );
+
   const grouped = groupTestsBySpecimen([
     { id: "a", sampleTypeId: "st1", sampleContainerId: "c1", status: "ORDERED" },
     { id: "b", sampleTypeId: "st1", sampleContainerId: "c1", status: "ORDERED" },
