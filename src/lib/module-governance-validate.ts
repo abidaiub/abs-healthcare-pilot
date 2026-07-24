@@ -855,3 +855,85 @@ export function validateMod23RegistryCompliance(): {
 
   return { ok: errors.length === 0, errors };
 }
+
+export function validateMod24RegistryCompliance(): {
+  ok: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  const mod24 = getModuleRegistryEntry("MOD-24");
+
+  if (!mod24) {
+    errors.push("MOD-24 entry missing from MODULE_REGISTRY");
+    return { ok: false, errors };
+  }
+
+  if (MODULE_REGISTRY.filter((entry) => entry.moduleCode === "MOD-24").length !== 1) {
+    errors.push("MOD-24 module ID must be unique in MODULE_REGISTRY");
+  }
+
+  if (mod24.implementationStatus !== "Implemented") {
+    errors.push("MOD-24 implementationStatus must be Implemented");
+  }
+
+  for (const dependency of [
+    "MOD-01",
+    "MOD-01A",
+    "MOD-02",
+    "MOD-03",
+    "MOD-04",
+    "MOD-06",
+    "MOD-07",
+    "MOD-15",
+    "MOD-21",
+    "MOD-22",
+    "MOD-23",
+  ]) {
+    if (!mod24.dependencies?.includes(dependency)) {
+      errors.push(`MOD-24 must depend on ${dependency}`);
+    }
+  }
+
+  if (mod24.dependencies?.includes("MOD-20")) {
+    errors.push("MOD-24 must not depend on MOD-20");
+  }
+
+  if (!mod24.verifyCommand?.includes("verify:mod24")) {
+    errors.push("MOD-24 verifyCommand must reference verify:mod24");
+  }
+
+  for (const filePath of [
+    mod24.docPath,
+    mod24.aiQcReportPath,
+    mod24.manualQcGuidePath,
+    mod24.manualQcResultTemplatePath,
+  ]) {
+    if (!filePath || !fs.existsSync(path.join(process.cwd(), filePath))) {
+      errors.push(`MOD-24 documentation path missing: ${filePath ?? "(unset)"}`);
+    }
+  }
+
+  if (mod24.manualQcStatus !== "NOT TESTED" || mod24.browserUatStatus !== "NOT TESTED") {
+    errors.push("MOD-24 QC statuses must remain NOT TESTED until manual UAT");
+  }
+
+  if (mod24.productionApprovalStatus !== "Pending Manual QC") {
+    errors.push("MOD-24 must not claim production approval");
+  }
+
+  const requiredCapabilities = [
+    "Release queue",
+    "Release authorization",
+    "QR verification",
+    "Localization",
+    "RTL support",
+  ];
+
+  for (const capability of requiredCapabilities) {
+    if (!mod24.capabilities?.includes(capability)) {
+      errors.push(`MOD-24 capabilities missing: ${capability}`);
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}

@@ -677,6 +677,24 @@ export const SCREENS = {
     screenName: "Report Generate / Print",
     workflowRef: "Preview → Print/PDF → Release to Portal",
   },
+  reportReleaseDetail: {
+    route: "/lab/report-release/[releaseId]",
+    moduleKey: "reportRelease",
+    screenName: "Report Release Detail",
+    workflowRef: "Authorize → Print → Portal publish",
+  },
+  reportReleaseHistory: {
+    route: "/lab/report-release/history",
+    moduleKey: "reportRelease",
+    screenName: "Report Release History",
+    workflowRef: "Released and withdrawn report audit",
+  },
+  reportReleasePrint: {
+    route: "/lab/report-release/[releaseId]/print",
+    moduleKey: "reportRelease",
+    screenName: "Printable Diagnostic Report",
+    workflowRef: "HTML printable report with QR verification",
+  },
   portalReports: {
     route: "/portal/reports",
     moduleKey: "patientPortal",

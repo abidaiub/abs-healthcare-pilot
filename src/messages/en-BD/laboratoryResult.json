@@ -13,6 +13,8 @@
   "status.entryCompleted": "Entry completed",
   "status.readyForVerification": "Ready for verification",
   "status.verified": "Verified",
+  "status.releasePending": "Release pending",
+  "status.released": "Released",
   "status.rejectedForCorrection": "Rejected for correction",
   "status.amended": "Amended",
   "status.cancelled": "Cancelled",

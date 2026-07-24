@@ -6,6 +6,8 @@ export const LAB_RESULT_STATUS_I18N: Record<LabResultStatus, string> = {
   ENTRY_COMPLETED: "laboratoryResult.status.entryCompleted",
   READY_FOR_VERIFICATION: "laboratoryResult.status.readyForVerification",
   VERIFIED: "laboratoryResult.status.verified",
+  RELEASE_PENDING: "laboratoryResult.status.releasePending",
+  RELEASED: "laboratoryResult.status.released",
   REJECTED_FOR_CORRECTION: "laboratoryResult.status.rejectedForCorrection",
   AMENDED: "laboratoryResult.status.amended",
   CANCELLED: "laboratoryResult.status.cancelled",
@@ -23,7 +25,9 @@ const RESULT_TRANSITIONS: Record<LabResultStatus, LabResultStatus[]> = {
   IN_PROGRESS: ["ENTRY_COMPLETED", "CANCELLED"],
   ENTRY_COMPLETED: ["READY_FOR_VERIFICATION", "IN_PROGRESS"],
   READY_FOR_VERIFICATION: ["IN_PROGRESS"],
-  VERIFIED: [],
+  VERIFIED: ["RELEASE_PENDING"],
+  RELEASE_PENDING: ["RELEASED", "VERIFIED"],
+  RELEASED: [],
   REJECTED_FOR_CORRECTION: [],
   AMENDED: [],
   CANCELLED: [],
@@ -35,6 +39,10 @@ export function canTransitionLabResultStatus(from: LabResultStatus, to: LabResul
 
 export function isLabResultEditable(status: LabResultStatus): boolean {
   return status === "DRAFT" || status === "IN_PROGRESS" || status === "ENTRY_COMPLETED";
+}
+
+export function isLabResultReleased(status: LabResultStatus): boolean {
+  return status === "RELEASED" || status === "RELEASE_PENDING";
 }
 
 export function isLabResultCorrectable(status: LabResultStatus): boolean {

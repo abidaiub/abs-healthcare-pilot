@@ -247,6 +247,13 @@ model Tenant {
   labResultItems                LabResultItem[]
   labResultVerifications        LabResultVerification[]
   labResultCorrectionRequests   LabResultCorrectionRequest[]
+  labReportReleases             LabReportRelease[]
+  labReportVersions             LabReportVersion[]
+  labReportDeliveries           LabReportDelivery[]
+  labReportAccessAudits         LabReportAccessAudit[]
+  labReportReprintAudits        LabReportReprintAudit[]
+  labReportVerificationTokens   LabReportVerificationToken[]
+  labReportCounter              TenantLabReportCounter?
   labSamples                    LabSample[]
   labSampleTests                LabSampleTest[]
   sampleRejectionReasons        SampleRejectionReason[]
@@ -304,6 +311,12 @@ model Branch {
   labSamples               LabSample[]
   labResults               LabResult[]
   labResultVerifications   LabResultVerification[]
+  labReportReleases        LabReportRelease[]
+  labReportVersions        LabReportVersion[]
+  labReportDeliveries      LabReportDelivery[]
+  labReportAccessAudits    LabReportAccessAudit[]
+  labReportReprintAudits   LabReportReprintAudit[]
+  labReportVerificationTokens LabReportVerificationToken[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -1180,9 +1193,43 @@ enum LabResultStatus {
   ENTRY_COMPLETED
   READY_FOR_VERIFICATION
   VERIFIED
+  RELEASE_PENDING
+  RELEASED
   REJECTED_FOR_CORRECTION
   AMENDED
   CANCELLED
+}
+
+enum LabReportReleaseStatus {
+  RELEASE_PENDING
+  RELEASED
+  WITHDRAWN
+  AMENDED
+}
+
+enum LabReportVersionStatus {
+  DRAFT
+  RELEASED
+  SUPERSEDED
+  WITHDRAWN
+}
+
+enum LabReportDeliveryMethod {
+  COUNTER
+  PORTAL
+  EMAIL
+  WHATSAPP
+  DOCTOR_PORTAL
+  DOWNLOAD
+  PRINT
+}
+
+enum LabReportAccessMethod {
+  PORTAL_VIEW
+  PDF_DOWNLOAD
+  PRINT
+  QR_VERIFY
+  COUNTER
 }
 
 enum AbnormalFlag {
@@ -1433,6 +1480,7 @@ model LabResult {
   criticalEvents     LabCriticalValueEvent[]
   verifications      LabResultVerification[]
   correctionRequests LabResultCorrectionRequest[]
+  reportRelease      LabReportRelease?
 
   @@index([tenantId])
   @@index([tenantId, branchId])
@@ -1572,6 +1620,191 @@ model LabResultCorrectionRequest {
   @@index([tenantId, labResultId])
   @@index([tenantId, status])
   @@map("lab_result_correction_requests")
+}
+
+/// Tenant-scoped diagnostic report number counter (MOD-24)
+model TenantLabReportCounter {
+  tenantId   String @id @map("tenant_id")
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_lab_report_counters")
+}
+
+/// Report release header (MOD-24)
+model LabReportRelease {
+  id                     String                 @id @default(cuid())
+  tenantId               String                 @map("tenant_id")
+  branchId               String                 @map("branch_id")
+  labResultId            String                 @unique @map("lab_result_id")
+  reportNumber           String                 @map("report_number")
+  status                 LabReportReleaseStatus @default(RELEASE_PENDING)
+  resultVersionSnapshot  Int                    @map("result_version_snapshot")
+  currentVersionId       String?                @unique @map("current_version_id")
+  portalPublishEligible  Boolean                @default(false) @map("portal_publish_eligible")
+  portalPublishedAt      DateTime?              @map("portal_published_at")
+  portalPublishedById    String?                @map("portal_published_by_id")
+  releasedById           String?                @map("released_by_id")
+  releasedAt             DateTime?              @map("released_at")
+  withdrawnById          String?                @map("withdrawn_by_id")
+  withdrawnAt            DateTime?              @map("withdrawn_at")
+  withdrawalReason       String?                @map("withdrawal_reason")
+  printCount             Int                    @default(0) @map("print_count")
+  downloadCount          Int                    @default(0) @map("download_count")
+  createdAt              DateTime               @default(now()) @map("created_at")
+  createdById            String?                @map("created_by_id")
+  updatedAt              DateTime               @updatedAt @map("updated_at")
+  updatedById            String?                @map("updated_by_id")
+
+  tenant              Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch              Branch                       @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  labResult           LabResult                    @relation(fields: [labResultId], references: [id], onDelete: Cascade)
+  currentVersion      LabReportVersion?            @relation("CurrentReportVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
+  versions            LabReportVersion[]           @relation("ReleaseVersions")
+  deliveries          LabReportDelivery[]
+  accessAudits        LabReportAccessAudit[]
+  reprintAudits       LabReportReprintAudit[]
+  verificationTokens  LabReportVerificationToken[]
+
+  @@unique([tenantId, reportNumber])
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, status])
+  @@index([tenantId, reportNumber])
+  @@index([tenantId, releasedAt])
+  @@map("lab_report_releases")
+}
+
+/// Immutable released report version snapshot (MOD-24)
+model LabReportVersion {
+  id               String                 @id @default(cuid())
+  tenantId         String                 @map("tenant_id")
+  branchId         String                 @map("branch_id")
+  releaseId        String                 @map("release_id")
+  versionNumber    Int                    @map("version_number")
+  status           LabReportVersionStatus @default(DRAFT)
+  isCurrent        Boolean                @default(false) @map("is_current")
+  snapshotJson     String                 @map("snapshot_json")
+  amendmentReason  String?                @map("amendment_reason")
+  amendedFromId    String?                @map("amended_from_id")
+  releasedById     String?                @map("released_by_id")
+  releasedAt       DateTime?              @map("released_at")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  createdById      String?                @map("created_by_id")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
+
+  tenant             Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch             Branch                       @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  release            LabReportRelease             @relation("ReleaseVersions", fields: [releaseId], references: [id], onDelete: Cascade)
+  currentForRelease  LabReportRelease?            @relation("CurrentReportVersion")
+  amendedFrom        LabReportVersion?            @relation("ReportVersionAmendment", fields: [amendedFromId], references: [id], onDelete: SetNull)
+  amendedChildren    LabReportVersion[]           @relation("ReportVersionAmendment")
+  verificationTokens LabReportVerificationToken[]
+
+  @@unique([releaseId, versionNumber])
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, releaseId])
+  @@index([tenantId, status])
+  @@map("lab_report_versions")
+}
+
+/// Delivery event log (MOD-24)
+model LabReportDelivery {
+  id             String                  @id @default(cuid())
+  tenantId       String                  @map("tenant_id")
+  branchId       String                  @map("branch_id")
+  releaseId      String                  @map("release_id")
+  versionId      String                  @map("version_id")
+  deliveryMethod LabReportDeliveryMethod @map("delivery_method")
+  deliveredTo    String                  @map("delivered_to")
+  deliveredById  String?                 @map("delivered_by_id")
+  deliveredAt    DateTime                @default(now()) @map("delivered_at")
+  referenceNote  String?                 @map("reference_note")
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+
+  tenant  Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch  Branch           @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  release LabReportRelease @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, releaseId])
+  @@map("lab_report_deliveries")
+}
+
+/// Report access audit (MOD-24)
+model LabReportAccessAudit {
+  id           String                @id @default(cuid())
+  tenantId     String                @map("tenant_id")
+  branchId     String                @map("branch_id")
+  releaseId    String                @map("release_id")
+  versionId    String                @map("version_id")
+  accessMethod LabReportAccessMethod @map("access_method")
+  accessedBy   String                @map("accessed_by")
+  accessedAt   DateTime              @default(now()) @map("accessed_at")
+  ipAddress    String?               @map("ip_address")
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+
+  tenant  Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch  Branch           @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  release LabReportRelease @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, releaseId])
+  @@index([tenantId, accessedAt])
+  @@map("lab_report_access_audits")
+}
+
+/// Reprint audit (MOD-24)
+model LabReportReprintAudit {
+  id            String   @id @default(cuid())
+  tenantId      String   @map("tenant_id")
+  branchId      String   @map("branch_id")
+  releaseId     String   @map("release_id")
+  versionId     String   @map("version_id")
+  reprintedById String   @map("reprinted_by_id")
+  reprintedAt   DateTime @default(now()) @map("reprinted_at")
+  reason        String
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  tenant  Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch  Branch           @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  release LabReportRelease @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, releaseId])
+  @@map("lab_report_reprint_audits")
+}
+
+/// QR verification token (MOD-24)
+model LabReportVerificationToken {
+  id         String    @id @default(cuid())
+  tenantId   String    @map("tenant_id")
+  branchId   String    @map("branch_id")
+  releaseId  String    @map("release_id")
+  versionId  String    @map("version_id")
+  token      String    @unique
+  isRevoked  Boolean   @default(false) @map("is_revoked")
+  expiresAt  DateTime? @map("expires_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  tenant  Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch  Branch           @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  release LabReportRelease @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  version LabReportVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, releaseId])
+  @@map("lab_report_verification_tokens")
 }
 
 /// Host/global subscription package master (tenant_id not applicable)

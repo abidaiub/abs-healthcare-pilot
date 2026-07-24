@@ -46,7 +46,7 @@ export function isResultReadyForVerification(status: LabResultStatus): boolean {
 }
 
 export function isResultLocked(status: LabResultStatus): boolean {
-  return status === "VERIFIED";
+  return status === "VERIFIED" || status === "RELEASE_PENDING" || status === "RELEASED";
 }
 
 export function isResultCorrectable(status: LabResultStatus): boolean {
