@@ -216,6 +216,12 @@ model Tenant {
   appointments              Appointment[]
   appointmentCounter        TenantAppointmentCounter?
   queueCounters             BranchDoctorQueueCounter[]
+  clinicalEncounters        ClinicalEncounter[]
+  encounterCounter          TenantEncounterCounter?
+  encounterVitals           EncounterVital[]
+  encounterDiagnoses        EncounterDiagnosis[]
+  encounterMedicineAdvices  EncounterMedicineAdvice[]
+  encounterInvestigationAdvices EncounterInvestigationAdvice[]
 
   @@index([tenantStatus])
   @@index([createdAt])
@@ -263,6 +269,7 @@ model Branch {
   registeredPatients       Patient[]                 @relation("PatientRegistrationBranch")
   appointments             Appointment[]
   queueCounters            BranchDoctorQueueCounter[]
+  clinicalEncounters       ClinicalEncounter[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -337,6 +344,7 @@ model Patient {
   tenant             Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   registrationBranch Branch @relation("PatientRegistrationBranch", fields: [registrationBranchId], references: [id])
   appointments       Appointment[]
+  clinicalEncounters ClinicalEncounter[]
 
   @@unique([tenantId, patientNumber])
   @@index([tenantId])
@@ -426,6 +434,8 @@ model Appointment {
   doctor     Doctor      @relation(fields: [doctorId], references: [id], onDelete: Restrict)
   department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
 
+  clinicalEncounters ClinicalEncounter[]
+
   @@unique([tenantId, appointmentNumber])
   @@index([tenantId])
   @@index([tenantId, branchId])
@@ -437,6 +447,205 @@ model Appointment {
   @@index([tenantId, branchId, doctorId, appointmentDate, timeSlot], map: "appointments_tenant_branch_doctor_date_slot_idx")
   @@index([tenantId, branchId, doctorId, queueTokenDate, queueToken])
   @@map("appointments")
+}
+
+enum ClinicalEncounterStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum EncounterType {
+  OPD
+}
+
+enum DiagnosisType {
+  PRIMARY
+  SECONDARY
+  PROVISIONAL
+  CONFIRMED
+}
+
+enum InvestigationAdviceStatus {
+  ADVISED
+  CANCELLED
+}
+
+/// Tenant-scoped sequential counter for encounter numbers (MOD-18)
+model TenantEncounterCounter {
+  tenantId   String @id @map("tenant_id")
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_encounter_counters")
+}
+
+/// Clinical encounter / consultation record (MOD-18)
+model ClinicalEncounter {
+  id                     String                  @id @default(cuid())
+  tenantId               String                  @map("tenant_id")
+  branchId               String                  @map("branch_id")
+  patientId              String                  @map("patient_id")
+  doctorId               String                  @map("doctor_id")
+  departmentId           String?                 @map("department_id")
+  appointmentId          String?                 @map("appointment_id")
+  encounterNumber        String                  @map("encounter_number")
+  status                 ClinicalEncounterStatus @default(DRAFT)
+  encounterType          EncounterType           @default(OPD) @map("encounter_type")
+  consultationDate       DateTime                @map("consultation_date") @db.Date
+  startedAt              DateTime?               @map("started_at")
+  completedAt            DateTime?               @map("completed_at")
+  chiefComplaint         String?                 @map("chief_complaint")
+  historyOfPresentIllness String?                @map("history_of_present_illness")
+  pastMedicalHistory     String?                 @map("past_medical_history")
+  pastSurgicalHistory    String?                 @map("past_surgical_history")
+  allergyNotes           String?                 @map("allergy_notes")
+  familyHistory          String?                 @map("family_history")
+  socialHistory          String?                 @map("social_history")
+  examinationNotes       String?                 @map("examination_notes")
+  clinicalNotes          String?                 @map("clinical_notes")
+  generalAdvice          String?                 @map("general_advice")
+  followUpDate           DateTime?               @map("follow_up_date") @db.Date
+  followUpIntervalDays   Int?                    @map("follow_up_interval_days")
+  followUpInstructions   String?                 @map("follow_up_instructions")
+  reopenReason           String?                 @map("reopen_reason")
+  reopenedAt             DateTime?               @map("reopened_at")
+  reopenedById           String?                 @map("reopened_by_id")
+  correctionReason       String?                 @map("correction_reason")
+  isActive               Boolean                 @default(true) @map("is_active")
+  createdAt              DateTime                @default(now()) @map("created_at")
+  createdById            String?                 @map("created_by_id")
+  createdBy              String?                 @map("created_by")
+  updatedAt              DateTime                @updatedAt @map("updated_at")
+  updatedById            String?                 @map("updated_by_id")
+  updatedBy              String?                 @map("updated_by")
+
+  tenant       Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch       Branch                       @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  patient      Patient                      @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor       Doctor                       @relation(fields: [doctorId], references: [id], onDelete: Restrict)
+  department   Department?                  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  appointment  Appointment?                 @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  vitals       EncounterVital?
+  diagnoses    EncounterDiagnosis[]
+  medicines    EncounterMedicineAdvice[]
+  investigations EncounterInvestigationAdvice[]
+
+  @@unique([tenantId, encounterNumber])
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, patientId])
+  @@index([tenantId, doctorId])
+  @@index([tenantId, appointmentId])
+  @@index([tenantId, status])
+  @@index([tenantId, consultationDate])
+  @@map("clinical_encounters")
+}
+
+model EncounterVital {
+  id                 String   @id @default(cuid())
+  tenantId           String   @map("tenant_id")
+  encounterId        String   @unique @map("encounter_id")
+  heightCm           Decimal? @map("height_cm") @db.Decimal(6, 2)
+  weightKg           Decimal? @map("weight_kg") @db.Decimal(6, 2)
+  temperatureC       Decimal? @map("temperature_c") @db.Decimal(4, 1)
+  pulseBpm           Int?     @map("pulse_bpm")
+  respiratoryRate    Int?     @map("respiratory_rate")
+  systolicBp         Int?     @map("systolic_bp")
+  diastolicBp        Int?     @map("diastolic_bp")
+  spo2Percent        Int?     @map("spo2_percent")
+  bmi                Decimal? @db.Decimal(5, 2)
+  bloodGlucoseMgDl   Decimal? @map("blood_glucose_mg_dl") @db.Decimal(6, 2)
+  notes              String?
+  capturedAt         DateTime @default(now()) @map("captured_at")
+  capturedById       String?  @map("captured_by_id")
+  capturedBy         String?  @map("captured_by")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  encounter ClinicalEncounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, encounterId])
+  @@map("encounter_vitals")
+}
+
+model EncounterDiagnosis {
+  id              String        @id @default(cuid())
+  tenantId        String        @map("tenant_id")
+  encounterId     String        @map("encounter_id")
+  diagnosisType   DiagnosisType @map("diagnosis_type")
+  diagnosisText   String        @map("diagnosis_text")
+  icdCode         String?       @map("icd_code")
+  notes           String?
+  sortOrder       Int           @default(0) @map("sort_order")
+  isActive        Boolean       @default(true) @map("is_active")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  createdBy       String?       @map("created_by")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  updatedBy       String?       @map("updated_by")
+
+  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  encounter ClinicalEncounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, encounterId])
+  @@map("encounter_diagnoses")
+}
+
+model EncounterMedicineAdvice {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  encounterId     String   @map("encounter_id")
+  medicineText    String   @map("medicine_text")
+  strength        String?
+  dose            String?
+  route           String?
+  frequency       String?
+  duration        String?
+  quantity        String?
+  instructions    String?
+  foodTiming      String?  @map("food_timing")
+  sortOrder       Int      @default(0) @map("sort_order")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  createdBy       String?  @map("created_by")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  updatedBy       String?  @map("updated_by")
+
+  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  encounter ClinicalEncounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, encounterId])
+  @@map("encounter_medicine_advices")
+}
+
+model EncounterInvestigationAdvice {
+  id                String                    @id @default(cuid())
+  tenantId          String                    @map("tenant_id")
+  encounterId       String                    @map("encounter_id")
+  investigationText String                    @map("investigation_text")
+  priority          String?
+  instructions      String?
+  clinicalNote      String?                   @map("clinical_note")
+  status            InvestigationAdviceStatus @default(ADVISED)
+  sortOrder         Int                       @default(0) @map("sort_order")
+  isActive          Boolean                   @default(true) @map("is_active")
+  createdAt         DateTime                  @default(now()) @map("created_at")
+  createdBy         String?                   @map("created_by")
+  updatedAt         DateTime                  @updatedAt @map("updated_at")
+  updatedBy         String?                   @map("updated_by")
+
+  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  encounter ClinicalEncounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, encounterId])
+  @@map("encounter_investigation_advices")
 }
 
 /// Host/global subscription package master (tenant_id not applicable)
@@ -804,6 +1013,7 @@ model Department {
   reportDoctorAssignments  ReportDoctorAssignment[]
   reportSignatureTemplates ReportSignatureTemplate[]
   appointments             Appointment[]
+  clinicalEncounters       ClinicalEncounter[]
 
   @@unique([tenantId, deptCode])
   @@index([tenantId])
@@ -1239,6 +1449,7 @@ model Doctor {
   reportSignatureTemplates ReportSignatureTemplate[]
   appointments             Appointment[]
   queueCounters            BranchDoctorQueueCounter[]
+  clinicalEncounters       ClinicalEncounter[]
 
   @@unique([tenantId, doctorCode])
   @@index([tenantId])

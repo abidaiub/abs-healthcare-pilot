@@ -39,5 +39,17 @@
   "queueDashboard.title": "قطار ڈیش بورڈ",
   "queueDashboard.breadcrumb": "آپریشنز / قطار ڈیش بورڈ",
   "queueOperator.title": "قطار آپریٹر",
-  "queueOperator.breadcrumb": "آپریشنز / قطار آپریٹر"
+  "queueOperator.breadcrumb": "آپریشنز / قطار آپریٹر",
+  "doctorWorklist.title": "ڈاکٹر ورک لسٹ",
+  "doctorWorklist.breadcrumb": "کلینیکل / ڈاکٹر ورک لسٹ",
+  "consultationList.title": "مشاورت کی فہرست",
+  "consultationList.breadcrumb": "کلینیکل / مشاورت",
+  "consultationStart.title": "مشاورت شروع",
+  "consultationStart.breadcrumb": "کلینیکل / مشاورت شروع",
+  "consultationDetail.title": "مشاورت کی تفصیل",
+  "consultationDetail.breadcrumb": "کلینیکل / مشاورت کی تفصیل",
+  "consultationEdit.title": "مشاورت ورک اسپیس",
+  "consultationEdit.breadcrumb": "کلینیکل / مشاورت ورک اسپیس",
+  "consultationPrint.title": "مشاورت پرنٹ",
+  "consultationPrint.breadcrumb": "کلینیکل / مشاورت پرنٹ"
 }

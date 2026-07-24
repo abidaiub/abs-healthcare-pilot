@@ -39,5 +39,17 @@
   "queueDashboard.title": "Queue Dashboard",
   "queueDashboard.breadcrumb": "Operations / Queue Dashboard",
   "queueOperator.title": "Queue Operator",
-  "queueOperator.breadcrumb": "Operations / Queue Operator"
+  "queueOperator.breadcrumb": "Operations / Queue Operator",
+  "doctorWorklist.title": "Doctor Worklist",
+  "doctorWorklist.breadcrumb": "Clinical / Doctor Worklist",
+  "consultationList.title": "Consultation List",
+  "consultationList.breadcrumb": "Clinical / Consultations",
+  "consultationStart.title": "Start Consultation",
+  "consultationStart.breadcrumb": "Clinical / Start Consultation",
+  "consultationDetail.title": "Consultation Detail",
+  "consultationDetail.breadcrumb": "Clinical / Consultation Detail",
+  "consultationEdit.title": "Consultation Workspace",
+  "consultationEdit.breadcrumb": "Clinical / Consultation Workspace",
+  "consultationPrint.title": "Consultation Print",
+  "consultationPrint.breadcrumb": "Clinical / Consultation Print"
 }

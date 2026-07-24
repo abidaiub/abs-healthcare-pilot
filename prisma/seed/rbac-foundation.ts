@@ -34,7 +34,23 @@ const TENANT_ROLE_SEEDS: RoleSeed[] = [
       "/appointments/new",
       "/appointments/queue",
       "/appointments/queue/operator",
+      "/consultations",
       "/diagnostic/billing",
+    ],
+    actions: ["canView", "canCreate", "canEdit", "canPrint"],
+  },
+  {
+    roleCode: "DOCTOR",
+    roleName: "Doctor",
+    description: "Clinical consultation and encounter documentation",
+    resourceKeys: [
+      "/doctor/worklist",
+      "/consultations",
+      "/consultations/start",
+      "/consultations/edit",
+      "/consultations/vitals",
+      "/consultations/complete",
+      "/consultations/print",
     ],
     actions: ["canView", "canCreate", "canEdit", "canPrint"],
   },
@@ -82,6 +98,13 @@ const SAMPLE_USERS = [
     phone: "+880 17 1111 0083",
     password: "Tenant@2026!",
     roleCode: "BILLING",
+  },
+  {
+    username: "amina.rahman",
+    email: "amina.rahman@albarakamedical.com",
+    phone: "+880 17 1111 0084",
+    password: "Tenant@2026!",
+    roleCode: "DOCTOR",
   },
 ] as const;
 

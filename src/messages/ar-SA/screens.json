@@ -39,5 +39,17 @@
   "queueDashboard.title": "لوحة الطابور",
   "queueDashboard.breadcrumb": "العمليات / لوحة الطابور",
   "queueOperator.title": "مشغل الطابور",
-  "queueOperator.breadcrumb": "العمليات / مشغل الطابور"
+  "queueOperator.breadcrumb": "العمليات / مشغل الطابور",
+  "doctorWorklist.title": "قائمة عمل الطبيب",
+  "doctorWorklist.breadcrumb": "السريري / قائمة عمل الطبيب",
+  "consultationList.title": "قائمة الاستشارات",
+  "consultationList.breadcrumb": "السريري / الاستشارات",
+  "consultationStart.title": "بدء الاستشارة",
+  "consultationStart.breadcrumb": "السريري / بدء الاستشارة",
+  "consultationDetail.title": "تفاصيل الاستشارة",
+  "consultationDetail.breadcrumb": "السريري / تفاصيل الاستشارة",
+  "consultationEdit.title": "مساحة عمل الاستشارة",
+  "consultationEdit.breadcrumb": "السريري / مساحة عمل الاستشارة",
+  "consultationPrint.title": "طباعة الاستشارة",
+  "consultationPrint.breadcrumb": "السريري / طباعة الاستشارة"
 }

@@ -138,6 +138,8 @@ const RECEPTION_NAV: NavGroup[] = [
 
       { href: "/appointments/queue", labelKey: "queueDashboard", icon: "⏱" },
 
+      { href: "/consultations", labelKey: "consultationList", icon: "☰" },
+
       {
 
         href: "/diagnostic/billing",
@@ -147,6 +149,26 @@ const RECEPTION_NAV: NavGroup[] = [
         icon: "₤",
 
       },
+
+    ],
+
+  },
+
+];
+
+
+
+const DOCTOR_NAV: NavGroup[] = [
+
+  {
+
+    titleKey: "groups.doctor",
+
+    items: [
+
+      { href: "/doctor/worklist", labelKey: "doctorWorklist", icon: "✚" },
+
+      { href: "/consultations", labelKey: "consultationList", icon: "☰" },
 
     ],
 
@@ -294,6 +316,14 @@ export function getTenantNavGroups(session: SessionContext): NavGroup[] {
 
 
 
+  if (role === "Doctor" || roleCode === "DOCTOR") {
+
+    return DOCTOR_NAV;
+
+  }
+
+
+
   if (
 
     role === "Lab Technician" ||
@@ -386,6 +416,10 @@ export function getRoleHomePath(role: string, roleCode?: string): string {
     role === "Cashier"
   ) {
     return "/dashboard";
+  }
+
+  if (roleCode === "DOCTOR" || role === "Doctor") {
+    return "/doctor/worklist";
   }
 
   if (

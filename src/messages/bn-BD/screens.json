@@ -39,5 +39,17 @@
   "queueDashboard.title": "কিউ ড্যাশবোর্ড",
   "queueDashboard.breadcrumb": "অপারেশন / কিউ ড্যাশবোর্ড",
   "queueOperator.title": "কিউ অপারেটর",
-  "queueOperator.breadcrumb": "অপারেশন / কিউ অপারেটর"
+  "queueOperator.breadcrumb": "অপারেশন / কিউ অপারেটর",
+  "doctorWorklist.title": "ডাক্তার ওয়ার্কলিস্ট",
+  "doctorWorklist.breadcrumb": "ক্লিনিকাল / ডাক্তার ওয়ার্কলিস্ট",
+  "consultationList.title": "পরামর্শ তালিকা",
+  "consultationList.breadcrumb": "ক্লিনিকাল / পরামর্শ",
+  "consultationStart.title": "পরামর্শ শুরু",
+  "consultationStart.breadcrumb": "ক্লিনিকাল / পরামর্শ শুরু",
+  "consultationDetail.title": "পরামর্শ বিবরণ",
+  "consultationDetail.breadcrumb": "ক্লিনিকাল / পরামর্শ বিবরণ",
+  "consultationEdit.title": "পরামর্শ ওয়ার্কস্পেস",
+  "consultationEdit.breadcrumb": "ক্লিনিকাল / পরামর্শ ওয়ার্কস্পেস",
+  "consultationPrint.title": "পরামর্শ প্রিন্ট",
+  "consultationPrint.breadcrumb": "ক্লিনিকাল / পরামর্শ প্রিন্ট"
 }

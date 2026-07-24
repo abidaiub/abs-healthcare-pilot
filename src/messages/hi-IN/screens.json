@@ -39,5 +39,17 @@
   "queueDashboard.title": "क्यू डैशबोर्ड",
   "queueDashboard.breadcrumb": "ऑपरेशंस / क्यू डैशबोर्ड",
   "queueOperator.title": "क्यू ऑपरेटर",
-  "queueOperator.breadcrumb": "ऑपरेशंस / क्यू ऑपरेटर"
+  "queueOperator.breadcrumb": "ऑपरेशंस / क्यू ऑपरेटर",
+  "doctorWorklist.title": "डॉक्टर वर्कलिस्ट",
+  "doctorWorklist.breadcrumb": "क्लिनिकल / डॉक्टर वर्कलिस्ट",
+  "consultationList.title": "परामर्श सूची",
+  "consultationList.breadcrumb": "क्लिनिकल / परामर्श",
+  "consultationStart.title": "परामर्श शुरू",
+  "consultationStart.breadcrumb": "क्लिनिकल / परामर्श शुरू",
+  "consultationDetail.title": "परामर्श विवरण",
+  "consultationDetail.breadcrumb": "क्लिनिकल / परामर्श विवरण",
+  "consultationEdit.title": "परामर्श वर्कस्पेस",
+  "consultationEdit.breadcrumb": "क्लिनिकल / परामर्श वर्कस्पेस",
+  "consultationPrint.title": "परामर्श प्रिंट",
+  "consultationPrint.breadcrumb": "क्लिनिकल / परामर्श प्रिंट"
 }

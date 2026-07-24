@@ -71,6 +71,11 @@ export function AppointmentDetailPanel({
               {t("appointment.actions.checkIn")}
             </Button>
           )}
+          {["WAITING", "CALLED", "IN_CONSULTATION"].includes(appointment.status) && (
+            <Link href={`/consultations/start?appointmentId=${appointment.id}`}>
+              <Button type="button">{t("appointment.actions.startConsultation")}</Button>
+            </Link>
+          )}
           {canEdit && !["COMPLETED", "CANCELLED", "NO_SHOW"].includes(appointment.status) && (
             <>
               <Button type="button" variant="secondary" disabled={pending} onClick={() => run(() => cancelAppointmentAction(appointment.id).then((r) => ({ ok: r.ok, errorCode: r.ok ? undefined : r.errorCode })))}>

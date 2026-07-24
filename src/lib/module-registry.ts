@@ -27,6 +27,12 @@ export const MODULES = {
     docPath: "docs/modules/MOD-17-Appointment-Queue-Management.md",
     mockupPath: "docs/17-AppointmentManagement/Mockups/WireframeMockup.md",
   },
+  doctorConsultation: {
+    id: "18",
+    name: "Doctor Worklist & Clinical Encounter",
+    docPath: "docs/modules/MOD-18-Doctor-Consultation.md",
+    mockupPath: "docs/18-DoctorWorklistEncounter/Mockups/WireframeMockup.md",
+  },
   sampleCollection: {
     id: "21",
     name: "Sample Collection & Laboratory Workflow",
@@ -404,9 +410,39 @@ export const SCREENS = {
   },
   doctorWorklist: {
     route: "/doctor/worklist",
-    moduleKey: "aiPrescription",
+    moduleKey: "doctorConsultation",
     screenName: "Doctor Worklist",
-    workflowRef: "Queue → Consult → Prescribe / Order",
+    workflowRef: "Queue → Start consultation → Clinical workspace",
+  },
+  consultationList: {
+    route: "/consultations",
+    moduleKey: "doctorConsultation",
+    screenName: "Consultation List",
+    workflowRef: "View encounter history and worklist",
+  },
+  consultationStart: {
+    route: "/consultations/start",
+    moduleKey: "doctorConsultation",
+    screenName: "Start Consultation",
+    workflowRef: "Appointment-linked encounter start",
+  },
+  consultationDetail: {
+    route: "/consultations/[encounterId]",
+    moduleKey: "doctorConsultation",
+    screenName: "Consultation Detail",
+    workflowRef: "Read-only completed encounter",
+  },
+  consultationEdit: {
+    route: "/consultations/[encounterId]/edit",
+    moduleKey: "doctorConsultation",
+    screenName: "Consultation Workspace",
+    workflowRef: "Draft, vitals, diagnosis, advice, complete",
+  },
+  consultationPrint: {
+    route: "/consultations/[encounterId]/print",
+    moduleKey: "doctorConsultation",
+    screenName: "Consultation Print",
+    workflowRef: "Printable prescription and summary",
   },
   diagnosticBilling: {
     route: "/diagnostic/billing",

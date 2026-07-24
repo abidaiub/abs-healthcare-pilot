@@ -8,8 +8,8 @@ import {
   completeAppointmentAction,
   recallQueueAppointmentAction,
   skipQueueAppointmentAction,
-  startConsultationAction,
 } from "@/app/actions/tenant-appointments";
+import { startConsultationAction } from "@/app/actions/tenant-consultations";
 import { Badge, Button, Card, CardBody } from "@/components/ui";
 import { APPOINTMENT_STATUS_I18N_KEYS } from "@/lib/appointment/constants";
 import type { QueueSummary } from "@/lib/appointment/queries";
@@ -88,7 +88,27 @@ export function QueueOperatorPanel({
                       )}
                       {canOperate && row.status === "CALLED" && (
                         <>
-                          <Button type="button" disabled={pending} onClick={() => run(() => startConsultationAction(row.id).then((r) => ({ ok: r.ok, errorCode: r.ok ? undefined : r.errorCode })))}>{t("appointment.actions.startConsultation")}</Button>
+                          <Button
+                            type="button"
+                            disabled={pending}
+                            onClick={() =>
+                              startTransition(async () => {
+                                const result = await startConsultationAction(row.id);
+                                if (!result.ok) {
+                                  setError(t(`consultation.errors.${result.errorCode}`, t("consultation.errors.generic")));
+                                  return;
+                                }
+                                setError(null);
+                                if (result.encounterId) {
+                                  router.push(`/consultations/${result.encounterId}/edit`);
+                                } else {
+                                  router.refresh();
+                                }
+                              })
+                            }
+                          >
+                            {t("appointment.actions.startConsultation")}
+                          </Button>
                           <Button type="button" variant="secondary" disabled={pending} onClick={() => run(() => recallQueueAppointmentAction(row.id).then((r) => ({ ok: r.ok, errorCode: r.ok ? undefined : r.errorCode })))}>{t("appointment.actions.recall")}</Button>
                         </>
                       )}
