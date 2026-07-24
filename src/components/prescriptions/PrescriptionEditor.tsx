@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition, type FormEvent } from "react";
+import { useRef, useState, useTransition, type FormEvent } from "react";
 import {
   addPrescriptionMedicineAction,
   cancelPrescriptionAction,
@@ -143,24 +143,36 @@ export function PrescriptionEditor({
   const [medicineDraft, setMedicineDraft] = useState<MedicineDraft>(EMPTY_MEDICINE_DRAFT);
   const [pending, startTransition] = useTransition();
   const disabled = !canEdit || pending;
+  const catalogSearchTimer = useRef<number | null>(null);
+  const catalogSearchRequest = useRef(0);
 
-  useEffect(() => {
-    const term = catalogQuery.trim();
+  function handleCatalogQueryChange(value: string) {
+    setCatalogQuery(value);
+    if (catalogSearchTimer.current) window.clearTimeout(catalogSearchTimer.current);
+    const term = value.trim();
     if (term.length < 2) {
       setCatalogResults([]);
       setCatalogSearching(false);
       return;
     }
-
     setCatalogSearching(true);
-    const timer = window.setTimeout(() => {
+    const requestId = ++catalogSearchRequest.current;
+    catalogSearchTimer.current = window.setTimeout(() => {
       void searchMedicationCatalogAction(term)
-        .then((rows) => setCatalogResults(rows))
-        .finally(() => setCatalogSearching(false));
+        .then((rows) => {
+          if (requestId !== catalogSearchRequest.current) return;
+          setCatalogResults(rows);
+        })
+        .catch(() => {
+          if (requestId !== catalogSearchRequest.current) return;
+          setCatalogResults([]);
+        })
+        .finally(() => {
+          if (requestId !== catalogSearchRequest.current) return;
+          setCatalogSearching(false);
+        });
     }, 300);
-
-    return () => window.clearTimeout(timer);
-  }, [catalogQuery]);
+  }
 
   function selectCatalogItem(item: CatalogSearchResult) {
     setMedicineDraft({
@@ -381,7 +393,7 @@ export function PrescriptionEditor({
                 <Input
                   label={t("pharmacy.actions.searchCatalog")}
                   value={catalogQuery}
-                  onChange={(event) => setCatalogQuery(event.target.value)}
+                  onChange={(event) => handleCatalogQueryChange(event.target.value)}
                   disabled={disabled}
                   placeholder={t("pharmacy.fields.query")}
                 />

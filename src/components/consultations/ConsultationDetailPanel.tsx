@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { reopenConsultationAction } from "@/app/actions/tenant-consultations";
+import { createLabOrderFromEncounterAction } from "@/app/actions/tenant-lab-orders";
 import { Badge, Button, Card, CardBody, Textarea } from "@/components/ui";
 import type { ClinicalEncounterStatus, DiagnosisType } from "@/lib/consultation/types";
 import { ENCOUNTER_STATUS_I18N_KEYS, isEncounterEditable } from "@/lib/consultation/constants";
@@ -71,6 +72,7 @@ type EncounterDetail = {
     instructions: string | null;
   }[];
   investigations: {
+    id: string;
     investigationText: string;
     priority: string | null;
     instructions: string | null;
@@ -83,12 +85,16 @@ export function ConsultationDetailPanel({
   canReopen,
   encounterPrescription,
   canCreatePrescription,
+  encounterLabOrder,
+  canCreateLabOrder,
 }: {
   encounter: EncounterDetail;
   canPrint: boolean;
   canReopen: boolean;
   encounterPrescription?: { id: string; status: "DRAFT" | "FINALIZED" | "CANCELLED" | "SUPERSEDED" } | null;
   canCreatePrescription?: boolean;
+  encounterLabOrder?: { id: string; status: "DRAFT" | "CONFIRMED" | "PARTIALLY_COLLECTED" | "COLLECTED" | "RECEIVED" | "IN_PROCESS" | "READY_FOR_RESULT" | "COMPLETED" | "CANCELLED" } | null;
+  canCreateLabOrder?: boolean;
 }) {
   const router = useRouter();
   const { t } = useI18n();
@@ -106,6 +112,21 @@ export function ConsultationDetailPanel({
       }
       setError(null);
       router.push(`/consultations/${encounter.id}/edit`);
+    });
+  }
+
+  function createLabOrder() {
+    startTransition(async () => {
+      const result = await createLabOrderFromEncounterAction(
+        encounter.id,
+        encounter.investigations.map((row) => row.id),
+      );
+      if (!result.ok) {
+        setError(t(`laboratory.errors.${result.errorCode}`, t("laboratory.errors.generic")));
+        return;
+      }
+      setError(null);
+      router.push(`/lab/orders/${result.labOrderId}/edit`);
     });
   }
 
@@ -143,6 +164,21 @@ export function ConsultationDetailPanel({
             <Link href={`/prescriptions/new?encounterId=${encounter.id}`}>
               <Button type="button" variant="secondary">{t("prescription.actions.create")}</Button>
             </Link>
+          )}
+          {encounterLabOrder?.status === "DRAFT" && (
+            <Link href={`/lab/orders/${encounterLabOrder.id}/edit`}>
+              <Button type="button" variant="secondary">{t("laboratory.actions.openDraft")}</Button>
+            </Link>
+          )}
+          {encounterLabOrder && encounterLabOrder.status !== "DRAFT" && (
+            <Link href={`/lab/orders/${encounterLabOrder.id}`}>
+              <Button type="button" variant="secondary">{t("laboratory.actions.viewOrder")}</Button>
+            </Link>
+          )}
+          {canCreateLabOrder && !encounterLabOrder && encounter.investigations.length > 0 && (
+            <Button type="button" variant="secondary" disabled={pending} onClick={createLabOrder}>
+              {t("laboratory.actions.createFromEncounter")}
+            </Button>
           )}
           <Link href="/consultations">
             <Button type="button" variant="ghost">{t("consultation.actions.backToList")}</Button>

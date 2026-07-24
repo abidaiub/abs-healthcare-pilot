@@ -3,6 +3,7 @@ import { ModulePageHeader } from "@/components/layout/ModulePageHeader";
 import { ConsultationDetailPanel } from "@/components/consultations/ConsultationDetailPanel";
 import { getEncounterAction } from "@/app/actions/tenant-consultations";
 import { findCurrentPrescriptionForEncounterAction } from "@/app/actions/tenant-prescriptions";
+import { findEncounterLabOrderDraftAction } from "@/app/actions/tenant-lab-orders";
 import { getServerI18n } from "@/lib/i18n/server";
 import { hasTenantPermission, requireTenantPermission } from "@/lib/rbac/auth";
 
@@ -15,11 +16,13 @@ export default async function ConsultationDetailPage({ params }: PageProps) {
   const encounter = await getEncounterAction(encounterId);
   if (!encounter) notFound();
 
-  const [canPrint, canReopen, encounterPrescription, canCreatePrescription] = await Promise.all([
+  const [canPrint, canReopen, encounterPrescription, canCreatePrescription, encounterLabOrder, canCreateLabOrder] = await Promise.all([
     hasTenantPermission(session.tenantId, session.userId, "/consultations/print", "canPrint"),
     hasTenantPermission(session.tenantId, session.userId, "/consultations/reopen", "canApprove"),
     findCurrentPrescriptionForEncounterAction(encounterId),
     hasTenantPermission(session.tenantId, session.userId, "/prescriptions/new", "canCreate"),
+    findEncounterLabOrderDraftAction(encounterId),
+    hasTenantPermission(session.tenantId, session.userId, "/lab/orders/new", "canCreate"),
   ]);
 
   return (
@@ -31,6 +34,8 @@ export default async function ConsultationDetailPage({ params }: PageProps) {
         canReopen={canReopen}
         encounterPrescription={encounterPrescription ? { id: encounterPrescription.id, status: encounterPrescription.status } : null}
         canCreatePrescription={canCreatePrescription}
+        encounterLabOrder={encounterLabOrder}
+        canCreateLabOrder={canCreateLabOrder && encounter.investigations.length > 0}
       />
     </div>
   );

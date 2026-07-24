@@ -213,14 +213,20 @@ const LAB_NAV: NavGroup[] = [
     items: [
 
       {
-
-        href: "/lab/sample-collection",
-
-        labelKey: "sampleCollection",
-
-        icon: "⬢",
-
+        href: "/lab/orders",
+        labelKey: "labOrders",
+        icon: "☰",
       },
+
+      {
+        href: "/lab/collection",
+        labelKey: "sampleCollection",
+        icon: "⬢",
+      },
+
+      { href: "/lab/receipt", labelKey: "labReceipt", icon: "↩" },
+
+      { href: "/lab/processing", labelKey: "labProcessing", icon: "⚙" },
 
       { href: "/lab/label-print", labelKey: "labelPrint", icon: "▤" },
 

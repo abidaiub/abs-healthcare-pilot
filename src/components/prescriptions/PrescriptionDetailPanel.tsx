@@ -8,8 +8,10 @@ import {
   createPrescriptionRevisionAction,
   finalizePrescriptionAction,
 } from "@/app/actions/tenant-prescriptions";
+import { createLabOrderFromPrescriptionAction } from "@/app/actions/tenant-lab-orders";
 import { Badge, Button, Card, CardBody, Textarea } from "@/components/ui";
 import type { PrescriptionDurationUnit, PrescriptionStatus } from "@/lib/prescription/types";
+import type { LabOrderStatus } from "@/generated/prisma/client";
 import type { DiagnosisType } from "@/lib/consultation/types";
 import { PRESCRIPTION_STATUS_I18N_KEYS, isPrescriptionEditable } from "@/lib/prescription/constants";
 import { useI18n } from "@/lib/i18n/client";
@@ -70,6 +72,7 @@ export type PrescriptionDetailData = {
     icdCode: string | null;
   }[];
   investigations: {
+    id: string;
     investigationText: string;
     priority: string | null;
     instructions: string | null;
@@ -83,6 +86,8 @@ export function PrescriptionDetailPanel({
   canCancel,
   canRevise,
   canPrint,
+  prescriptionLabOrder,
+  canCreateLabOrder,
 }: {
   prescription: PrescriptionDetailData;
   canEdit: boolean;
@@ -90,6 +95,8 @@ export function PrescriptionDetailPanel({
   canCancel: boolean;
   canRevise: boolean;
   canPrint: boolean;
+  prescriptionLabOrder?: { id: string; status: LabOrderStatus } | null;
+  canCreateLabOrder?: boolean;
 }) {
   const router = useRouter();
   const { t } = useI18n();
@@ -143,6 +150,21 @@ export function PrescriptionDetailPanel({
     });
   }
 
+  function createLabOrder() {
+    startTransition(async () => {
+      const result = await createLabOrderFromPrescriptionAction(
+        prescription.id,
+        prescription.investigations.map((row) => row.id),
+      );
+      if (!result.ok) {
+        setError(t(`laboratory.errors.${result.errorCode}`, t("laboratory.errors.generic")));
+        return;
+      }
+      setError(null);
+      router.push(`/lab/orders/${result.labOrderId}/edit`);
+    });
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -168,6 +190,21 @@ export function PrescriptionDetailPanel({
             <Link href={`/prescriptions/${prescription.id}/print`}>
               <Button type="button" variant="secondary">{t("prescription.actions.print")}</Button>
             </Link>
+          )}
+          {prescriptionLabOrder?.status === "DRAFT" && (
+            <Link href={`/lab/orders/${prescriptionLabOrder.id}/edit`}>
+              <Button type="button" variant="secondary">{t("laboratory.actions.openDraft")}</Button>
+            </Link>
+          )}
+          {prescriptionLabOrder && prescriptionLabOrder.status !== "DRAFT" && (
+            <Link href={`/lab/orders/${prescriptionLabOrder.id}`}>
+              <Button type="button" variant="secondary">{t("laboratory.actions.viewOrder")}</Button>
+            </Link>
+          )}
+          {canCreateLabOrder && !prescriptionLabOrder && prescription.investigations.length > 0 && (
+            <Button type="button" variant="secondary" disabled={pending} onClick={createLabOrder}>
+              {t("laboratory.actions.createFromPrescription")}
+            </Button>
           )}
           <Link href={`/prescriptions/${prescription.id}/history`}>
             <Button type="button" variant="ghost">{t("prescription.actions.history")}</Button>

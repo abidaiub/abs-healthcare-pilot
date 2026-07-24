@@ -601,3 +601,88 @@ export function validateMod20RegistryCompliance(): {
 
   return { ok: errors.length === 0, errors };
 }
+
+export function validateMod21RegistryCompliance(): {
+  ok: boolean;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  const mod21 = getModuleRegistryEntry("MOD-21");
+
+  if (!mod21) {
+    errors.push("MOD-21 entry missing from MODULE_REGISTRY");
+    return { ok: false, errors };
+  }
+
+  if (MODULE_REGISTRY.filter((entry) => entry.moduleCode === "MOD-21").length !== 1) {
+    errors.push("MOD-21 module ID must be unique in MODULE_REGISTRY");
+  }
+
+  if (mod21.displayName !== "Sample Collection & Lab Workflow") {
+    errors.push("MOD-21 displayName must be Sample Collection & Lab Workflow");
+  }
+
+  if (mod21.implementationStatus !== "Implemented") {
+    errors.push("MOD-21 implementationStatus must be Implemented");
+  }
+
+  for (const dependency of [
+    "MOD-01",
+    "MOD-01A",
+    "MOD-02",
+    "MOD-03",
+    "MOD-04",
+    "MOD-06",
+    "MOD-07",
+    "MOD-15",
+    "MOD-18",
+    "MOD-19",
+  ]) {
+    if (!mod21.dependencies?.includes(dependency)) {
+      errors.push(`MOD-21 must depend on ${dependency}`);
+    }
+  }
+
+  if (mod21.dependencies?.includes("MOD-20")) {
+    errors.push("MOD-21 must not depend on MOD-20");
+  }
+
+  if (!mod21.verifyCommand?.includes("verify:mod21")) {
+    errors.push("MOD-21 verifyCommand must reference verify:mod21");
+  }
+
+  for (const filePath of [
+    mod21.docPath,
+    mod21.aiQcReportPath,
+    mod21.manualQcGuidePath,
+    mod21.manualQcResultTemplatePath,
+  ]) {
+    if (!filePath || !fs.existsSync(path.join(process.cwd(), filePath))) {
+      errors.push(`MOD-21 documentation path missing: ${filePath ?? "(unset)"}`);
+    }
+  }
+
+  if (mod21.manualQcStatus !== "NOT TESTED" || mod21.browserUatStatus !== "NOT TESTED") {
+    errors.push("MOD-21 QC statuses must remain NOT TESTED until manual UAT");
+  }
+
+  if (mod21.productionApprovalStatus !== "Pending Manual QC") {
+    errors.push("MOD-21 must not claim production approval");
+  }
+
+  const requiredCapabilities = [
+    "Lab order lifecycle",
+    "Sample collection worklist",
+    "Sample receipt and rejection",
+    "Localization",
+    "RTL support",
+  ];
+
+  for (const capability of requiredCapabilities) {
+    if (!mod21.capabilities?.includes(capability)) {
+      errors.push(`MOD-21 capabilities missing: ${capability}`);
+    }
+  }
+
+  return { ok: errors.length === 0, errors };
+}

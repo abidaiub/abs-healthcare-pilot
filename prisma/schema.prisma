@@ -238,6 +238,13 @@ model Tenant {
   medicationIngredients         MedicationIngredient[]
   medicationAliases             MedicationAlias[]
   branchMedications             BranchMedication[]
+  labOrderCounter               TenantLabOrderCounter?
+  labAccessionCounter           TenantLabAccessionCounter?
+  labOrders                     LabOrder[]
+  labOrderTests                 LabOrderTest[]
+  labSamples                    LabSample[]
+  labSampleTests                LabSampleTest[]
+  sampleRejectionReasons        SampleRejectionReason[]
 
   @@index([tenantStatus])
   @@index([createdAt])
@@ -288,6 +295,8 @@ model Branch {
   clinicalEncounters       ClinicalEncounter[]
   prescriptions            Prescription[]
   branchMedications        BranchMedication[]
+  labOrders                LabOrder[]
+  labSamples               LabSample[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -364,6 +373,7 @@ model Patient {
   appointments       Appointment[]
   clinicalEncounters ClinicalEncounter[]
   prescriptions      Prescription[]
+  labOrders          LabOrder[]
 
   @@unique([tenantId, patientNumber])
   @@index([tenantId])
@@ -455,6 +465,7 @@ model Appointment {
 
   clinicalEncounters ClinicalEncounter[]
   prescriptions      Prescription[]
+  labOrders          LabOrder[]
 
   @@unique([tenantId, appointmentNumber])
   @@index([tenantId])
@@ -553,6 +564,7 @@ model ClinicalEncounter {
   medicines      EncounterMedicineAdvice[]
   investigations EncounterInvestigationAdvice[]
   prescriptions  Prescription[]
+  labOrders      LabOrder[]
 
   @@unique([tenantId, encounterNumber])
   @@index([tenantId])
@@ -661,8 +673,9 @@ model EncounterInvestigationAdvice {
   updatedAt         DateTime                  @updatedAt @map("updated_at")
   updatedBy         String?                   @map("updated_by")
 
-  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  encounter ClinicalEncounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  encounter     ClinicalEncounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  labOrderTests LabOrderTest[]
 
   @@index([tenantId])
   @@index([tenantId, encounterId])
@@ -736,6 +749,7 @@ model Prescription {
   medicines              PrescriptionMedicine[]
   diagnoses              PrescriptionDiagnosis[]
   investigations         PrescriptionInvestigation[]
+  labOrders              LabOrder[]
 
   @@unique([tenantId, prescriptionNumber, versionNumber])
   @@index([tenantId])
@@ -817,8 +831,9 @@ model PrescriptionInvestigation {
   isActive                       Boolean                   @default(true) @map("is_active")
   createdAt                      DateTime                  @default(now()) @map("created_at")
 
-  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prescription  Prescription   @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  labOrderTests LabOrderTest[]
 
   @@index([tenantId])
   @@index([tenantId, prescriptionId])
@@ -1098,6 +1113,243 @@ model BranchMedication {
   @@index([tenantId, branchId])
   @@index([tenantId, medicationCatalogItemId])
   @@map("branch_medications")
+}
+
+enum LabOrderSource {
+  ENCOUNTER_ADVICE
+  PRESCRIPTION
+  MANUAL
+}
+
+enum LabOrderPriority {
+  ROUTINE
+  URGENT
+  STAT
+}
+
+enum LabOrderStatus {
+  DRAFT
+  CONFIRMED
+  PARTIALLY_COLLECTED
+  COLLECTED
+  RECEIVED
+  IN_PROCESS
+  READY_FOR_RESULT
+  COMPLETED
+  CANCELLED
+}
+
+enum LabOrderTestStatus {
+  ORDERED
+  SAMPLE_PENDING
+  SAMPLE_COLLECTED
+  SAMPLE_RECEIVED
+  IN_PROCESS
+  READY_FOR_RESULT
+  COMPLETED
+  CANCELLED
+  RECOLLECTION_REQUIRED
+}
+
+enum LabSampleStatus {
+  PENDING_COLLECTION
+  COLLECTED
+  RECEIVED
+  REJECTED
+  IN_PROCESS
+  READY_FOR_RESULT
+  COMPLETED
+}
+
+enum SampleReceiptOutcome {
+  ACCEPTED
+  REJECTED
+}
+
+/// Tenant-scoped lab order counter (MOD-21)
+model TenantLabOrderCounter {
+  tenantId   String @id @map("tenant_id")
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_lab_order_counters")
+}
+
+/// Tenant-scoped sample accession counter (MOD-21)
+model TenantLabAccessionCounter {
+  tenantId   String @id @map("tenant_id")
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_lab_accession_counters")
+}
+
+/// Sample rejection reason reference (MOD-21)
+model SampleRejectionReason {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  reasonCode  String   @map("reason_code")
+  displayName String   @map("display_name")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  labSamples LabSample[]
+
+  @@unique([tenantId, reasonCode])
+  @@index([tenantId])
+  @@map("sample_rejection_reasons")
+}
+
+/// Laboratory order header (MOD-21)
+model LabOrder {
+  id                 String           @id @default(cuid())
+  tenantId           String           @map("tenant_id")
+  branchId           String           @map("branch_id")
+  patientId          String           @map("patient_id")
+  doctorId           String?          @map("doctor_id")
+  encounterId        String?          @map("encounter_id")
+  appointmentId      String?          @map("appointment_id")
+  prescriptionId     String?          @map("prescription_id")
+  orderNumber        String           @map("order_number")
+  orderSource        LabOrderSource   @map("order_source")
+  priority           LabOrderPriority @default(ROUTINE)
+  status             LabOrderStatus   @default(DRAFT)
+  clinicalNote       String?          @map("clinical_note")
+  orderedAt          DateTime         @default(now()) @map("ordered_at")
+  confirmedAt        DateTime?        @map("confirmed_at")
+  cancelledAt        DateTime?        @map("cancelled_at")
+  cancellationReason String?          @map("cancellation_reason")
+  createdAt          DateTime         @default(now()) @map("created_at")
+  createdById        String?          @map("created_by_id")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
+  updatedById        String?          @map("updated_by_id")
+
+  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch       Branch             @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  patient      Patient            @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  doctor       Doctor?            @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+  encounter    ClinicalEncounter? @relation(fields: [encounterId], references: [id], onDelete: SetNull)
+  appointment  Appointment?       @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  prescription Prescription?      @relation(fields: [prescriptionId], references: [id], onDelete: SetNull)
+  tests        LabOrderTest[]
+  samples      LabSample[]
+
+  @@unique([tenantId, orderNumber])
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, patientId])
+  @@index([tenantId, status])
+  @@index([tenantId, orderNumber])
+  @@index([tenantId, orderedAt])
+  @@map("lab_orders")
+}
+
+/// Ordered test line on a lab order (MOD-21)
+model LabOrderTest {
+  id                                String             @id @default(cuid())
+  tenantId                          String             @map("tenant_id")
+  labOrderId                        String             @map("lab_order_id")
+  tenantServiceId                   String?            @map("tenant_service_id")
+  sourceEncounterInvestigationId    String?            @map("source_encounter_investigation_id")
+  sourcePrescriptionInvestigationId String?            @map("source_prescription_investigation_id")
+  testCode                          String?            @map("test_code")
+  testName                          String             @map("test_name")
+  departmentId                      String?            @map("department_id")
+  sampleTypeId                      String?            @map("sample_type_id")
+  sampleContainerId                 String?            @map("sample_container_id")
+  specimenRequirementSnapshot       String?            @map("specimen_requirement_snapshot")
+  instructions                      String?
+  priority                          LabOrderPriority   @default(ROUTINE)
+  status                            LabOrderTestStatus @default(ORDERED)
+  sequence                          Int                @default(0)
+  createdAt                         DateTime           @default(now()) @map("created_at")
+  updatedAt                         DateTime           @updatedAt @map("updated_at")
+
+  tenant                          Tenant                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  labOrder                        LabOrder                      @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
+  tenantService                   TenantService?                @relation(fields: [tenantServiceId], references: [id], onDelete: SetNull)
+  department                      Department?                   @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  sampleType                      SampleType?                   @relation(fields: [sampleTypeId], references: [id], onDelete: SetNull)
+  sampleContainer                 SampleContainer?              @relation(fields: [sampleContainerId], references: [id], onDelete: SetNull)
+  sourceEncounterInvestigation    EncounterInvestigationAdvice? @relation(fields: [sourceEncounterInvestigationId], references: [id], onDelete: SetNull)
+  sourcePrescriptionInvestigation PrescriptionInvestigation?    @relation(fields: [sourcePrescriptionInvestigationId], references: [id], onDelete: SetNull)
+  sampleTests                     LabSampleTest[]
+
+  @@index([tenantId])
+  @@index([tenantId, labOrderId])
+  @@index([tenantId, status])
+  @@map("lab_order_tests")
+}
+
+/// Physical sample / accession (MOD-21)
+model LabSample {
+  id                   String                @id @default(cuid())
+  tenantId             String                @map("tenant_id")
+  branchId             String                @map("branch_id")
+  labOrderId           String                @map("lab_order_id")
+  sampleTypeId         String?               @map("sample_type_id")
+  sampleContainerId    String?               @map("sample_container_id")
+  accessionNumber      String                @map("accession_number")
+  barcodeValue         String                @map("barcode_value")
+  collectionSite       String?               @map("collection_site")
+  sampleStatus         LabSampleStatus       @default(PENDING_COLLECTION)
+  collectedAt          DateTime?             @map("collected_at")
+  collectedById        String?               @map("collected_by_id")
+  receivedAt           DateTime?             @map("received_at")
+  receivedById         String?               @map("received_by_id")
+  receiptOutcome       SampleReceiptOutcome? @map("receipt_outcome")
+  conditionOnReceipt   String?               @map("condition_on_receipt")
+  receiptNote          String?               @map("receipt_note")
+  rejectedAt           DateTime?             @map("rejected_at")
+  rejectedById         String?               @map("rejected_by_id")
+  rejectionReasonId    String?               @map("rejection_reason_id")
+  rejectionNote        String?               @map("rejection_note")
+  recollectionRequired Boolean               @default(false) @map("recollection_required")
+  supersedesSampleId   String?               @map("supersedes_sample_id")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+
+  tenant           Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch           Branch                 @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  labOrder         LabOrder               @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
+  sampleType       SampleType?            @relation(fields: [sampleTypeId], references: [id], onDelete: SetNull)
+  sampleContainer  SampleContainer?       @relation(fields: [sampleContainerId], references: [id], onDelete: SetNull)
+  rejectionReason  SampleRejectionReason? @relation(fields: [rejectionReasonId], references: [id], onDelete: SetNull)
+  supersedesSample LabSample?             @relation("SampleRecollection", fields: [supersedesSampleId], references: [id], onDelete: SetNull)
+  supersededBy     LabSample[]            @relation("SampleRecollection")
+  sampleTests      LabSampleTest[]
+
+  @@unique([tenantId, accessionNumber])
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, labOrderId])
+  @@index([tenantId, sampleStatus])
+  @@index([tenantId, accessionNumber])
+  @@index([tenantId, barcodeValue])
+  @@map("lab_samples")
+}
+
+/// Mapping between sample and ordered tests (MOD-21)
+model LabSampleTest {
+  id             String   @id @default(cuid())
+  tenantId       String   @map("tenant_id")
+  labSampleId    String   @map("lab_sample_id")
+  labOrderTestId String   @map("lab_order_test_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  labSample    LabSample    @relation(fields: [labSampleId], references: [id], onDelete: Cascade)
+  labOrderTest LabOrderTest @relation(fields: [labOrderTestId], references: [id], onDelete: Cascade)
+
+  @@unique([labSampleId, labOrderTestId])
+  @@index([tenantId])
+  @@index([tenantId, labSampleId])
+  @@index([tenantId, labOrderTestId])
+  @@map("lab_sample_tests")
 }
 
 /// Host/global subscription package master (tenant_id not applicable)
@@ -1467,6 +1719,7 @@ model Department {
   appointments             Appointment[]
   clinicalEncounters       ClinicalEncounter[]
   prescriptions            Prescription[]
+  labOrderTests            LabOrderTest[]
 
   @@unique([tenantId, deptCode])
   @@index([tenantId])
@@ -1626,6 +1879,7 @@ model TenantService {
   serviceParameters       ServiceParameter[]
   reportDoctorAssignments ReportDoctorAssignment[]
   tenantServiceBranches   TenantServiceBranch[]
+  labOrderTests           LabOrderTest[]
 
   @@unique([tenantId, hostServiceId])
   @@index([tenantId])
@@ -1738,6 +1992,8 @@ model SampleType {
   tenant                 Tenant?                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tenantServices         TenantService[]
   hostSampleRequirements HostServiceSampleRequirement[]
+  labOrderTests          LabOrderTest[]
+  labSamples             LabSample[]
 
   @@unique([tenantId, typeCode])
   @@index([tenantId])
@@ -1769,6 +2025,8 @@ model SampleContainer {
   department             Department?                    @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   tenantServices         TenantService[]
   hostSampleRequirements HostServiceSampleRequirement[]
+  labOrderTests          LabOrderTest[]
+  labSamples             LabSample[]
 
   @@unique([tenantId, containerCode])
   @@index([tenantId])
@@ -1904,6 +2162,7 @@ model Doctor {
   queueCounters            BranchDoctorQueueCounter[]
   clinicalEncounters       ClinicalEncounter[]
   prescriptions            Prescription[]
+  labOrders                LabOrder[]
 
   @@unique([tenantId, doctorCode])
   @@index([tenantId])

@@ -20,6 +20,7 @@ import { seedBranchFoundation } from "./seed/branch-foundation";
 import { seedPatientFoundation } from "./seed/patient-foundation";
 import { seedAppointmentFoundation } from "./seed/appointment-foundation";
 import { seedMedicationFoundation } from "./seed/medication-foundation";
+import { seedLabFoundation } from "./seed/lab-foundation";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -86,6 +87,7 @@ async function main() {
   await seedPatientFoundation(prisma, tenant.id);
   await seedAppointmentFoundation(prisma, tenant.id);
   await seedMedicationFoundation(prisma, tenant.tenantCode);
+  await seedLabFoundation(prisma, tenant.tenantCode);
 
   const adminUser = await prisma.user.findUnique({
     where: { username: "laila.hasan" },
