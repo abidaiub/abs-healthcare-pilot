@@ -1,0 +1,75 @@
+{
+  "title": "إعداد جدول الطبيب",
+  "description": "نوبات الاستشارة الأسبوعية لكل طبيب في الفرع الحالي. النوبات المنشورة تحدد المواعيد المتاحة للحجز.",
+  "sections": {
+    "list": "النوبات الأسبوعية",
+    "form": "إضافة أو تعديل نوبة"
+  },
+  "fields": {
+    "doctor": "الطبيب",
+    "dayOfWeek": "اليوم",
+    "startTime": "بداية النوبة",
+    "endTime": "نهاية النوبة",
+    "slotDuration": "الدقائق لكل مريض",
+    "chamber": "العيادة",
+    "slots": "الفترات",
+    "branch": "الفرع",
+    "state": "الحالة",
+    "publishedAt": "تاريخ النشر"
+  },
+  "days": {
+    "sunday": "الأحد",
+    "monday": "الإثنين",
+    "tuesday": "الثلاثاء",
+    "wednesday": "الأربعاء",
+    "thursday": "الخميس",
+    "friday": "الجمعة",
+    "saturday": "السبت"
+  },
+  "state": {
+    "draft": "مسودة",
+    "published": "منشور",
+    "inactive": "متوقف"
+  },
+  "actions": {
+    "save": "حفظ النوبة",
+    "edit": "تعديل",
+    "cancelEdit": "إلغاء التعديل",
+    "publish": "نشر",
+    "unpublish": "إلغاء النشر",
+    "deactivate": "إيقاف"
+  },
+  "hints": {
+    "publish": "تظهر فقط النوبات المنشورة كفترات قابلة للحجز عند حجز المواعيد.",
+    "slotPreview": "تُنتج هذه النوبة {count} فترة قابلة للحجز.",
+    "noSlots": "لا تُنتج هذه النوبة أي فترات قابلة للحجز. قلّل الدقائق لكل مريض.",
+    "branchScope": "تُدار النوبات لفرع العمل الحالي فقط.",
+    "doctorImmutable": "لا يمكن تغيير الطبيب بعد إنشاء الجدول. أوقف هذه النوبة وأنشئ نوبة جديدة."
+  },
+  "messages": {
+    "empty": "لم يُضبط بعد أي نوبة استشارة لهذا الفرع.",
+    "saved": "تم حفظ النوبة.",
+    "published": "تم نشر النوبة.",
+    "unpublished": "تم إلغاء نشر النوبة.",
+    "deactivated": "تم إيقاف النوبة.",
+    "confirmDeactivate": "إيقاف هذه النوبة؟ لن تُقدّم بعدها فترات قابلة للحجز.",
+    "confirmUnpublish": "إلغاء نشر هذه النوبة؟ سيُحظر الحجز الجديد على فتراتها."
+  },
+  "errors": {
+    "generic": "تعذّر حفظ النوبة.",
+    "DOCTOR_SCHEDULE_NOT_FOUND": "النوبة غير موجودة.",
+    "DOCTOR_SCHEDULE_DOCTOR_INVALID": "اختر طبيباً نشطاً.",
+    "DOCTOR_SCHEDULE_BRANCH_REQUIRED": "يلزم فرع عمل صالح.",
+    "DOCTOR_SCHEDULE_BRANCH_ACCESS_DENIED": "هذه النوبة تتبع فرعاً آخر.",
+    "DOCTOR_SCHEDULE_DOCTOR_NOT_AT_BRANCH": "هذا الطبيب غير مُعيَّن في الفرع الحالي.",
+    "DOCTOR_SCHEDULE_INVALID_DAY": "اختر يوماً صالحاً من أيام الأسبوع.",
+    "DOCTOR_SCHEDULE_INVALID_TIME": "أدخل أوقات النوبة بصيغة HH:MM.",
+    "DOCTOR_SCHEDULE_INVALID_RANGE": "يجب أن تكون نهاية النوبة بعد بدايتها.",
+    "DOCTOR_SCHEDULE_INVALID_SLOT_DURATION": "يجب أن تتسع الدقائق لكل مريض داخل النوبة.",
+    "DOCTOR_SCHEDULE_OVERLAP": "تتداخل هذه النوبة مع نوبة أخرى لنفس الطبيب واليوم.",
+    "DOCTOR_SCHEDULE_DUPLICATE": "توجد نوبة تبدأ في هذا الوقت لنفس الطبيب واليوم.",
+    "DOCTOR_SCHEDULE_HAS_BOOKINGS": "ما زالت مواعيد قادمة تستخدم هذه النوبة. ألغِها أو أكملها أولاً.",
+    "DOCTOR_SCHEDULE_STALE": "تم تعديل هذه النوبة بواسطة مستخدم آخر. حدّث الصفحة ثم أعد المحاولة.",
+    "DOCTOR_SCHEDULE_DOCTOR_IMMUTABLE": "لا يمكن تغيير الطبيب بعد إنشاء الجدول. أوقف هذه النوبة وأنشئ نوبة جديدة."
+  }
+}

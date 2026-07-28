@@ -1,0 +1,75 @@
+{
+  "title": "ڈاکٹر شیڈول سیٹ اپ",
+  "description": "موجودہ برانچ کے لیے ہر ڈاکٹر کی ہفتہ وار مشاورت شفٹیں۔ شائع شدہ شفٹیں ہی بکنگ کے قابل اپائنٹمنٹ سلاٹ متعین کرتی ہیں۔",
+  "sections": {
+    "list": "ہفتہ وار شفٹیں",
+    "form": "شفٹ شامل یا ترمیم کریں"
+  },
+  "fields": {
+    "doctor": "ڈاکٹر",
+    "dayOfWeek": "دن",
+    "startTime": "شفٹ آغاز",
+    "endTime": "شفٹ اختتام",
+    "slotDuration": "فی مریض منٹ",
+    "chamber": "چیمبر",
+    "slots": "سلاٹ",
+    "branch": "برانچ",
+    "state": "حالت",
+    "publishedAt": "اشاعت کا وقت"
+  },
+  "days": {
+    "sunday": "اتوار",
+    "monday": "پیر",
+    "tuesday": "منگل",
+    "wednesday": "بدھ",
+    "thursday": "جمعرات",
+    "friday": "جمعہ",
+    "saturday": "ہفتہ"
+  },
+  "state": {
+    "draft": "مسودہ",
+    "published": "شائع شدہ",
+    "inactive": "منسوخ"
+  },
+  "actions": {
+    "save": "شفٹ محفوظ کریں",
+    "edit": "ترمیم",
+    "cancelEdit": "ترمیم منسوخ",
+    "publish": "شائع کریں",
+    "unpublish": "اشاعت واپس",
+    "deactivate": "منسوخ کریں"
+  },
+  "hints": {
+    "publish": "اپائنٹمنٹ بکنگ میں صرف شائع شدہ شفٹوں کے سلاٹ نظر آتے ہیں۔",
+    "slotPreview": "یہ شفٹ {count} بکنگ کے قابل سلاٹ بناتی ہے۔",
+    "noSlots": "اس شفٹ سے کوئی بکنگ کے قابل سلاٹ نہیں بنتا۔ فی مریض منٹ کم کریں۔",
+    "branchScope": "شفٹیں صرف آپ کی موجودہ ورکنگ برانچ کے لیے منظم ہوتی ہیں۔",
+    "doctorImmutable": "شیڈول بننے کے بعد ڈاکٹر تبدیل نہیں کیا جا سکتا۔ اس شفٹ کو منسوخ کر کے نئی شفٹ بنائیں۔"
+  },
+  "messages": {
+    "empty": "اس برانچ کے لیے ابھی کوئی مشاورت شفٹ ترتیب نہیں دی گئی۔",
+    "saved": "شفٹ محفوظ ہو گئی۔",
+    "published": "شفٹ شائع ہو گئی۔",
+    "unpublished": "شفٹ کی اشاعت واپس لے لی گئی۔",
+    "deactivated": "شفٹ منسوخ کر دی گئی۔",
+    "confirmDeactivate": "اس شفٹ کو منسوخ کریں؟ اس کے بعد اس کے سلاٹ بکنگ کے لیے نہیں رہیں گے۔",
+    "confirmUnpublish": "اس شفٹ کی اشاعت واپس لیں؟ اس کے سلاٹ پر نئی بکنگ بند ہو جائے گی۔"
+  },
+  "errors": {
+    "generic": "شفٹ محفوظ نہیں ہو سکی۔",
+    "DOCTOR_SCHEDULE_NOT_FOUND": "شفٹ نہیں ملی۔",
+    "DOCTOR_SCHEDULE_DOCTOR_INVALID": "ایک فعال ڈاکٹر منتخب کریں۔",
+    "DOCTOR_SCHEDULE_BRANCH_REQUIRED": "ایک درست ورکنگ برانچ درکار ہے۔",
+    "DOCTOR_SCHEDULE_BRANCH_ACCESS_DENIED": "یہ شفٹ دوسری برانچ کی ہے۔",
+    "DOCTOR_SCHEDULE_DOCTOR_NOT_AT_BRANCH": "یہ ڈاکٹر موجودہ برانچ میں تعینات نہیں ہے۔",
+    "DOCTOR_SCHEDULE_INVALID_DAY": "ہفتے کا درست دن منتخب کریں۔",
+    "DOCTOR_SCHEDULE_INVALID_TIME": "شفٹ کا وقت HH:MM میں درج کریں۔",
+    "DOCTOR_SCHEDULE_INVALID_RANGE": "شفٹ کا اختتام آغاز کے بعد ہونا چاہیے۔",
+    "DOCTOR_SCHEDULE_INVALID_SLOT_DURATION": "فی مریض منٹ شفٹ کے اندر فٹ ہونے چاہئیں۔",
+    "DOCTOR_SCHEDULE_OVERLAP": "یہ شفٹ اسی ڈاکٹر اور دن کی کسی دوسری شفٹ سے ہم آہنگ نہیں (اوورلیپ)۔",
+    "DOCTOR_SCHEDULE_DUPLICATE": "اسی ڈاکٹر اور دن پر اس وقت پہلے سے ایک شفٹ موجود ہے۔",
+    "DOCTOR_SCHEDULE_HAS_BOOKINGS": "آنے والے اپائنٹمنٹس اب بھی اس شفٹ کا استعمال کرتے ہیں۔ پہلے انہیں منسوخ یا مکمل کریں۔",
+    "DOCTOR_SCHEDULE_STALE": "کسی اور صارف نے اس شفٹ کو تبدیل کر دیا ہے۔ صفحہ تازہ کر کے دوبارہ کوشش کریں۔",
+    "DOCTOR_SCHEDULE_DOCTOR_IMMUTABLE": "شیڈول بننے کے بعد ڈاکٹر تبدیل نہیں کیا جا سکتا۔ اس شفٹ کو منسوخ کر کے نئی شفٹ بنائیں۔"
+  }
+}

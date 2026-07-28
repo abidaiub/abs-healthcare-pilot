@@ -88,5 +88,8 @@
   "errors.APPOINTMENT_DOCTOR_INACTIVE": "Doctor is inactive or not assigned to this branch.",
   "errors.APPOINTMENT_INVALID_STATUS": "This status change is not allowed.",
   "errors.APPOINTMENT_VALIDATION": "Please check the appointment form fields.",
-  "errors.FORBIDDEN": "You do not have permission for this action."
+  "errors.FORBIDDEN": "You do not have permission for this action.",
+  "errors.APPOINTMENT_SLOT_UNAVAILABLE": "This time slot is not offered by the doctor's published schedule.",
+  "messages.noSlots": "No slot available for this doctor on the selected date",
+  "messages.slotBooked": "booked"
 }

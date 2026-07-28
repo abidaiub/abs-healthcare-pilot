@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   createAppointmentAction,
   searchPatientsForAppointmentAction,
   updateAppointmentAction,
 } from "@/app/actions/tenant-appointments";
+import { getDoctorDayAvailabilityAction } from "@/app/actions/tenant-doctor-schedules";
+import type { AvailableSlot } from "@/lib/doctor-schedule/queries";
 import { Badge, Button, Card, CardBody, Input, Select, Textarea } from "@/components/ui";
 import {
   APPOINTMENT_TYPES,
@@ -81,7 +83,55 @@ export function AppointmentForm({
   const [reasonForVisit, setReasonForVisit] = useState(initialValues?.reasonForVisit ?? "");
   const [notes, setNotes] = useState(initialValues?.notes ?? "");
 
+  const [availability, setAvailability] = useState<{
+    key: string;
+    slots: AvailableSlot[] | null;
+  } | null>(null);
+
   const bookedSet = useMemo(() => new Set(bookedSlots), [bookedSlots]);
+  const availabilityKey = doctorId && appointmentDate ? `${doctorId}|${appointmentDate}` : "";
+
+  // The doctor's published MOD-17 schedule, when one exists, replaces the fixed slot grid.
+  useEffect(() => {
+    if (!availabilityKey) return;
+
+    let cancelled = false;
+    void getDoctorDayAvailabilityAction({
+      doctorId,
+      appointmentDate,
+      excludeAppointmentId: appointmentId,
+    }).then((result) => {
+      if (cancelled) return;
+      setAvailability({
+        key: availabilityKey,
+        slots: result.hasPublishedSchedule ? result.slots : null,
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [availabilityKey, doctorId, appointmentDate, appointmentId]);
+
+  const scheduleSlots =
+    availabilityKey && availability?.key === availabilityKey ? availability.slots : null;
+
+  const slotOptions = useMemo<AvailableSlot[]>(() => {
+    if (scheduleSlots) return scheduleSlots;
+    return TIME_SLOTS.map((slot) => ({
+      slot,
+      booked: bookedSet.has(slot) ? 1 : 0,
+      capacity: 1,
+      isFull: bookedSet.has(slot),
+    }));
+  }, [scheduleSlots, bookedSet]);
+
+  // A slot the doctor no longer offers must not survive a schedule change.
+  const selectedSlot = useMemo(() => {
+    if (slotOptions.length === 0) return "";
+    if (slotOptions.some((option) => option.slot === timeSlot)) return timeSlot;
+    return (slotOptions.find((option) => !option.isFull) ?? slotOptions[0]).slot;
+  }, [slotOptions, timeSlot]);
 
   function runPatientSearch(query: string) {
     startTransition(async () => {
@@ -100,7 +150,7 @@ export function AppointmentForm({
     const formData = new FormData();
     formData.set("appointmentType", appointmentType);
     formData.set("appointmentDate", appointmentDate);
-    formData.set("timeSlot", appointmentType === "SCHEDULED" ? timeSlot : "");
+    formData.set("timeSlot", appointmentType === "SCHEDULED" ? selectedSlot : "");
     formData.set("patientId", patientId);
     formData.set("doctorId", doctorId);
     formData.set("reasonForVisit", reasonForVisit);
@@ -199,15 +249,20 @@ export function AppointmentForm({
           {appointmentType === "SCHEDULED" && (
             <Select
               label={t("appointment.fields.timeSlot")}
-              value={timeSlot}
+              value={selectedSlot}
               onChange={(e) => setTimeSlot(e.target.value)}
+              disabled={slotOptions.length === 0}
             >
-              {TIME_SLOTS.map((slot) => (
-                <option key={slot} value={slot} disabled={bookedSet.has(slot)}>
-                  {slot}
-                  {bookedSet.has(slot) ? " (booked)" : ""}
-                </option>
-              ))}
+              {slotOptions.length === 0 ? (
+                <option value="">{t("appointment.messages.noSlots")}</option>
+              ) : (
+                slotOptions.map((option) => (
+                  <option key={option.slot} value={option.slot} disabled={option.isFull}>
+                    {option.slot}
+                    {option.isFull ? ` (${t("appointment.messages.slotBooked")})` : ""}
+                  </option>
+                ))
+              )}
             </Select>
           )}
           <Input

@@ -350,6 +350,14 @@ export const TENANT_PERMISSION_RESOURCES: PermissionResource[] = [
     group: "Clinical",
   },
   {
+    resourceKey: "/settings/doctor-schedules",
+    moduleCode: "MOD-17",
+    permissionCode: "DOCTOR_SCHEDULE",
+    label: "Doctor Schedule Setup",
+    route: "/settings/doctor-schedules",
+    group: "Diagnostic Setup",
+  },
+  {
     resourceKey: "/appointments/queue/operator",
     moduleCode: "MOD-17",
     permissionCode: "QUEUE_OPERATE",

@@ -1,0 +1,75 @@
+{
+  "title": "Doctor Schedule Setup",
+  "description": "Weekly consultation shifts per doctor for the current branch. Published shifts define the bookable appointment slots.",
+  "sections": {
+    "list": "Weekly shifts",
+    "form": "Add or edit shift"
+  },
+  "fields": {
+    "doctor": "Doctor",
+    "dayOfWeek": "Day",
+    "startTime": "Shift start",
+    "endTime": "Shift end",
+    "slotDuration": "Minutes per patient",
+    "chamber": "Chamber",
+    "slots": "Slots",
+    "branch": "Branch",
+    "state": "State",
+    "publishedAt": "Published at"
+  },
+  "days": {
+    "sunday": "Sunday",
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday"
+  },
+  "state": {
+    "draft": "Draft",
+    "published": "Published",
+    "inactive": "Retired"
+  },
+  "actions": {
+    "save": "Save shift",
+    "edit": "Edit",
+    "cancelEdit": "Cancel edit",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "deactivate": "Retire"
+  },
+  "hints": {
+    "publish": "Only published shifts appear as bookable slots in appointment booking.",
+    "slotPreview": "This shift produces {count} bookable slots.",
+    "noSlots": "This shift produces no bookable slots. Reduce the minutes per patient.",
+    "branchScope": "Shifts are managed for your current working branch only.",
+    "doctorImmutable": "Doctor cannot be changed after schedule creation. Retire this schedule and create a new one."
+  },
+  "messages": {
+    "empty": "No consultation shift configured yet for this branch.",
+    "saved": "Shift saved.",
+    "published": "Shift published.",
+    "unpublished": "Shift unpublished.",
+    "deactivated": "Shift retired.",
+    "confirmDeactivate": "Retire this shift? It will no longer offer bookable slots.",
+    "confirmUnpublish": "Unpublish this shift? New bookings will be blocked for its slots."
+  },
+  "errors": {
+    "generic": "The shift could not be saved.",
+    "DOCTOR_SCHEDULE_NOT_FOUND": "Shift not found.",
+    "DOCTOR_SCHEDULE_DOCTOR_INVALID": "Select an active doctor.",
+    "DOCTOR_SCHEDULE_BRANCH_REQUIRED": "A valid working branch is required.",
+    "DOCTOR_SCHEDULE_BRANCH_ACCESS_DENIED": "This shift belongs to another branch.",
+    "DOCTOR_SCHEDULE_DOCTOR_NOT_AT_BRANCH": "This doctor is not assigned to the current branch.",
+    "DOCTOR_SCHEDULE_INVALID_DAY": "Select a valid day of the week.",
+    "DOCTOR_SCHEDULE_INVALID_TIME": "Enter shift times as HH:MM.",
+    "DOCTOR_SCHEDULE_INVALID_RANGE": "Shift end must be later than shift start.",
+    "DOCTOR_SCHEDULE_INVALID_SLOT_DURATION": "Minutes per patient must fit inside the shift.",
+    "DOCTOR_SCHEDULE_OVERLAP": "This shift overlaps another shift for the same doctor and day.",
+    "DOCTOR_SCHEDULE_DUPLICATE": "A shift already starts at this time for the same doctor and day.",
+    "DOCTOR_SCHEDULE_HAS_BOOKINGS": "Upcoming appointments still use this shift. Cancel or complete them first.",
+    "DOCTOR_SCHEDULE_STALE": "This shift was changed by someone else. Refresh and try again.",
+    "DOCTOR_SCHEDULE_DOCTOR_IMMUTABLE": "Doctor cannot be changed after schedule creation. Retire this schedule and create a new one."
+  }
+}

@@ -29,6 +29,7 @@ export const REQUIRED_MESSAGE_NAMESPACES = [
   "branch",
   "patient",
   "appointment",
+  "doctorSchedule",
   "consultation",
   "prescription",
   "pharmacy",

@@ -210,6 +210,7 @@ model Tenant {
   analyzers                     Analyzer[]
   doctors                       Doctor[]
   doctorBranches                DoctorBranch[]
+  doctorSchedules               DoctorSchedule[]
   doctorDepartmentMappings      DoctorDepartmentMapping[]
   reportDoctorAssignments       ReportDoctorAssignment[]
   reportSignatureTemplates      ReportSignatureTemplate[]
@@ -301,6 +302,7 @@ model Branch {
   testMethods              TestMethod[]
   analyzers                Analyzer[]
   doctorBranches           DoctorBranch[]
+  doctorSchedules             DoctorSchedule[]
   reportDoctorAssignments  ReportDoctorAssignment[]
   reportSignatureTemplates ReportSignatureTemplate[]
   tenantServiceBranches    TenantServiceBranch[]
@@ -2631,6 +2633,7 @@ model Doctor {
   department               Department?                @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   user                     User?                      @relation(fields: [userId], references: [id], onDelete: SetNull)
   doctorBranches           DoctorBranch[]
+  doctorSchedules          DoctorSchedule[]
   doctorDepartmentMappings DoctorDepartmentMapping[]
   reportingAssignments     ReportDoctorAssignment[]   @relation("ReportingDoctor")
   verifyingAssignments     ReportDoctorAssignment[]   @relation("VerifyingDoctor")
@@ -2674,6 +2677,42 @@ model DoctorBranch {
   @@index([branchId])
   @@index([createdAt])
   @@map("doctor_branches")
+}
+
+/// Weekly consultation shift template for a doctor at one branch (MOD-17 DoctorSchedule).
+/// Published rows drive the bookable slot list; unpublished rows are drafts only.
+model DoctorSchedule {
+  id           String    @id @default(cuid())
+  tenantId     String    @map("tenant_id")
+  branchId     String    @map("branch_id")
+  doctorId     String    @map("doctor_id")
+  dayOfWeek    Int       @map("day_of_week")
+  startTime    String    @map("start_time")
+  endTime      String    @map("end_time")
+  slotDuration Int       @map("slot_duration")
+  chamber      String?
+  isPublished  Boolean   @default(false) @map("is_published")
+  publishedAt  DateTime? @map("published_at")
+  publishedBy  String?   @map("published_by")
+  isActive     Boolean   @default(true) @map("is_active")
+  /// Optimistic concurrency token for edit / publish / deactivate.
+  stateVersion Int       @default(1) @map("state_version")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  createdBy    String?   @map("created_by")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  updatedBy    String?   @map("updated_by")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, branchId, doctorId, dayOfWeek, startTime], map: "doctor_schedules_tenant_branch_doctor_day_start_key")
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, branchId, doctorId, dayOfWeek], map: "doctor_schedules_tenant_branch_doctor_day_idx")
+  @@index([doctorId])
+  @@index([createdAt])
+  @@map("doctor_schedules")
 }
 
 /// Department-level reporting/verification privileges for a doctor

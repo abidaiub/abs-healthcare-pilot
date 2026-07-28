@@ -20,6 +20,7 @@ import {
   parseAppointmentFormData,
   validateAppointmentReferences,
 } from "@/lib/appointment/validation";
+import { assertScheduledSlotAvailable } from "@/lib/appointment/slot-capacity";
 import { requireTenantSession } from "@/lib/auth";
 import { hasTenantPermission, requireTenantPermission } from "@/lib/rbac/auth";
 import { writeAuditLog } from "@/lib/saas/audit";
@@ -141,38 +142,65 @@ export async function createAppointmentAction(
 
   const initialStatus = parsed.autoCheckIn ? ("WAITING" as const) : ("SCHEDULED" as const);
 
-  const appointment = await prisma.$transaction(async (tx) => {
-    const appointmentNumber = await allocateAppointmentNumber(tx, session.tenantId);
-    let queueToken: number | null = null;
-    let queueTokenDate: Date | null = null;
+  let appointment;
+  try {
+    appointment = await prisma.$transaction(async (tx) => {
+      if (parsed.appointmentType === "SCHEDULED" && parsed.timeSlot) {
+        const slot = await assertScheduledSlotAvailable(tx, {
+          tenantId: session.tenantId,
+          branchId: branchResult.branch.id,
+          doctorId: parsed.doctorId,
+          appointmentDate: parsed.appointmentDate,
+          timeSlot: parsed.timeSlot,
+        });
+        if (!slot.ok) {
+          throw new Error(slot.errorCode);
+        }
+      }
 
-    if (parsed.autoCheckIn) {
-      queueTokenDate = startOfDay(parsed.appointmentDate);
-      queueToken = await allocateQueueToken(tx, {
-        tenantId: session.tenantId,
-        branchId: branchResult.branch.id,
-        doctorId: parsed.doctorId,
-        queueDate: queueTokenDate,
+      const appointmentNumber = await allocateAppointmentNumber(tx, session.tenantId);
+      let queueToken: number | null = null;
+      let queueTokenDate: Date | null = null;
+
+      if (parsed.autoCheckIn) {
+        queueTokenDate = startOfDay(parsed.appointmentDate);
+        queueToken = await allocateQueueToken(tx, {
+          tenantId: session.tenantId,
+          branchId: branchResult.branch.id,
+          doctorId: parsed.doctorId,
+          queueDate: queueTokenDate,
+        });
+      }
+
+      return tx.appointment.create({
+        data: {
+          tenantId: session.tenantId,
+          appointmentNumber,
+          ...appointmentDataFromInput(
+            parsed,
+            branchResult.branch.id,
+            refs.departmentId,
+            initialStatus,
+            queueToken,
+            queueTokenDate,
+          ),
+          createdBy: session.user.name,
+          updatedBy: session.user.name,
+        },
       });
-    }
-
-    return tx.appointment.create({
-      data: {
-        tenantId: session.tenantId,
-        appointmentNumber,
-        ...appointmentDataFromInput(
-          parsed,
-          branchResult.branch.id,
-          refs.departmentId,
-          initialStatus,
-          queueToken,
-          queueTokenDate,
-        ),
-        createdBy: session.user.name,
-        updatedBy: session.user.name,
-      },
     });
-  });
+  } catch (error) {
+    if (error instanceof Error) {
+      const code = error.message;
+      if (
+        code === APPOINTMENT_ERROR_CODES.APPOINTMENT_SLOT_FULL ||
+        code === APPOINTMENT_ERROR_CODES.APPOINTMENT_SLOT_UNAVAILABLE
+      ) {
+        return { ok: false, errorCode: code };
+      }
+    }
+    throw error;
+  }
 
   await auditAppointmentEvent({
     tenantId: session.tenantId,
@@ -224,20 +252,50 @@ export async function updateAppointmentAction(
     return { ok: false, errorCode: refs.errorCode };
   }
 
-  const appointment = await prisma.appointment.update({
-    where: { id: appointmentId },
-    data: {
-      appointmentType: parsed.appointmentType,
-      appointmentDate: parsed.appointmentDate,
-      timeSlot: parsed.timeSlot,
-      patientId: parsed.patientId,
-      doctorId: parsed.doctorId,
-      departmentId: refs.departmentId,
-      reasonForVisit: parsed.reasonForVisit,
-      notes: parsed.notes,
-      updatedBy: session.user.name,
-    },
-  });
+  let appointment;
+  try {
+    appointment = await prisma.$transaction(async (tx) => {
+      if (parsed.appointmentType === "SCHEDULED" && parsed.timeSlot) {
+        const slot = await assertScheduledSlotAvailable(tx, {
+          tenantId: session.tenantId,
+          branchId: existing.branchId,
+          doctorId: parsed.doctorId,
+          appointmentDate: parsed.appointmentDate,
+          timeSlot: parsed.timeSlot,
+          excludeAppointmentId: appointmentId,
+        });
+        if (!slot.ok) {
+          throw new Error(slot.errorCode);
+        }
+      }
+
+      return tx.appointment.update({
+        where: { id: appointmentId },
+        data: {
+          appointmentType: parsed.appointmentType,
+          appointmentDate: parsed.appointmentDate,
+          timeSlot: parsed.timeSlot,
+          patientId: parsed.patientId,
+          doctorId: parsed.doctorId,
+          departmentId: refs.departmentId,
+          reasonForVisit: parsed.reasonForVisit,
+          notes: parsed.notes,
+          updatedBy: session.user.name,
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      const code = error.message;
+      if (
+        code === APPOINTMENT_ERROR_CODES.APPOINTMENT_SLOT_FULL ||
+        code === APPOINTMENT_ERROR_CODES.APPOINTMENT_SLOT_UNAVAILABLE
+      ) {
+        return { ok: false, errorCode: code };
+      }
+    }
+    throw error;
+  }
 
   await auditAppointmentEvent({
     tenantId: session.tenantId,

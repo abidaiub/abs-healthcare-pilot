@@ -110,6 +110,8 @@ const TENANT_ADMIN_NAV: NavGroup[] = [
 
       { href: "/settings/doctors", labelKey: "doctors", icon: "✚" },
 
+      { href: "/settings/doctor-schedules", labelKey: "doctorSchedules", icon: "🕘" },
+
       { href: "/settings/report-layouts", labelKey: "reportLayouts", icon: "⎙" },
 
     ],

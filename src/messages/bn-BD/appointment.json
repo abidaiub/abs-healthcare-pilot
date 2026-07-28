@@ -88,5 +88,8 @@
   "errors.APPOINTMENT_DOCTOR_INACTIVE": "Doctor is inactive or not assigned to this branch.",
   "errors.APPOINTMENT_INVALID_STATUS": "This status change is not allowed.",
   "errors.APPOINTMENT_VALIDATION": "Please check the appointment form fields.",
-  "errors.FORBIDDEN": "You do not have permission for this action."
+  "errors.FORBIDDEN": "You do not have permission for this action.",
+  "errors.APPOINTMENT_SLOT_UNAVAILABLE": "ডাক্তারের প্রকাশিত সময়সূচিতে এই সময়ের স্লট নেই।",
+  "messages.noSlots": "নির্বাচিত তারিখে এই ডাক্তারের কোনো স্লট নেই",
+  "messages.slotBooked": "বুক হয়েছে"
 }

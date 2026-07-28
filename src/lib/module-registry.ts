@@ -383,6 +383,12 @@ export const SCREENS = {
     screenName: "Edit Patient",
     workflowRef: "Update registration data without changing patient number",
   },
+  doctorSchedules: {
+    route: "/settings/doctor-schedules",
+    moduleKey: "appointmentQueue",
+    screenName: "Doctor Schedule Setup",
+    workflowRef: "Weekly consultation shifts → published bookable slots",
+  },
   appointmentBooking: {
     route: "/appointments/new",
     moduleKey: "appointmentQueue",

@@ -117,5 +117,7 @@
   "verificationHistory.title": "Verification History",
   "verificationHistory.breadcrumb": "Laboratory / Verification History",
   "correctionWorklist.title": "Result Corrections",
-  "correctionWorklist.breadcrumb": "Laboratory / Result Corrections"
+  "correctionWorklist.breadcrumb": "Laboratory / Result Corrections",
+  "doctorSchedules.title": "डॉक्टर अनुसूची सेटअप",
+  "doctorSchedules.breadcrumb": "डायग्नोस्टिक सेटअप / डॉक्टर अनुसूची"
 }

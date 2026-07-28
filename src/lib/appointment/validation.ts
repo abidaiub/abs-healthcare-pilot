@@ -5,6 +5,8 @@ import {
   DEFAULT_MAX_PATIENTS_PER_SLOT,
 } from "@/lib/appointment/errors";
 import { TIME_SLOTS, startOfDay } from "@/lib/appointment/constants";
+import { isValidTimeOfDay } from "@/lib/doctor-schedule/constants";
+import { getDoctorDayAvailability } from "@/lib/doctor-schedule/queries";
 
 export type AppointmentFormInput = {
   appointmentType: AppointmentType;
@@ -49,8 +51,10 @@ export function parseAppointmentFormData(
   const timeSlotRaw = String(formData.get("timeSlot") ?? "").trim();
   const timeSlot = timeSlotRaw || null;
 
+  // Slot membership is resolved against the doctor's published schedule later; here we only
+  // reject values that are not a well-formed time of day.
   if (appointmentType === "SCHEDULED") {
-    if (!timeSlot || !TIME_SLOTS.includes(timeSlot as (typeof TIME_SLOTS)[number])) {
+    if (!timeSlot || !isValidTimeOfDay(timeSlot)) {
       return { errorCode: APPOINTMENT_ERROR_CODES.APPOINTMENT_INVALID_SLOT };
     }
   }
@@ -109,19 +113,48 @@ export async function validateAppointmentReferences(
   }
 
   if (input.appointmentType === "SCHEDULED" && input.timeSlot) {
-    const booked = await prisma.appointment.count({
-      where: {
-        tenantId,
-        branchId,
-        doctorId: input.doctorId,
-        appointmentDate: input.appointmentDate,
-        timeSlot: input.timeSlot,
-        status: { notIn: ["CANCELLED", "NO_SHOW"] },
-        ...(excludeAppointmentId ? { NOT: { id: excludeAppointmentId } } : {}),
-      },
-    });
-    if (booked >= DEFAULT_MAX_PATIENTS_PER_SLOT) {
-      return { ok: false as const, errorCode: APPOINTMENT_ERROR_CODES.APPOINTMENT_SLOT_FULL };
+    // Soft pre-check for UX. Create/update re-validate capacity inside the same DB
+    // transaction as the write (see assertScheduledSlotAvailable) to prevent races.
+    const availability = await getDoctorDayAvailability(
+      tenantId,
+      branchId,
+      input.doctorId,
+      input.appointmentDate,
+      excludeAppointmentId,
+    );
+
+    if (availability.hasPublishedSchedule) {
+      const slot = availability.slots.find((entry) => entry.slot === input.timeSlot);
+      if (!slot) {
+        return {
+          ok: false as const,
+          errorCode: APPOINTMENT_ERROR_CODES.APPOINTMENT_SLOT_UNAVAILABLE,
+        };
+      }
+      if (slot.isFull) {
+        return { ok: false as const, errorCode: APPOINTMENT_ERROR_CODES.APPOINTMENT_SLOT_FULL };
+      }
+    } else {
+      if (!TIME_SLOTS.includes(input.timeSlot as (typeof TIME_SLOTS)[number])) {
+        return {
+          ok: false as const,
+          errorCode: APPOINTMENT_ERROR_CODES.APPOINTMENT_SLOT_UNAVAILABLE,
+        };
+      }
+      const booked = await prisma.appointment.count({
+        where: {
+          tenantId,
+          branchId,
+          doctorId: input.doctorId,
+          appointmentDate: input.appointmentDate,
+          timeSlot: input.timeSlot,
+          status: { notIn: ["CANCELLED", "NO_SHOW"] },
+          ...(excludeAppointmentId ? { NOT: { id: excludeAppointmentId } } : {}),
+        },
+      });
+      if (booked >= DEFAULT_MAX_PATIENTS_PER_SLOT) {
+        return { ok: false as const, errorCode: APPOINTMENT_ERROR_CODES.APPOINTMENT_SLOT_FULL };
+      }
     }
   }
 
