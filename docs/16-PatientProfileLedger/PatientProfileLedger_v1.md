@@ -1,5 +1,7 @@
 ## MODULE 16: Patient Profile & Unified Patient Ledger
 
+> **Integration note (2026-07-26 — Architecture Approved):** MOD-16 is a **patient-centric clinical-financial 360° hub and patient subledger UX**. It is **not** General Ledger, Account Ledger, Cash Book, Bank Book, Trial Balance, Profit and Loss, or Balance Sheet — those belong to **MOD-33**. Patient dues project over MOD-10 operational billing and future MOD-33 patient subledger postings (ADR-005). Status: documented; **not implemented**.
+
 ### 1. Executive Summary
 The Patient Profile & Unified Patient Ledger module provides a comprehensive 360-degree view of a patient's interaction with the healthcare facility. It consolidates demographic data, clinical history, and financial transactions into a single, unified interface. This module is the central hub for clinicians to understand a patient's health journey and for administrators to manage the patient's financial standing.
 

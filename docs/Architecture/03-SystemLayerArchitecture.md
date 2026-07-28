@@ -3,7 +3,7 @@
 ## 1. Executive Summary
 The **ABSHealthcareLite System Layer Architecture** defines the complete structural blueprint of the platform. By adopting a strict layered architecture philosophy, the system decouples presentation, business logic, and data access. This ensures that the current ASP.NET WebForms implementation can seamlessly transition to future MVC/Core/API frameworks without rewriting the underlying business rules or database schemas. 
 
-This document serves as the master technical blueprint, ensuring that all modules (01-32, 40) adhere to the multi-tenant SaaS model, maintain rigorous data isolation, and provide a scalable foundation for a modern, AI-driven healthcare enterprise.
+This document serves as the master technical blueprint, ensuring that all modules (01-32, 40, and planned Business Operations 33–39 / 41–42) adhere to the multi-tenant SaaS model, maintain rigorous data isolation, and provide a scalable foundation for a modern, AI-driven healthcare and business-operations enterprise.
 
 ## 2. Architectural Principles
 *   **Multi-Tenant First**: Every architectural layer must respect the `CompanyId` boundary. Data bleeding between tenants is structurally impossible.
@@ -36,13 +36,13 @@ The dictionaries that drive clinical and operational workflows.
 *   **Departments & Categories**: Organizational taxonomy (Modules 08, 09).
 *   **Services**: The Master Service Catalog for billing and clinical orders (Module 10).
 *   **Doctors & Masters**: Provider profiles and referral networks (Modules 11, 12).
-*   **Inventory/Pharmacy Masters**: Diagnostic and medication catalogs (Modules 14, 20).
+*   **Inventory/Pharmacy Masters**: Diagnostic healthcare inventory extension (Module 14 over planned MOD-35) and medication catalogs (Module 20; pharmacy stock via planned MOD-35 adapter).
 
 ## 6. Patient Management Layer
 The core demographic and identity engine.
 *   **Patient Registration**: Master Patient Index (MPI) generation (Module 15).
 *   **Patient Identity**: Deduplication and demographic tracking.
-*   **Patient Profile**: The 360-degree clinical ledger (Module 16).
+*   **Patient Profile**: The 360-degree clinical-financial patient view / patient subledger UX (Module 16 — not General Ledger).
 
 ## 7. Appointment Layer
 The scheduling and patient flow engine.
@@ -74,10 +74,12 @@ Inpatient operations and logistics.
 *   **Discharge**: Multi-department clearance and continuity of care (Module 29).
 
 ## 12. Finance Layer
-The revenue cycle engine (Touchpoints across modules).
-*   **Billing**: Invoicing for OPD, IPD, Diagnostics, and Pharmacy.
-*   **Payments**: Cash, credit, and future online gateways.
-*   **Revenue**: Corporate and insurance tracking.
+Operational revenue cycle plus planned reusable accounting engine.
+*   **Operational Billing (MOD-10)**: Diagnostic/service invoicing, collection, discounts, dues (live in pilot).
+*   **Payments**: Cash, credit, and future online gateways (operational under MOD-10).
+*   **General Accounting (MOD-33 — PLANNED)**: Central double-entry posting engine, COA, vouchers, GL, statements; adapters only — no arbitrary GL writes from source modules.
+*   **Procurement / Inventory / Assets / HR / Payroll / Shareholder / Budget / Manufacturing (MOD-34–39, 41–42 — PLANNED)**: See `docs/Architecture/05-Business-Operations-Suite.md`.
+*   **Revenue**: Corporate and insurance tracking (future enhancements on operational + GL layers).
 
 ## 13. Patient Engagement Layer
 The digital front door.

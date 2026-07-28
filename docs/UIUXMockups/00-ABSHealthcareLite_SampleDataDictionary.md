@@ -486,3 +486,126 @@ When future data needs to be generated for new modules or edge cases, creators m
 This **ABSHealthcareLite Sample Data Dictionary** is the mandatory, official data source for all visual and instructional materials related to the platform. 
 
 By utilizing this standardized, realistic, and culturally relevant dataset, ABSHealthcareLite ensures that all UI Mockups, User Manuals, Product Demos, Training Sessions, and QA Testing environments present a cohesive, professional, and highly credible representation of the software in action.
+
+---
+
+## SECTION 25: PLANNED BUSINESS OPERATIONS SUITE SAMPLE DATA
+
+> **PLANNED / FOR DESIGN, MOCKUP, SEED PLANNING, AI-QC, AND MANUAL UAT**
+>
+> Every record in this section is fictional design data. It does not imply that a database model, seed, screen, API, posting service, or tenant enablement exists.
+
+### MOD-33 — Finance & General Accounting
+
+| Dataset | Fictional sample |
+| :--- | :--- |
+| Fiscal year / periods | FY-2026-27, 01-Jul-2026–30-Jun-2027; P01 Jul-2026 Open, P02 Aug-2026 Future |
+| Chart of Accounts / hierarchy | 1000 Assets → 1100 Current Assets → 1110 Cash in Hand; 1120 City Bank; 1200 Patient Receivables; 2000 Liabilities → 2100 Supplier Payables; 4000 Service Revenue; 5000 Operating Expense |
+| System account roles | CASH→1110; BANK→1120; PATIENT_AR→1200; AP_CONTROL→2100; RETAINED_EARNINGS→3100 |
+| Cash / bank account | Main Counter Cash (1110); City Bank, Gulshan Branch, masked account ••7821 (1120) |
+| Patient/customer receivable | PT-260007 / Farhana Chowdhury, control account 1200, opening due ৳400 |
+| Supplier payable | SUP-034-001 / Meghna Medical Supplies Ltd., control account 2100 |
+| Journal voucher | JV-26-0001: Dr Office Expense ৳5,000; Cr Accrued Expense ৳5,000 |
+| Receipt voucher | RV-26-0001: Dr City Bank ৳20,000; Cr Patient Receivables ৳20,000 |
+| Payment voucher | PV-26-0001: Dr Supplier Payables ৳12,500; Cr City Bank ৳12,500 |
+| Contra voucher | CV-26-0001: Dr City Bank ৳30,000; Cr Main Counter Cash ৳30,000 |
+| Opening balance | OB-26-0001: Cash ৳50,000 Dr; Bank ৳150,000 Dr; Patient AR ৳25,000 Dr; Supplier AP ৳40,000 Cr; Opening Equity ৳185,000 Cr |
+| Trial Balance | Total debits ৳225,000; total credits ৳225,000 |
+| Profit and Loss | Service revenue ৳300,000; expenses ৳210,000; profit ৳90,000 |
+| Balance Sheet | Assets ৳475,000; liabilities ৳125,000; equity ৳350,000 |
+
+### MOD-34 — Procurement & Supplier Management
+
+| Dataset | Fictional sample |
+| :--- | :--- |
+| Supplier | SUP-034-001, Meghna Medical Supplies Ltd., Dhaka |
+| Requisition | PR-034-0001, CBC reagent kits × 20, requested by Laboratory |
+| Quotation / comparison | QT-001 ৳98,000; QT-002 ৳101,500; CS-034-0001 selects QT-001 for compliant lowest evaluated cost |
+| Purchase order | PO-034-0001, 20 kits, ৳98,000, Approved |
+| GRN | GRN-034-0001, 20 kits received, inspection Accepted |
+| Supplier invoice / three-way match | SINV-034-0001, ৳98,000; PO=GRN=invoice, Matched |
+| Purchase return | PRET-034-0001, 1 damaged kit, ৳4,900 |
+| Supplier payment | SPAY-034-0001, bank payment ৳93,100 against SINV-034-0001 |
+
+### MOD-35 — Enterprise Inventory, Store & Consumption
+
+| Dataset | Fictional sample |
+| :--- | :--- |
+| Generic item / category | ITM-035-001 CBC Reagent Kit; category Laboratory Consumables |
+| UOM / conversion | Base Each; 1 Carton = 10 Each |
+| Warehouses | WH-CENTRAL Central Store; WH-LAB Laboratory Department Store |
+| Batch / expiry | Batch CBC-2607-A; expiry 30-Jun-2027 |
+| Stock receipt | SR-035-0001, 20 Each into WH-CENTRAL from GRN-034-0001 |
+| Transfer | ST-035-0001, 5 Each WH-CENTRAL → WH-LAB |
+| Issue / consumption | SI-035-0001 issues 2 Each; CON-035-0001 consumes 1 Each for July testing |
+| Adjustment | ADJ-035-0001, -1 Each after approved damage count |
+| Valuation example | Weighted average: 10 @ ৳4,800 + 10 @ ৳5,000 = 20 @ ৳4,900; 2 issued = ৳9,800 |
+
+### MOD-36 — Fixed Asset, Device Maintenance & Calibration
+
+| Dataset | Fictional sample |
+| :--- | :--- |
+| Asset / healthcare device | AST-036-001, Hematology Analyzer, asset tag ABS-DHK-HA-001 |
+| Capitalization / custodian | Capitalized 01-Jul-2026 at ৳850,000; custodian Nusrat Karim, Laboratory |
+| Depreciation | Straight line, 5 years, nil residual; monthly ৳14,166.67 |
+| Preventive maintenance | PM-036-0001 due 15-Oct-2026, quarterly service |
+| Calibration | CAL-036-0001 completed 10-Jul-2026, certificate CAL-FIC-260710 |
+| Breakdown | BRK-036-0001, sample probe error, priority High, restored 18-Jul-2026 |
+| Disposal | DSP-036-0001 design scenario: approval pending, proposed proceeds ৳75,000 |
+
+### MOD-37 — HR & Employee Management
+
+| Dataset | Fictional sample |
+| :--- | :--- |
+| Employee / designation / position | EMP-037-001, Nusrat Karim; Medical Technologist; Senior Lab Technologist |
+| Branch / department | Dhaka Main Branch; Laboratory |
+| Shift / attendance | Morning 08:00–16:00; 01-Jul-2026 Present, in 07:56, out 16:08 |
+| Leave | LV-037-0001, Casual Leave, 20-Jul-2026, Approved |
+| Transfer | TRF-037-0001, Laboratory → Quality Control, effective 01-Sep-2026, Proposed |
+| Separation | SEP-037-0001 design scenario, resignation, last working day 30-Nov-2026 |
+
+### MOD-38 — Payroll, Benefits, Loans & Final Settlement
+
+| Dataset | Fictional sample |
+| :--- | :--- |
+| Salary structure | STR-038-001: Basic ৳30,000; House Rent ৳15,000; Medical ৳3,000 |
+| Earnings / deductions | Overtime ৳2,000; provident fund ৳3,000; tax ৳1,000 |
+| Loan / advance | LOAN-038-0001 ৳60,000, 12 installments; ADV-038-0001 ৳10,000 |
+| Payroll run | PAYRUN-2026-07, gross ৳50,000, deductions ৳9,000, net ৳41,000 |
+| Salary payable / payment | SP-038-0001 payable ৳41,000; bank payment SALPAY-038-0001 |
+| Payslip | PSLIP-038-0001 for EMP-037-001, Jul-2026 |
+| Final settlement | FSET-038-0001 design scenario: salary, leave encashment, loan recovery; approval pending |
+
+### MOD-39 — Shareholder, Investment & Profit Distribution
+
+| Dataset | Fictional sample |
+| :--- | :--- |
+| Shareholder / class | SHR-039-001, Rahman Holdings Ltd.; Ordinary Class A |
+| Holding / ownership | 60,000 of 100,000 shares; 60.00% |
+| Contribution / investment | CAP-039-0001 ৳6,000,000; ADDINV-039-0001 ৳500,000 |
+| Shareholder loan | SHL-039-0001 ৳750,000, documented as liability |
+| Dividend declaration | DIV-039-2026-01, ৳5 per share; total ৳500,000 |
+| Dividend payable / payment | SHR-039-001 payable ৳300,000; DIVPAY-039-0001 bank payment ৳300,000 |
+
+### MOD-41 — Budgeting, Cost Center & Financial Control
+
+| Dataset | Fictional sample |
+| :--- | :--- |
+| Cost center / project | CC-LAB Laboratory; PRJ-41-LIMS LIMS Upgrade |
+| Annual budget | BUD-41-FY26, operating expense ৳12,000,000 |
+| Branch / department budget | Dhaka Main ৳8,000,000; Laboratory ৳2,400,000 |
+| Commitment | COM-041-0001, PO-034-0001, ৳98,000 |
+| Actual versus budget | July Laboratory: budget ৳200,000; commitment ৳98,000; actual ৳86,000; available ৳16,000 |
+
+### MOD-42 — Manufacturing, BOM, Production & Costing
+
+| Dataset | Fictional sample |
+| :--- | :--- |
+| Raw material / BOM | RM-042-001 Reagent Base; BOM-042-001 for 100 Diagnostic Buffer Bottles |
+| Production order | PROD-042-0001, planned quantity 100 bottles |
+| Material issue / return | MI-042-0001 issues 55 L; MR-042-0001 returns 2 L |
+| Work in progress | WIP-042-0001 accumulated material ৳42,400 |
+| Finished goods receipt | FGR-042-0001 receives 98 bottles |
+| Wastage | WST-042-0001 records 2 bottles equivalent, approved normal loss |
+| Labor / overhead | Labor allocation ৳7,350; overhead allocation ৳4,900 |
+| Product costing | Material ৳42,400 + labor ৳7,350 + overhead ৳4,900 = ৳54,650 / 98 = ৳557.65 per bottle |

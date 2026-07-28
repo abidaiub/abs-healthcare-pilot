@@ -5,7 +5,7 @@
 
 ## SECTION 1: EXECUTIVE SUMMARY
 
-The **ABSHealthcareLite Product Master Book Volume 2 – Functional Module Catalog** provides a comprehensive, functional breakdown of all 33 documented modules within the ABSHealthcareLite ecosystem. 
+The **ABSHealthcareLite Product Master Book Volume 2 – Functional Module Catalog** provides a comprehensive, functional breakdown of the documented modules within the ABSHealthcareLite ecosystem: clinical/diagnostic modules **01–32** and **40**, plus the **Business Operations Suite** modules **33–39** and **41–42** (PLANNED / ARCHITECTURE APPROVED — not implemented).
 
 Designed for Product Managers, Sales Teams, Implementation Specialists, and Healthcare Executives, this document translates the technical architecture into business capabilities. It works in tandem with **Volume 1 (Product Master Book)** and the **System Architecture Blueprints (01-03)** to provide a complete understanding of what the system does, who uses it, and how it is deployed. 
 
@@ -49,7 +49,18 @@ This catalog reinforces our commitment to a Multi-tenant SaaS architecture, loca
 | **30** | Patient Portal & Self Service| Engagement | Advanced | Documented |
 | **31** | Appointment & Follow-Up | Engagement | Advanced | Documented |
 | **32** | Telemedicine & Virtual Care | Telemedicine | Enterprise | Documented |
+| **33** | Finance & General Accounting | Business Operations | Foundation (ERP) | PLANNED / ARCHITECTURE APPROVED |
+| **34** | Procurement & Supplier Management | Business Operations | Foundation (ERP) | PLANNED / ARCHITECTURE APPROVED |
+| **35** | Enterprise Inventory, Store & Consumption | Business Operations | Foundation (ERP) | PLANNED / ARCHITECTURE APPROVED |
+| **36** | Fixed Asset, Device Maintenance & Calibration | Business Operations | Advanced (ERP) | PLANNED / ARCHITECTURE APPROVED |
+| **37** | HR & Employee Management | Business Operations | Advanced (ERP) | PLANNED / ARCHITECTURE APPROVED |
+| **38** | Payroll, Benefits, Loans & Final Settlement | Business Operations | Advanced (ERP) | PLANNED / ARCHITECTURE APPROVED |
+| **39** | Shareholder, Investment & Profit Distribution | Business Operations | Enterprise (ERP) | PLANNED / ARCHITECTURE APPROVED |
 | **40** | AI Prescription Capture | AI | AI | Documented |
+| **41** | Budgeting, Cost Center & Financial Control | Business Operations | Advanced (ERP) | PLANNED / ARCHITECTURE APPROVED |
+| **42** | Manufacturing, BOM, Production & Costing | Business Operations | Enterprise (ERP) | PLANNED / ARCHITECTURE APPROVED |
+
+> **Status note:** PLANNED / ARCHITECTURE APPROVED means documentation and registry reservation only. Implementation, AI-QC, Manual QC/UAT, and production approval have **not** started. MOD-40 remains AI Prescription Capture and was not renumbered.
 
 ---
 
@@ -316,24 +327,25 @@ This catalog reinforces our commitment to a Multi-tenant SaaS architecture, loca
 18. **Deployment Edition**: Hospital, Enterprise, AI Editions.
 
 ### Module 14 – Diagnostic Inventory
-1. **Purpose**: Manages lab reagents, consumables, and stock.
-2. **Business Objectives**: Ensure labs never run out of critical testing supplies.
+1. **Purpose**: Healthcare-specific diagnostic inventory and consumption extension for reagents, consumables, and lab quality rules.
+2. **Business Objectives**: Ensure labs never run out of critical testing supplies while reusing the enterprise inventory/procurement engines.
 3. **Primary Actors**: Lab Manager, Store Keeper.
-4. **Secondary Actors**: None.
-5. **Key Features**: Item master, batch/expiry tracking, supplier mapping.
-6. **Major Screens**: Item Setup, Stock Ledger.
-7. **Major Reports**: Low Stock Alert, Expiry Report.
-8. **Major Database Entities**: `DiagnosticItem`, `StockLedger`.
-9. **Dependencies**: Mod 01, 09.
+4. **Secondary Actors**: Purchase Officer (via MOD-34), Inventory Controller (via MOD-35).
+5. **Key Features**: Reagent/open-bottle/open-expiry tracking; test-/analyzer-/patient-service-wise consumption; healthcare expiry blocking; lab compliance rules. Physical stock ledger and generic item engine are **MOD-35**; procurement is **MOD-34**.
+6. **Major Screens**: Healthcare consumption dashboard, reagent open log, machine/test mapping (planned over MOD-35 stock views).
+7. **Major Reports**: Low Stock Alert, Expiry Report, Consumption by Test/Machine.
+8. **Major Database Entities**: Healthcare extension entities over MOD-35 item/batch/ledger (design pending implementation).
+9. **Dependencies**: Mod 01, 09; **planned**: Mod 34, 35.
 10. **Used By**: Mod 21, 22.
 11. **Security Considerations**: Inventory value protection.
-12. **Audit Requirements**: Track stock adjustments.
+12. **Audit Requirements**: Track stock adjustments and consumption.
 13. **Mobile Readiness**: Medium (Barcode scanning).
 14. **API Readiness**: High.
 15. **AI Readiness**: Medium (Predictive ordering).
-16. **Future Expansion**: Automated supplier PO generation.
+16. **Future Expansion**: Auto-consumption from LIS result/verification events.
 17. **Criticality Level**: Foundation.
 18. **Deployment Edition**: Diagnostic, Hospital, Enterprise Editions.
+19. **Implementation Status**: Documented; not implemented. Architecture boundary **ARCHITECTURE APPROVED** (extension of MOD-35/MOD-34).
 
 ### Module 15 – Patient Registration & MPI
 1. **Purpose**: Creates the unified patient identity.
@@ -356,15 +368,15 @@ This catalog reinforces our commitment to a Multi-tenant SaaS architecture, loca
 18. **Deployment Edition**: All Editions.
 
 ### Module 16 – Patient Profile & Ledger
-1. **Purpose**: The 360-degree clinical and financial patient view.
-2. **Business Objectives**: Provide a single source of truth for a patient's history.
+1. **Purpose**: The 360-degree clinical and financial patient view and **patient subledger UX**.
+2. **Business Objectives**: Provide a single source of truth for a patient's clinical history and patient-account dues.
 3. **Primary Actors**: Doctors, Nurses, Billing.
 4. **Secondary Actors**: None.
-5. **Key Features**: Timeline view, allergy tracking, consolidated ledger.
-6. **Major Screens**: Patient 360 Dashboard.
-7. **Major Reports**: Patient History Summary.
-8. **Major Database Entities**: `PatientProfile`, `PatientAllergy`.
-9. **Dependencies**: Mod 15.
+5. **Key Features**: Timeline view, allergy tracking, consolidated **patient** ledger (debits/credits/due). **Not** General Ledger, Account Ledger, Cash Book, Bank Book, Trial Balance, P&L, or Balance Sheet (those are MOD-33).
+6. **Major Screens**: Patient 360 Dashboard, Patient Account / Ledger Grid.
+7. **Major Reports**: Patient History Summary, Patient Due Statement.
+8. **Major Database Entities**: `PatientProfile`, `PatientAllergy`, patient ledger projection (design pending).
+9. **Dependencies**: Mod 15; financial projection over Mod 10; future Mod 33 patient subledger.
 10. **Used By**: Mod 18, 27, 29, 30.
 11. **Security Considerations**: High PHI visibility restrictions.
 12. **Audit Requirements**: Track profile views (Break-the-glass).
@@ -374,6 +386,7 @@ This catalog reinforces our commitment to a Multi-tenant SaaS architecture, loca
 16. **Future Expansion**: Longitudinal health graphs.
 17. **Criticality Level**: Core.
 18. **Deployment Edition**: All Editions.
+19. **Boundary ADR**: ADR-005 (`docs/Architecture/ADR/ADR-005-MOD-16-Patient-Ledger-vs-GL.md`).
 
 ### Module 17 – Appointment & Queue
 1. **Purpose**: Basic scheduling and token generation.
@@ -695,6 +708,52 @@ This catalog reinforces our commitment to a Multi-tenant SaaS architecture, loca
 17. **Criticality Level**: Enterprise.
 18. **Deployment Edition**: Telemedicine, Enterprise, AI Editions.
 
+### Module 33 – Finance & General Accounting
+1. **Purpose**: Central reusable double-entry accounting engine for all editions and verticals.
+2. **Business Objectives**: Fiscal control, immutable posting, and statutory statements without healthcare hard-coding in the core engine.
+3. **Primary Actors**: Accountant, Finance Manager, Cashier, Auditor.
+4. **Key Features**: Fiscal year/periods/lock; COA; vouchers; posting engine; reversal; GL; cash/bank; reconciliation; TB/P&L/BS/Cash Flow/Equity; party subledgers.
+5. **Dependencies**: Mod 01, 01A, 02, 03, 04, 06, 07.
+6. **Used By**: Mod 10 (adapter), 34, 35, 36, 38, 39, 41, 42.
+7. **Status**: PLANNED / ARCHITECTURE APPROVED — NOT STARTED.
+8. **Scope Document**: `docs/modules/MOD-33-Finance-General-Accounting.md`.
+9. **Deployment Edition**: Recommended for healthcare; Required for Trading/Distribution/Manufacturing/Enterprise.
+
+### Module 34 – Procurement & Supplier Management
+1. **Purpose**: Procure-to-pay including suppliers, PR/PO, GRN orchestration, three-way matching, and AP.
+2. **Key Features**: Quotation/comparative statement; partial receiving; inspection; supplier invoice; returns; advances; VAT; freight; landed cost; GRNI clearing (ADR-006).
+3. **Dependencies**: Mod 01–04, 06, 07, 33, 35.
+4. **Used By**: Mod 14, 20 (stock adapter path), 41, 42.
+5. **Status**: PLANNED / ARCHITECTURE APPROVED. Scope: `docs/modules/MOD-34-Procurement-Supplier-Management.md`.
+
+### Module 35 – Enterprise Inventory, Store & Consumption
+1. **Purpose**: Single generic inventory engine for healthcare, pharmacy, trading, distribution, and manufacturing.
+2. **Key Features**: Items/UOM/warehouses; batch/expiry/serial/barcode; movements; WAVG default / FIFO optional; item ledger.
+3. **Dependencies**: Mod 01–04, 06, 07, 09, 33.
+4. **Used By**: Mod 14, 20 (pharmacy stock adapter), 34, 36, 42.
+5. **Status**: PLANNED / ARCHITECTURE APPROVED. Scope: `docs/modules/MOD-35-Enterprise-Inventory.md`.
+
+### Module 36 – Fixed Asset, Device Maintenance & Calibration
+1. **Purpose**: Asset register, capitalization, depreciation, maintenance, calibration, AMC, disposal.
+2. **Dependencies**: Platform + Mod 33; optional Mod 35 for spare parts.
+3. **Status**: PLANNED / ARCHITECTURE APPROVED. Scope: `docs/modules/MOD-36-Fixed-Asset-Maintenance.md`.
+
+### Module 37 – HR & Employee Management
+1. **Purpose**: Employee master and employment lifecycle (distinct from Mod 02 user identity).
+2. **Dependencies**: Platform + Mod 08.
+3. **Used By**: Mod 38.
+4. **Status**: PLANNED / ARCHITECTURE APPROVED. Scope: `docs/modules/MOD-37-HR-Employee-Management.md`.
+
+### Module 38 – Payroll, Benefits, Loans & Final Settlement
+1. **Purpose**: Payroll run, benefits, loans/advances, payslips, final settlement; posts only via Mod 33.
+2. **Dependencies**: Mod 37, 33, platform.
+3. **Status**: PLANNED / ARCHITECTURE APPROVED. Scope: `docs/modules/MOD-38-Payroll-Benefits-Settlement.md`.
+
+### Module 39 – Shareholder, Investment & Profit Distribution
+1. **Purpose**: Shareholder register, capital movements, dividend declaration and payment.
+2. **Dependencies**: Mod 33, platform.
+3. **Status**: PLANNED / ARCHITECTURE APPROVED. Scope: `docs/modules/MOD-39-Shareholder-Profit-Distribution.md`.
+
 ### Module 40 – AI Prescription Capture
 1. **Purpose**: Intelligent OCR and mapping of unstructured prescriptions.
 2. **Business Objectives**: Eliminate manual data entry and prevent revenue leakage.
@@ -715,18 +774,30 @@ This catalog reinforces our commitment to a Multi-tenant SaaS architecture, loca
 17. **Criticality Level**: AI.
 18. **Deployment Edition**: AI Edition.
 
+### Module 41 – Budgeting, Cost Center & Financial Control
+1. **Purpose**: Cost centers, projects, budgets, commitment control, actual vs budget, approval limits, cash-flow forecast.
+2. **Dependencies**: Mod 33; reads Mod 34 commitments; Mod 08 for department budgets.
+3. **Status**: PLANNED / ARCHITECTURE APPROVED. Scope: `docs/modules/MOD-41-Budgeting-Financial-Control.md`.
+
+### Module 42 – Manufacturing, BOM, Production & Costing
+1. **Purpose**: BOM, production orders, WIP, finished goods, labor/overhead, batch and product costing.
+2. **Dependencies**: Mod 35, 33, 34, platform.
+3. **Status**: PLANNED / ARCHITECTURE APPROVED. Scope: `docs/modules/MOD-42-Manufacturing-Costing.md`.
+4. **Deployment Edition**: Manufacturing (Required); Enterprise (Optional).
+
 ---
 
 ## SECTION 4: MODULE GROUP SUMMARIES
 
 *   **Foundation Modules (01-06)**: The bedrock of the SaaS platform. These modules handle multi-tenancy, security, auditing, and localization. They operate invisibly behind the scenes to keep the system secure and scalable.
-*   **Master Data Modules (07-14)**: The dictionaries of the hospital. They define the physical locations, clinical departments, billable services, and inventory items required before any patient transaction can occur.
-*   **Patient Journey Modules (15-17, 31)**: Manage the patient's entry into the system, ensuring unique identification (MPI) and orchestrating their physical and digital appointments.
-*   **Clinical Modules (18-20)**: The physician's digital workspace. These modules replace paper charts with structured encounters, diagnoses, and electronic prescriptions.
+*   **Master Data Modules (07-14)**: The dictionaries of the hospital. They define the physical locations, clinical departments, billable services, and healthcare inventory extension (MOD-14 over planned MOD-35).
+*   **Patient Journey Modules (15-17, 31)**: Manage the patient's entry into the system, ensuring unique identification (MPI) and orchestrating their physical and digital appointments. MOD-16 is patient 360 / patient subledger UX — not General Ledger.
+*   **Clinical Modules (18-20)**: The physician's digital workspace. These modules replace paper charts with structured encounters, diagnoses, and electronic prescriptions. MOD-20 pharmacy stock will use MOD-35 (no second stock engine).
 *   **Diagnostic Modules (21-24)**: The Laboratory Information System (LIS). A strict pipeline from barcode generation to pathologist verification and secure report delivery.
 *   **Radiology Modules (25)**: The Radiology Information System (RIS). Manages expensive imaging assets, technician workflows, and structured radiologist dictations.
 *   **IPD Modules (26-29)**: The logistical and clinical management of admitted patients. Covers bed occupancy, nursing tasks, medication administration, and the complex discharge clearance process.
-*   **Finance Modules**: *(Integrated throughout)*. Modules 10, 28, 29, and 40 contain heavy financial touchpoints for billing, pricing, and revenue assurance.
+*   **Operational Finance Touchpoints**: Modules 10, 28, 29, and 40 contain billing, pricing, clearance, and revenue-assurance touchpoints. They later post into MOD-33 via adapters; they do not write arbitrary GL rows.
+*   **Business Operations Suite (33–39, 41–42)**: **PLANNED / ARCHITECTURE APPROVED**. Reusable finance, procurement, inventory, assets, HR, payroll, shareholder, budgeting, and manufacturing. See `docs/Architecture/05-Business-Operations-Suite.md`.
 *   **Patient Engagement Modules (30)**: The digital front door, empowering patients with self-service access to their health data and hospital services.
 *   **Telemedicine Modules (32)**: Extends clinical care beyond the hospital walls via secure video consultations and remote prescribing.
 *   **AI Modules (40)**: The intelligence layer that automates administrative burdens, starting with the conversion of unstructured prescription images into structured billing orders.
@@ -798,6 +869,24 @@ This catalog reinforces our commitment to a Multi-tenant SaaS architecture, loca
 [21] Sample Collection (Orders automatically created)
 ```
 
+### Planned Procure-to-Pay & Accounting Flow *(Architecture Approved — Not Implemented)*
+```text
+[34] Purchase Requisition → PO
+      |
+      v
+[34/35] GRN (Inventory Dr / GRNI Cr via [33])
+      |
+      v
+[34] Supplier Invoice + Three-Way Match (clear GRNI → AP via [33])
+      |
+      v
+[34] Supplier Payment (AP Dr / Bank Cr via [33])
+
+[10] Diagnostic Invoice/Payment ──adapter──► [33] Patient AR / Revenue / Cash
+[14] Healthcare consumption ──uses──► [35] stock + [33] expense posting
+[20] Pharmacy stock adapter ──uses──► [35] (no second stock engine)
+```
+
 ---
 
 ## SECTION 6: MODULE DEPENDENCY HEATMAP
@@ -805,55 +894,70 @@ This catalog reinforces our commitment to a Multi-tenant SaaS architecture, loca
 | Module Group | Dependency Level | Description |
 | :--- | :--- | :--- |
 | **Foundation (01-06)** | **Independent** | Relies on nothing. Everything relies on them. |
-| **Master Data (07-14)** | **Low Dependency** | Relies only on Foundation. |
+| **Master Data (07-14)** | **Low Dependency** | Relies only on Foundation; MOD-14 later depends on MOD-34/35. |
 | **Patient Journey (15-17)** | **Medium Dependency** | Relies on Foundation and Master Data. |
 | **Clinical (18-20)** | **High Dependency** | Relies on Patient Journey and Master Data. |
 | **Diagnostics (21-25)** | **High Dependency** | Strict linear dependency within the group. |
 | **IPD (26-29)** | **Very High Dependency**| Relies on Clinical, Master Data, and Patient. |
 | **Engagement/Telemed (30-32)**| **High Dependency** | Sits on top of all clinical and diagnostic data. |
+| **Business Operations (33–39, 41–42)** | **High Dependency** | Core sequence MOD-33 → MOD-35 → MOD-34; others post into MOD-33. **Planned only.** |
 | **AI (40)** | **Very High Dependency**| Requires mature Master Data to map against. |
 
 ---
 
 ## SECTION 7: EDITION MAPPING
 
-| Module | Clinic | Diagnostic | Hospital | Enterprise | Telemed | AI Ed. |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| 01-06 (Foundation) | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
-| 07-12 (Masters) | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
-| 13 (Ward Setup) | | | ✔ | ✔ | | ✔ |
-| 14 (Diag Inventory) | | ✔ | ✔ | ✔ | | ✔ |
-| 15-17 (Patient/Appt)| ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
-| 18-20 (Clinical) | ✔ | | ✔ | ✔ | ✔ | ✔ |
-| 21-24 (Laboratory) | | ✔ | ✔ | ✔ | | ✔ |
-| 25 (Radiology) | | ✔ | ✔ | ✔ | | ✔ |
-| 26-29 (IPD) | | | ✔ | ✔ | | ✔ |
-| 30 (Patient Portal) | | ✔ | ✔ | ✔ | ✔ | ✔ |
-| 31 (Adv. Appt) | ✔ | | ✔ | ✔ | ✔ | ✔ |
-| 32 (Telemedicine) | | | | ✔ | ✔ | ✔ |
-| 40 (AI Prescription)| | | | | | ✔ |
+| Module | Clinic | Diagnostic | Hospital | Enterprise | Telemed | AI Ed. | Trading/Dist. *(P)* | Mfg *(P)* |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| 01-06 (Foundation) | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| 07-12 (Masters) | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔* | ✔* |
+| 13 (Ward Setup) | | | ✔ | ✔ | | ✔ | | |
+| 14 (Diag Inventory) | | ✔ | ✔ | ✔ | | ✔ | | |
+| 15-17 (Patient/Appt)| ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | | |
+| 18-20 (Clinical) | ✔ | | ✔ | ✔ | ✔ | ✔ | | |
+| 21-24 (Laboratory) | | ✔ | ✔ | ✔ | | ✔ | | |
+| 25 (Radiology) | | ✔ | ✔ | ✔ | | ✔ | | |
+| 26-29 (IPD) | | | ✔ | ✔ | | ✔ | | |
+| 30 (Patient Portal) | | ✔ | ✔ | ✔ | ✔ | ✔ | | |
+| 31 (Adv. Appt) | ✔ | | ✔ | ✔ | ✔ | ✔ | | |
+| 32 (Telemedicine) | | | | ✔ | ✔ | ✔ | | |
+| 33 (Finance) *(P)* | ○ | ○ | ○ | ✔ | | ✔ | ✔ | ✔ |
+| 34 (Procurement) *(P)* | ○ | ○ | ○ | ✔ | | ✔ | ✔ | ✔ |
+| 35 (Inventory) *(P)* | ○ | ✔ | ✔ | ✔ | | ✔ | ✔ | ✔ |
+| 36 (Assets) *(P)* | ○ | ○ | ○ | ✔ | | ✔ | ○ | ✔ |
+| 37–38 (HR/Payroll) *(P)* | ○ | ○ | ○ | ✔ | | ✔ | ○ | ○ |
+| 39 (Shareholder) *(P)* | ○ | ○ | ○ | ○ | | | ○ | ○ |
+| 40 (AI Prescription)| | | | | | ✔ | | |
+| 41 (Budget) *(P)* | ○ | ○ | ○ | ✔ | | ✔ | ✔ | ✔ |
+| 42 (Manufacturing) *(P)* | | | | ○ | | | | ✔ |
+
+\* Trading/Manufacturing editions use relevant masters (branch, category, users) without full clinical packs.
+*(P)* = PLANNED / ARCHITECTURE APPROVED. ○ = Optional/Recommended. ✔ = Included/Required.
 
 ---
 
 ## SECTION 8: IMPLEMENTATION PRIORITY
 
-Based on the official Development Sequence Guide:
+Based on the official Development Sequence Guide (clinical) plus Business Operations Suite phases:
 
 *   **Phase 1 (The Bedrock)**: Modules 01, 02, 03, 04, 06.
 *   **Phase 2 (The Dictionaries)**: Modules 07, 08, 09, 10, 11, 12, 13, 14, 20.
 *   **Phase 3 (The Front Desk)**: Modules 15, 16, 17, 05.
 *   **Phase 4 (Clinical & Diagnostics)**: Modules 18, 19, 21, 22, 23, 24, 25.
 *   **Phase 5 (The Ward & Edge)**: Modules 28, 27, 26, 29, 30, 31, 32, 40.
+*   **Business Operations P0 (Docs/Registry)**: Reserve MOD-33–39, 41–42 — **current documentation reservation**.
+*   **Business Operations P1–P11**: MOD-33 foundation → statements + MOD-10 adapter → MOD-35 → MOD-34 → MOD-14/MOD-20 adapters → MOD-16 AR projection → MOD-36 → MOD-37/38 → MOD-41 → MOD-39 → MOD-42. See `docs/Architecture/05-Business-Operations-Suite.md`.
 
 ---
 
 ## SECTION 9: PRODUCT MATURITY MAP
 
-*   **Foundation**: Modules 01-14. The mandatory base.
+*   **Foundation**: Modules 01-14. The mandatory healthcare base.
 *   **Core**: Modules 15-21. The minimum viable healthcare operations.
 *   **Advanced**: Modules 22-25, 30, 31. Automation and patient-facing tools.
 *   **Enterprise**: Modules 26-29, 32. Complex inpatient logistics and virtual care.
 *   **AI**: Module 40. Next-generation machine learning automation.
+*   **Business Operations (PLANNED)**: Modules 33–39, 41–42. Architecture approved; implementation not started; not production approved.
 
 ---
 

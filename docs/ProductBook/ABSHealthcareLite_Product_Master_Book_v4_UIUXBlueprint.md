@@ -196,7 +196,7 @@ Optimal click paths designed for speed:
 
 ## SECTION 15: MODULE SCREEN CATALOG
 
-*Summary of core screens per module (01-32, 40):*
+*Summary of core screens per module (01-32, 40) plus planned Business Operations screens (33–39, 41–42). Planned screens are documentation only — **NOT IMPLEMENTED**.:*
 
 *   **01 Company/Tenant:** Tenant List, Tenant Setup Wizard, Branding Configuration.
 *   **02 User Management:** User Grid, User Profile Entry, Password Reset Modal.
@@ -211,13 +211,13 @@ Optimal click paths designed for speed:
 *   **11 Doctor:** Doctor Profile, Schedule Builder, Commission Setup.
 *   **12 Referral Doctor:** Referral List, Referral Portal Dashboard.
 *   **13 Ward Cabin Bed:** Visual Bed Board, Ward Entry.
-*   **14 Diagnostic Inventory:** Stock Ledger, PO Wizard, GRN Entry.
+*   **14 Diagnostic Inventory:** Healthcare consumption dashboard, reagent open log, machine/test mapping (stock ledger/PO/GRN UX hosted by planned MOD-35/MOD-34).
 *   **15 Patient Registration:** MPI Search, Registration Form, Smart Card Print.
-*   **16 Patient Profile Ledger:** Patient 360 Dashboard, Ledger Grid.
+*   **16 Patient Profile Ledger:** Patient 360 Dashboard, Patient Account / Ledger Grid (patient subledger UX — not GL/TB/P&L/BS).
 *   **17 Appointment:** Calendar View, Queue Display Board, Token Print.
 *   **18 Doctor Worklist:** OPD Queue List, Clinical Encounter Workspace.
 *   **19 Prescription:** CPOE Interface, Drug Interaction Alert Modal, Rx Print.
-*   **20 Pharmacy:** POS Screen, Dispense Queue, Batch Expiry Dashboard.
+*   **20 Pharmacy:** Medication catalog screens (implemented/pilot); future dispense/stock screens consume MOD-35 (no second pharmacy stock UI engine).
 *   **21 Sample Collection:** Phlebotomy Worklist, Barcode Generation, Acknowledgement Print.
 *   **22 Result Entry:** Analyzer Interface, Manual Entry Grid, Delta Check Alerts.
 *   **23 Result Verification:** Pathologist Worklist, Side-by-Side Verification Screen.
@@ -231,6 +231,17 @@ Optimal click paths designed for speed:
 *   **31 Appt Follow-Up:** Recall List, CRM Communication Log.
 *   **32 Telemedicine:** Virtual Waiting Room, Video Consultation UI, Chat Panel.
 *   **40 AI Prescription Capture:** Image Upload/Camera UI, AI Extraction Review Split-Screen.
+*   **33 Finance & General Accounting *(PLANNED)*:** Fiscal Year/Period Setup, COA Tree, Voucher Entry (JV/RV/PV/Contra/Adjustment), Posting/Approval Queue, Account Ledger, Cash Book, Bank Book, Bank Reconciliation, Trial Balance, P&L, Balance Sheet, Cash Flow, Changes in Equity. Persistent debit/credit totals; period-lock badges; immutable posted state.
+*   **34 Procurement *(PLANNED)*:** Supplier Master, PR → Quotation → Comparative Statement → PO Wizard, GRN Entry, Inspection, Three-Way Match Workbench, Supplier Invoice, Payment, Return.
+*   **35 Enterprise Inventory *(PLANNED)*:** Item Master, Warehouse/Store, Batch/Expiry Board, Stock Receipt/Transfer/Issue, Physical Count, Adjustment, Item Ledger, Reorder Alerts.
+*   **36 Fixed Assets *(PLANNED)*:** Asset Register, Capitalization, Depreciation Run, Maintenance/Calibration Calendar, AMC Contracts, Breakdown/Downtime, Disposal.
+*   **37 HR *(PLANNED)*:** Employee Master, Designation/Position, Attendance, Shift/Roster, Leave, Separation.
+*   **38 Payroll *(PLANNED)*:** Salary Structure, Payroll Run Validation, Approval Queue, Payslip Print, Loan/Advance, Final Settlement.
+*   **39 Shareholder *(PLANNED)*:** Shareholder Register, Ownership Snapshot, Dividend Declaration, Payable/Payment, Unpaid Dividend.
+*   **41 Budgeting *(PLANNED)*:** Cost Center/Project Masters, Budget Entry, Commitment Control Alerts, Actual vs Budget, Cash-Flow Forecast.
+*   **42 Manufacturing *(PLANNED)*:** BOM Builder, Production Order, Material Issue/Return, WIP Board, Finished Goods Receipt, Batch/Product Costing.
+
+All planned Business Operations screens must obey Volume 4 global rules: no hardcoded English labels; EN/BN/AR/UR/HI; RTL/LTR; 30% text expansion; WCAG AA; keyboard operation; responsive layouts; visible permission restrictions; audit/history access; tenant branding; print-ready reports; clear approval/status badges; minimum-click workflows.
 
 ---
 
@@ -254,6 +265,7 @@ To ensure consistent UI testing and training, official sample data profiles must
 *   **Host Menu:** Dashboard, Tenants, Global Settings, License Management, Host Audit.
 *   **Tenant Menu:** Dashboard, Hospital Setup, Master Data, User Management, Reports.
 *   **Department Menus:** Contextual. (e.g., "Laboratory" menu shows Sample Collection, Result Entry, Verification).
+*   **Business Operations Menus *(PLANNED — not routed yet)*:** Finance (vouchers, ledgers, statements); Procurement; Inventory/Stores; Fixed Assets & Maintenance; HR; Payroll; Shareholders; Budgeting; Manufacturing — visible only when module entitlement is Active after implementation + QC.
 *   **Role Menus:** Dynamically generated based on Module 03 (Role Permissions).
 *   **Portal Menus:** Home, My Appointments, My Reports, My Prescriptions, Profile.
 *   **Mobile Menus:** Bottom tab bar: Home | Appointments | Records | More.
@@ -279,6 +291,22 @@ To bridge the gap between UI design and development, ABSHealthcareLite will util
 *   **Phase 4 - IPD Screens:** Visual Bed Board, Nursing Station, MAR, Discharge.
 *   **Phase 5 - Portal + Telemedicine:** Patient Mobile App screens, Video UI.
 *   **Phase 6 - AI Screens:** AI Prescription Capture review interfaces.
+*   **Phase 7 - Business Operations Screens *(PLANNED)*:** Finance vouchers/statements, procurement match workbench, inventory movements, asset maintenance calendar, payroll approval, shareholder distribution — only after corresponding module implementation phases.
+
+---
+
+## SECTION 19A: FINANCE & OPERATIONS UI PATTERNS (PLANNED)
+
+*   **Voucher entry:** Split debit/credit grid; running balance; period badge; draft/submit/approve/post actions; reverse (never edit posted).
+*   **Payment/receipt:** Party subledger picker; open-item allocation; persistent totals.
+*   **Account ledger / TB / P&L / BS:** Date/branch filters; print-ready layouts; drill to voucher.
+*   **Purchase workflow:** Status chips for PR→PO→GRN→Invoice→Paid; three-way match exceptions highlighted.
+*   **Stock issue/consumption:** Forced batch/expiry selection; block expired healthcare items (MOD-14 rules).
+*   **Asset maintenance calendar:** Schedule board; downtime and AMC alerts.
+*   **Payroll approval:** Run → validate → approve → post; payslip print.
+*   **Shareholder distribution:** Ownership snapshot before declare; payable → payment trail.
+
+These patterns are documentation requirements only in P0; no screens are implemented in this reservation.
 
 ---
 

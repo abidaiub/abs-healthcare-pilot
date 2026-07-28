@@ -43,6 +43,8 @@ Our **Global Healthcare Vision** is to transcend geographical and linguistic bar
 *   Medical Colleges & Teaching Hospitals
 *   Specialty Centers (e.g., Oncology, Maternity)
 *   Telemedicine & Virtual Care Providers
+*   Trading and Distribution companies *(planned Business Operations Suite)*
+*   Manufacturing companies *(planned Business Operations Suite)*
 
 **Regions:**
 *   Bangladesh (Domestic Market)
@@ -94,6 +96,17 @@ Our **Global Healthcare Vision** is to transcend geographical and linguistic bar
 *   **Target Customers**: High-volume hospitals and diagnostic networks.
 *   **Key Benefits**: Drastic reduction in manual data entry, optimized revenue capture, and advanced clinical decision support.
 
+### ABS Business Operations / Trading Edition *(PLANNED — Architecture Approved)*
+*   **Included Modules**: MOD-33 Finance, MOD-34 Procurement, MOD-35 Enterprise Inventory, MOD-41 Budgeting (recommended).
+*   **Target Customers**: Trading and distribution companies; healthcare tenants adding full ERP finance.
+*   **Key Benefits**: Reusable double-entry accounting, procure-to-pay, and single inventory engine without healthcare hard-coding in the core.
+*   **Status**: Documentation and registry reserved only. Not implemented. Not production approved.
+
+### ABS Manufacturing Edition *(PLANNED — Architecture Approved)*
+*   **Included Modules**: Trading Edition foundations + MOD-42 Manufacturing, BOM, Production & Costing.
+*   **Target Customers**: Manufacturing companies requiring BOM, WIP, and product costing.
+*   **Status**: Documentation and registry reserved only. Not implemented. Not production approved.
+
 ---
 
 ## 7. Architectural Overview
@@ -105,7 +118,7 @@ ABSHealthcareLite is built on a strict layered architecture, ensuring separation
 *   **Clinical Layer**: Doctor workspaces, encounters, and prescriptions.
 *   **Diagnostic Layer**: LIS and RIS engines managing samples, results, and imaging.
 *   **IPD Layer**: Inpatient logistics, nursing tasks, and bed occupancy.
-*   **Finance Layer**: Revenue cycle, billing, and payment tracking.
+*   **Finance Layer**: (a) Operational revenue cycle and diagnostic billing (MOD-10); (b) planned reusable double-entry accounting engine (MOD-33) with procurement, inventory, assets, HR/payroll, shareholder, budgeting, and manufacturing extensions (MOD-34–39, MOD-41–42). Healthcare-specific inventory consumption remains MOD-14 over MOD-35.
 *   **Patient Engagement Layer**: Portals, notifications, and self-service tools.
 *   **Telemedicine Layer**: Virtual consultation and remote care infrastructure.
 *   **AI Layer**: OCR, intelligent mapping, and machine learning pipelines.
@@ -119,11 +132,12 @@ ABSHealthcareLite is built on a strict layered architecture, ensuring separation
 *   **Clinical Documentation**: Structured EMR, progress notes, and clinical pathways.
 *   **Laboratory Management**: End-to-end LIS with barcode tracking and multi-level verification.
 *   **Radiology Management**: RIS workflow, scheduling, and structured dictation.
-*   **Billing**: Integrated charge capture across all clinical and operational events.
+*   **Billing**: Integrated charge capture across all clinical and operational events (MOD-10 operational billing).
 *   **IPD**: Real-time bed boards, nursing handovers, and safe medication administration.
 *   **Portal**: Secure patient access to records, appointments, and bills.
 *   **Telemedicine**: Integrated video consults with remote prescribing.
 *   **AI**: Automated data extraction from unstructured clinical documents.
+*   **Business Operations (PLANNED)**: General accounting, procurement, enterprise inventory, fixed assets, HR, payroll, shareholder distribution, budgeting, and manufacturing — configuration-based reuse for diagnostic, clinic, hospital, trading, distribution, and manufacturing tenants.
 
 ---
 
@@ -142,9 +156,9 @@ ABSHealthcareLite is built on a strict layered architecture, ensuring separation
 *   **[11] Doctor Management**: Master Data | Manages provider profiles, specialties, and credentials.
 *   **[12] Referral Doctor**: Master Data | Tracks external referring physicians for commissions and reporting.
 *   **[13] Ward/Cabin/Bed Setup**: Master Data | Defines the physical inpatient infrastructure.
-*   **[14] Diagnostic Inventory**: Master Data | Manages lab reagents, consumables, and stock.
+*   **[14] Diagnostic Inventory**: Master Data | Healthcare inventory extension (reagents/consumables) over planned MOD-35/MOD-34 — not a second enterprise stock engine.
 *   **[15] Patient Registration & MPI**: Patient Journey | Creates the unified patient identity.
-*   **[16] Patient Profile Ledger**: Patient Journey | The 360-degree clinical and financial patient view.
+*   **[16] Patient Profile Ledger**: Patient Journey | Patient 360° clinical-financial view and patient subledger UX (not General Ledger).
 *   **[17] Appointment & Queue Mgmt**: Patient Journey | Basic scheduling and token generation.
 *   **[18] Doctor Worklist & Encounter**: Clinical | The physician's workspace for diagnosis and clinical notes.
 *   **[19] Prescription Management**: Clinical | Generates structured, multilingual medication plans.
@@ -161,7 +175,16 @@ ABSHealthcareLite is built on a strict layered architecture, ensuring separation
 *   **[30] Patient Portal & Self Service**: Engagement | The patient-facing web and mobile gateway.
 *   **[31] Appointment & Follow-Up**: Engagement | Advanced scheduling, waitlists, and compliance tracking.
 *   **[32] Telemedicine & Virtual Consult**: Telemedicine | Integrated remote care and video consultations.
-*   **[40] AI Prescription Capture**: AI | Intelligent OCR and mapping of unstructured prescriptions to billing orders.
+*   **[33] Finance & General Accounting**: Business Operations | **PLANNED / ARCHITECTURE APPROVED** — central double-entry posting engine, COA, vouchers, GL, statements.
+*   **[34] Procurement & Supplier Management**: Business Operations | **PLANNED / ARCHITECTURE APPROVED** — supplier, PR/PO, GRN, three-way matching, AP.
+*   **[35] Enterprise Inventory, Store & Consumption**: Business Operations | **PLANNED / ARCHITECTURE APPROVED** — single generic inventory engine for all verticals.
+*   **[36] Fixed Asset, Device Maintenance & Calibration**: Business Operations | **PLANNED / ARCHITECTURE APPROVED**.
+*   **[37] HR & Employee Management**: Business Operations | **PLANNED / ARCHITECTURE APPROVED**.
+*   **[38] Payroll, Benefits, Loans & Final Settlement**: Business Operations | **PLANNED / ARCHITECTURE APPROVED**.
+*   **[39] Shareholder, Investment & Profit Distribution**: Business Operations | **PLANNED / ARCHITECTURE APPROVED**.
+*   **[40] AI Prescription Capture**: AI | Intelligent OCR and mapping of unstructured prescriptions to billing orders *(unchanged ID)*.
+*   **[41] Budgeting, Cost Center & Financial Control**: Business Operations | **PLANNED / ARCHITECTURE APPROVED**.
+*   **[42] Manufacturing, BOM, Production & Costing**: Business Operations | **PLANNED / ARCHITECTURE APPROVED**.
 
 ---
 
@@ -214,9 +237,11 @@ ABSHealthcareLite embraces Artificial Intelligence as an assistive tool, not a r
 ---
 
 ## 16. Product Roadmap
-*   **Current Phase**: Deployment of Modules 01-32 and 40, covering the complete clinical, diagnostic, and patient engagement lifecycle.
-*   **Future Modules**: Comprehensive Finance & Accounting, HR & Payroll, Fixed Asset Management, and Advanced Pharmacy Procurement.
+*   **Current Phase**: Clinical, diagnostic, and patient engagement lifecycle (Modules 01-32 and 40), with operational diagnostic billing under MOD-10.
+*   **Business Operations Suite (Reserved — Architecture Approved, NOT STARTED)**: MOD-33 Finance & General Accounting; MOD-34 Procurement; MOD-35 Enterprise Inventory; MOD-36 Fixed Assets; MOD-37 HR; MOD-38 Payroll; MOD-39 Shareholder Distribution; MOD-41 Budgeting; MOD-42 Manufacturing. See `docs/Architecture/05-Business-Operations-Suite.md` and ADR set under `docs/Architecture/ADR/`.
+*   **Integration rules (approved)**: MOD-14 remains healthcare inventory extension over MOD-35/MOD-34; MOD-20 pharmacy stock uses MOD-35 (no second stock engine); MOD-16 is patient subledger/360 (not GL); MOD-10 posts to MOD-33 via future adapter.
 *   **Future Expansion**: Specialized clinical modules including Blood Bank, Operating Theater (OT) Management, Intensive Care Unit (ICU) flows, and Emergency Room (ER) triage.
+*   **Disclaimer**: Reservation of module IDs and documentation is not implementation completion, AI-QC pass, Manual QC pass, or production approval.
 
 ---
 

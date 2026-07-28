@@ -44,12 +44,13 @@ This path adds advanced clinical governance, patient engagement, and AI.
 ## 6. Diagnostic Center Only Path
 Optimized for standalone pathology labs and imaging centers (skips IPD/Nursing).
 *   **Phase 1 (Foundation)**: 01, 02, 03, 04, 06.
-*   **Phase 2 (Master Data)**: 07, 08, 09, 10, 11, 12 (Referral Doctor), 14 (Diag Inventory).
+*   **Phase 2 (Master Data)**: 07, 08, 09, 10, 11, 12 (Referral Doctor), 14 (Diag Inventory extension — depends on planned 35/34).
 *   **Phase 3 (Patient)**: 15, 17.
-*   **Phase 4 (Billing)**: *Core Billing*.
+*   **Phase 4 (Billing)**: MOD-10 operational billing (live in pilot); future MOD-33 adapter for GL posting.
 *   **Phase 5 (Laboratory)**: 21, 22, 23, 24.
 *   **Phase 6 (Radiology)**: 25.
 *   **Phase 7 (Portal)**: 30.
+*   **Phase 8 (Business Operations — optional/planned)**: 33 → 35 → 34 → 14 extension / 20 stock adapter → 16 AR projection.
 
 ## 7. Development Dependency Table
 
@@ -67,8 +68,17 @@ Optimized for standalone pathology labs and imaging centers (skips IPD/Nursing).
 | 11 | Doctor Management | 2 - High | 01, 02, 08 | Sprint 2 |
 | 12 | Referral Doctor | 2 - High | 01 | Sprint 2 |
 | 13 | Ward/Cabin/Bed Setup | 2 - High | 01, 07 | Sprint 2 |
-| 14 | Diagnostic Inventory | 2 - High | 01, 09 | Sprint 2 |
+| 14 | Diagnostic Inventory (healthcare extension) | 2 - High (docs); build after 35/34 | 01, 09; planned 34, 35 | After Business Ops P3–P5 |
 | 20 | Pharmacy Catalog | 2 - High | 01, 09 | Sprint 2 |
+| 33 | Finance & General Accounting | Planned P1 | 01–04, 06, 07 | Business Ops P1 |
+| 34 | Procurement & Supplier Management | Planned P4 | 33, 35, platform | Business Ops P4 |
+| 35 | Enterprise Inventory | Planned P3 | 33, 09, platform | Business Ops P3 |
+| 36 | Fixed Asset & Maintenance | Planned P7 | 33, platform | Business Ops P7 |
+| 37 | HR & Employee Management | Planned P8 | platform, 08 | Business Ops P8 |
+| 38 | Payroll & Settlement | Planned P8 | 37, 33 | Business Ops P8 |
+| 39 | Shareholder & Distribution | Planned P10 | 33 | Business Ops P10 |
+| 41 | Budgeting & Financial Control | Planned P9 | 33, 34 | Business Ops P9 |
+| 42 | Manufacturing & Costing | Planned P11 | 33, 34, 35 | Business Ops P11 |
 | 05 | Notification Center | 3 - Medium | 01 | Sprint 3 |
 | 15 | Patient Reg & MPI | 3 - Medium | 01, 06, 07 | Sprint 3 |
 | 16 | Patient Profile | 3 - Medium | 15 | Sprint 3 |
@@ -206,6 +216,14 @@ For optimal velocity, the engineering team should be structured as follows:
   +-------------+
   | 40 AI Presc | (Feeds structured data into Billing & Diagnostics)
   +-------------+
+
+[ BUSINESS OPERATIONS SUITE — PLANNED / ARCHITECTURE APPROVED — NOT STARTED ]
+  P0 Docs+Registry (complete when reserved)
+  P1 [33 Finance] -> P2 Statements + [10] adapter
+  P3 [35 Inventory] -> P4 [34 Procurement]
+  P5 [14] healthcare extension + [20] pharmacy stock adapter
+  P6 [16] patient AR projection -> P7 [36 Assets]
+  P8 [37 HR] -> [38 Payroll] -> P9 [41 Budget] -> P10 [39 Shareholder] -> P11 [42 Mfg]
 
 ===================================================================================
 ```

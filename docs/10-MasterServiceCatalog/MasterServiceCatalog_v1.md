@@ -1,5 +1,7 @@
 ## MODULE 10: Master Service Catalog
 
+> **Integration note (2026-07-26 — Architecture Approved):** MOD-10 remains the authoritative source for **service catalog, service pricing, diagnostic invoicing, collection, discounts, dues, and billing workflow**. Operational billing (Invoice / InvoicePayment) later posts to **MOD-33** through an accounting adapter. MOD-10 must never write arbitrary GL rows. Billing hold consumers (e.g. MOD-24) continue to use operational dues. See ADR-001 and `docs/Architecture/05-Business-Operations-Suite.md`.
+
 ### 1. Executive Summary
 The Master Service Catalog is the central repository for all billable services and investigations offered by the healthcare provider. It defines pricing, departmental ownership, and clinical parameters for each service.
 

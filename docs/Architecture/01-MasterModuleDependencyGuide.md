@@ -127,7 +127,7 @@ Highly interdependent modules managing inpatient care.
 *   **[29] Discharge Management**: The complex exit workflow. Depends on clearances from Nursing [27], Pharmacy [20], Billing, and triggers Bed Release in [28].
 
 ## 10. Billing & Financial Modules
-*(Note: Dedicated Finance modules are slated for future documentation, but billing touchpoints are heavily integrated into [10] Service Catalog, [28] Occupancy, and [29] Discharge).*
+*(Note: Dedicated Business Operations finance modules are now reserved as MOD-33–39 and MOD-41–42 — **PLANNED / ARCHITECTURE APPROVED**, not implemented. Operational billing touchpoints remain in [10] Service Catalog, [28] Occupancy, and [29] Discharge and will post into MOD-33 via adapters. See `docs/Architecture/05-Business-Operations-Suite.md`.)*
 
 ## 11. Patient Engagement Modules
 **Criticality: Advanced**
@@ -141,13 +141,26 @@ Highly interdependent modules managing inpatient care.
 **Criticality: AI**
 *   **[40] AI Prescription Capture**: An intelligent overlay. Depends on the Master Service Catalog [10] and Pharmacy Catalog [20] to map unstructured image data into structured orders.
 
-## 14. Future Modules
-To complete the ERP, future modules will include:
-*   Finance & Accounts (Vouchers, Ledgers, P&L)
-*   HR & Payroll
-*   Fixed Asset Management
+## 14. Business Operations Suite & Remaining Future Modules
+
+### Reserved (Architecture Approved — NOT STARTED)
+*   **[33] Finance & General Accounting** — central double-entry posting engine
+*   **[34] Procurement & Supplier Management**
+*   **[35] Enterprise Inventory, Store & Consumption** — single inventory engine
+*   **[36] Fixed Asset, Device Maintenance & Calibration**
+*   **[37] HR & Employee Management**
+*   **[38] Payroll, Benefits, Loans & Final Settlement**
+*   **[39] Shareholder, Investment & Profit Distribution**
+*   **[41] Budgeting, Cost Center & Financial Control**
+*   **[42] Manufacturing, BOM, Production & Costing**
+
+**Approved dependency spine:** Platform → MOD-33 → MOD-35 → MOD-34; MOD-14 and MOD-20 stock adapter consume MOD-35/MOD-34; MOD-16 remains patient subledger UX (not GL). MOD-40 remains AI Prescription Capture.
+
+ADRs: `docs/Architecture/ADR/`. Suite overview: `docs/Architecture/05-Business-Operations-Suite.md`.
+
+### Still future (not ID-reserved here)
 *   CRM & Marketing
-*   Advanced Pharmacy POS & Procurement
+*   Advanced Pharmacy POS (dispensing UX; stock engine remains MOD-35)
 
 ---
 

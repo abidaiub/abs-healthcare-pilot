@@ -52,11 +52,12 @@ Tracks the origin of the medication.
 *   Multilingual display names (EN, BN, AR, UR, HI).
 *   Support for "Favorite" and "Frequently Prescribed" lists per doctor/department.
 
-#### G. Pharmacy Inventory (Batch & Stock)
-*   **MedicationBatch**: Tracks specific production runs.
-    *   `BatchId`, `CompanyId`, `BrandId`, `BatchNo`, `ManufactureDate`, `ExpiryDate`, `PurchasePrice`, `SalePrice`, `QtyReceived`, `QtyAvailable`.
-*   **MedicationStock**: Tracks current availability per location.
-    *   `StockId`, `CompanyId`, `BranchId`, `BatchId`, `CurrentQty`, `ReorderLevel`.
+#### G. Pharmacy Inventory Integration (MOD-35)
+*   MOD-20 owns medication identity and pharmacy-domain workflow only.
+*   Medication identity links to the generic MOD-35 item identity.
+*   MOD-35 owns warehouse/store, batch/expiry, availability, stock movement, item ledger, and valuation.
+*   MOD-34 owns supplier procurement; MOD-33 owns accounting posting.
+*   MOD-20 must not create an independent stock ledger, batch-balance table, or valuation engine.
 
 #### H. Batch Management
 *   Enforce batch-wise inventory tracking.
@@ -109,7 +110,11 @@ Key metric cards:
 *   Dispense Report (by Doctor, by Patient)
 *   Controlled Drug Report
 
-### 9. Database Design
+### 9. Deprecated Historical Concept — Do Not Implement
+
+The tables in this section are retained only to explain the original MOD-20 proposal. `MedicationBatch` and `MedicationStock` are not target-architecture MOD-20 tables. Their intended capabilities map to MOD-35 item, warehouse/store, batch, stock-movement, and item-ledger concepts. The MOD-20 medication catalog links to the MOD-35 item identity; it does not duplicate quantity or valuation state.
+
+#### Historical Database Design
 
 **Table: MedicationGeneric**
 | Column | Type | Required | Description |
@@ -197,7 +202,7 @@ Key metric cards:
 
 ### 10. Acceptance Criteria
 *   **Catalog Management**: Host Admin can create global generics; Company Admin can create tenant-specific brands.
-*   **Inventory Integrity**: Dispensing an item strictly reduces `CurrentQty` in `MedicationStock` and `QtyAvailable` in `MedicationBatch`.
+*   **Inventory Integrity**: Dispensing creates an idempotent MOD-35 stock-movement request; only MOD-35 changes stock availability and batch quantities.
 *   **Batch Traceability**: Every dispensed item can be traced back to a specific `BatchNo` and `ExpiryDate`.
 *   **Dispensing Workflow**: Pharmacist can pull a finalized prescription, select batches (FEFO suggested), and dispense partially or fully.
 *   **Auditability**: Substitutions and controlled drug dispensing require justification and are fully logged.
@@ -222,15 +227,21 @@ Key metric cards:
 #### 1.3 Dispense Return Workflow
 *   **Return Process**: Workflow for patients returning unused/unopened medications (Full or Partial return).
 *   **Quality Check**: Pharmacist must verify the physical condition, Batch No, and Expiry before accepting the return.
-*   **Financial Reversal**: Returning an item automatically credits the `PatientLedger` (Module 16) and increases `MedicationStock`.
+*   **Return integration**: An approved return requests a MOD-35 reversing stock movement and, where money changes, the MOD-10 operational billing reversal/refund workflow. Any accounting effect posts through MOD-33; MOD-16 only displays the patient-centric ledger view.
 
-#### 1.4 Purchase / GRN Integration Roadmap
-*   **Purchase Order (PO)**: Generate POs based on `ReorderLevel` from `MedicationStock`.
-*   **Goods Received Note (GRN)**: Seamless conversion of PO to GRN.
-*   **Batch Auto-Creation**: Approving a GRN automatically creates new `MedicationBatch` records and updates the `MedicationStockLedger`.
-*   **Finance Posting**: GRN approval triggers an Accounts Payable (AP) entry in the financial ledger.
+#### 1.4 Purchase / GRN Integration Roadmap *(revised — Architecture Approved 2026-07-26)*
+*   **MOD-20 remains** the medication catalog and pharmacy-domain workflow module.
+*   **Single stock engine:** Future pharmacy stock, GRN, stock ledger, valuation, transfer, and adjustments **must use MOD-35** via a pharmacy stock adapter. Do **not** design a second pharmacy-native stock engine.
+*   **Procurement:** Purchase Order / GRN orchestration uses **MOD-34** (with MOD-35 stock updates).
+*   **Finance posting:** GRN and AP effects post through the **MOD-33** posting engine (GRNI clearing baseline — ADR-006), not by writing arbitrary GL rows.
+*   Legacy table names below (`MedicationStock`, `MedicationStockLedger`) are deprecated historical concepts and must not be implemented.
+*   See ADR-004 and `docs/modules/MOD-20-Pharmacy-Medication-Catalog.md`.
 
-### 2. Updated Database Design (Additional Tables)
+### 2. Deprecated Historical Concept — Do Not Implement
+
+The following additional-table proposal is preserved for traceability only. `MedicationStore` maps to a MOD-35 warehouse/store, and `MedicationStockLedger` maps to the MOD-35 item ledger. MOD-20 may retain medication-specific dispense/return workflow records, but it must not own stock balances or valuation.
+
+#### Historical Additional Table Proposal
 
 **Table: MedicationUom**
 | Column | Type | Required | Description |
@@ -267,6 +278,20 @@ Key metric cards:
 *   **MedicationReturnItem**: `ReturnItemId`, `ReturnId`, `DispenseItemId`, `BatchId`, `ReturnQty`, `RefundAmount`, `ConditionStatus`, `Reason`.
 
 ### 3. Updated Business Rules
-*   **Ledger Immutability**: The `MedicationStockLedger` is append-only. Mistakes must be corrected with a reversing transaction (Adjustment).
+*   **Ledger Immutability**: MOD-35's item ledger is append-only; corrections use an authorized MOD-35 reversing adjustment.
 *   **Return Constraints**: Medications cannot be returned if they are marked as "Temperature Sensitive" or if the batch has expired.
 *   **Store Scoping**: A pharmacist is assigned to a specific `StoreId` and can only dispense stock available in that store.
+
+### 4. Approved Integration Mapping
+
+| Pharmacy concept | Approved owner / mapping |
+| :--- | :--- |
+| Pharmacy medication identity | MOD-20 catalog linked to MOD-35 item identity |
+| Pharmacy store | MOD-35 warehouse/store |
+| Pharmacy batch and expiry | MOD-35 batch |
+| Pharmacy procurement | MOD-34 |
+| Pharmacy GRN stock movement | MOD-35 |
+| Pharmacy stock ledger | MOD-35 item ledger |
+| Pharmacy valuation | MOD-35 valuation engine |
+| Pharmacy dispense or sale | MOD-20 workflow producing MOD-35 stock movement |
+| Accounting posting | MOD-33 adapter |

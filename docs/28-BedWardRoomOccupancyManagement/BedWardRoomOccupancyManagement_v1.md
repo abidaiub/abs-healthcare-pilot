@@ -1,5 +1,7 @@
 ## MODULE 28: Bed, Ward, Room & Occupancy Management
 
+> **Integration note (2026-07-26 — Architecture Approved):** Future IPD bed charges and occupancy-based billing integrate with **MOD-10** (operational invoicing), **MOD-16** (patient account/subledger UX), and **MOD-33** (GL posting via adapters). MOD-28 does not own General Ledger. Module remains documented / registry-listed; full implementation not complete.
+
 ### 1. Executive Summary
 The Bed, Ward, Room & Occupancy Management module is the logistical core of the Inpatient Department (IPD). It tracks the physical location and status of every bed across the hospital's hierarchy (Building → Floor → Ward → Room → Bed). By managing reservations, real-time occupancy, transfers, and housekeeping workflows, this module ensures optimal patient flow, maximizes revenue generation, and provides a clear, auditable trail of a patient's physical journey through the facility.
 

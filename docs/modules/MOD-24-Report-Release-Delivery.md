@@ -35,6 +35,12 @@ Authorize release of pathologist-verified laboratory results, enforce a centrali
 - Automated invoice/payment billing integration
 - Multilingual/RTL PDF (HTML print supports RTL)
 
+## Integration notes (Business Operations Suite — Architecture Approved)
+
+- Billing hold remains an **operational** release control based on MOD-10 invoice dues.
+- Future MOD-33 accounting integration must **not** bypass MOD-24 release blocking / billing-hold controls.
+- Accounting posting of invoices/payments is a MOD-10 → MOD-33 adapter concern, separate from release eligibility.
+
 ## QC
 
 Automated: PASS | Manual: NOT TESTED | Production: Pending Manual QC

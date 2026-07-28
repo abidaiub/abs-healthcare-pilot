@@ -19,12 +19,13 @@ A successful ERP rollout requires a disciplined, phased approach to mitigate cli
 
 *   **Phase 1: Planning**: Define scope, establish the project team, map existing workflows to ABSHealthcareLite modules, and set the Go-Live date.
 *   **Phase 2: System Configuration**: Provision the tenant, configure global settings, localization, and establish the physical location hierarchy (Branches/Wards).
-*   **Phase 3: Master Data Setup**: Populate the critical dictionaries (Services, Doctors, Pharmacy Catalog, Diagnostic Inventory).
+*   **Phase 3: Master Data Setup**: Populate the critical dictionaries (Services, Doctors, Pharmacy Catalog, Diagnostic Inventory). When Business Operations modules are in scope (future), also plan Chart of Accounts, suppliers, generic items/warehouses, assets, and employees — without treating P0 documentation as implementation completion.
 *   **Phase 4: User Training**: Role-specific, hands-on training for all hospital staff using a sandbox environment.
 *   **Phase 5: Pilot Operation**: Run a controlled subset of operations (e.g., one specific OPD clinic) through the system to validate workflows.
 *   **Phase 6: Go Live**: The official cutover. Legacy systems become read-only; ABSHealthcareLite becomes the system of record.
 *   **Phase 7: Hypercare Support**: Intensive, on-site IT support for the first 2-4 weeks post-Go-Live to resolve immediate user friction.
 *   **Phase 8: Continuous Improvement**: Post-stabilization phase to activate advanced modules (e.g., Patient Portal, Telemedicine, AI Prescription Capture).
+*   **Phase 9 (Planned): Business Operations Suite**: After clinical stabilization, implement reusable finance/procurement/inventory/HR modules per `docs/Architecture/05-Business-Operations-Suite.md` phases P1–P11. **P0 (documentation/registry reservation) does not constitute go-live of these modules.**
 
 ---
 
@@ -239,6 +240,45 @@ Hospitals evolve in their use of ABSHealthcareLite. Implementations should targe
 *   **Level 3 (General Hospital)**: Level 2 + IPD, Bed Occupancy, Nursing Station, MAR.
 *   **Level 4 (Multi-Branch Hospital)**: Level 3 + Multi-location routing, centralized procurement.
 *   **Level 5 (Enterprise Healthcare Network)**: Level 4 + Patient Portal, Telemedicine, AI Automation, Advanced Analytics.
+*   **Level 6 (Business Operations / ERP) — PLANNED**: Level 5 (or Trading/Manufacturing editions) + MOD-33 Finance, MOD-34 Procurement, MOD-35 Inventory, and optional MOD-36–39, MOD-41–42. Requires financial reconciliation, period open/close, and role-based finance UAT before go-live.
+
+---
+
+## SECTION 20A: BUSINESS OPERATIONS SUITE IMPLEMENTATION (PLANNED)
+
+> Status: **ARCHITECTURE APPROVED / NOT STARTED**. Do not treat this section as an active go-live path until modules complete AI QC and Manual QC/UAT.
+
+### Approved build sequence (P0–P11)
+
+| Phase | Scope |
+|-------|--------|
+| P0 | Documentation, ADRs, registry reservation, Product Book updates *(this reservation)* |
+| P1 | MOD-33 foundation: FY, periods, COA, control roles, posting/reversal, GL, Trial Balance |
+| P2 | MOD-33 Cash/Bank/reconciliation/P&L/BS + MOD-10 accounting adapter |
+| P3 | MOD-35 inventory foundation |
+| P4 | MOD-34 procurement and supplier workflow |
+| P5 | MOD-14 healthcare extension + MOD-20 pharmacy stock adapter |
+| P6 | MOD-16 patient ledger / AR projection |
+| P7 | MOD-36 fixed assets and maintenance |
+| P8 | MOD-37 HR + MOD-38 Payroll |
+| P9 | MOD-41 budgeting and commitment control |
+| P10 | MOD-39 shareholder and profit distribution |
+| P11 | MOD-42 manufacturing and production costing |
+
+### Master data & migration (when implementing)
+
+*   **Finance opening balances**: Trial Balance / subledger opening load into MOD-33; reconcile to legacy books before period open.
+*   **Suppliers / items / warehouses**: Migrate into MOD-34/MOD-35; map MOD-14 reagent items as healthcare extensions; map pharmacy catalog items to MOD-35 stock items (adapter).
+*   **Assets / employees**: MOD-36 / MOD-37 masters with optional link from existing Users (MOD-02) and lab device masters.
+*   **Period opening and closing**: Train accountants on period lock, voucher immutability, and reversal-only corrections.
+*   **Financial reconciliation gate**: AR vs MOD-10 dues; stock valuation vs GL inventory; AP vs open POs/GRNs; payroll vs bank payments.
+
+### Training, UAT, go-live, backup
+
+*   Role-based sandbox training for Accountant, Store Keeper, Purchase Officer, HR/Payroll Officer before each Business Operations phase go-live.
+*   Integration testing across MOD-10 → MOD-33 and MOD-34/35 → MOD-33 adapters is mandatory.
+*   Backup and restore verification must include posted vouchers and stock ledgers (immutable history).
+*   Tenant and branch isolation validation remains a release-blocking check.
 
 ---
 
@@ -285,6 +325,13 @@ Hospitals evolve in their use of ABSHealthcareLite. Implementations should targe
           v
 [ PHASE 7: OPTIMIZATION & AI ]
   Hypercare Ends -> Portal/Telemed Activated -> AI Module 40 Enabled -> SLA Support
+          |
+          v
+[ PHASE 8: BUSINESS OPERATIONS SUITE — PLANNED / NOT STARTED ]
+  P0 Docs+Registry -> P1 MOD-33 -> P2 Statements+MOD-10 adapter -> P3 MOD-35 -> P4 MOD-34
+  -> P5 MOD-14/MOD-20 adapters -> P6 MOD-16 -> P7 MOD-36 -> P8 MOD-37/38
+  -> P9 MOD-41 -> P10 MOD-39 -> P11 MOD-42
+  (Each phase: AI QC + Manual QC/UAT + go-live gate; never mark complete from docs alone)
 
 =========================================================================================
 ```

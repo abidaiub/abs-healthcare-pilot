@@ -1,5 +1,7 @@
 ## MODULE 14: Diagnostic Inventory / Reagent & Consumable Management
 
+> **Integration note (2026-07-26 — Architecture Approved):** MOD-14 remains the healthcare-specific Diagnostic Inventory module. It is an **extension/consumer of MOD-35 (enterprise inventory) and MOD-34 (procurement)**. Physical stock ledger, generic item/warehouse engines, and valuation live in MOD-35; PO/GRN orchestration lives in MOD-34. MOD-14 owns reagent/open-bottle/open-expiry, test-/analyzer-/patient-service-wise consumption, X-ray film and surgical consumables usage, healthcare expiry blocking, and lab quality/compliance rules. See ADR-003 and `docs/Architecture/05-Business-Operations-Suite.md`. Status: documented; **not implemented**. Do not replace or renumber MOD-14.
+
 ### 1. Executive Summary
 The Diagnostic Inventory module is a specialized Laboratory Information System (LIS) extension for ABSHealthcareLite. It manages the lifecycle of reagents, consumables, tools, and equipment parts. It features batch/lot tracking, expiry management, and "open bottle" tracking, ensuring lab operational efficiency and cost control.
 

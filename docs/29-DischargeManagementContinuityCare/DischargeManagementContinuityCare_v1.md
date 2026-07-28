@@ -1,5 +1,7 @@
 ## MODULE 29: Discharge Management & Continuity of Care
 
+> **Integration note (2026-07-26 — Architecture Approved):** Future discharge clearance and final billing integrate with **MOD-10** (operational billing/collection), **MOD-16** (patient ledger/clearance visibility), and **MOD-33** (accounting posting via adapters). Discharge financial clearance must not bypass patient due controls. Module remains documented; not implemented in the pilot.
+
 ### 1. Executive Summary
 The Discharge Management & Continuity of Care module governs the final and often most complex phase of a patient's inpatient journey. It orchestrates a multi-disciplinary clearance workflow (Clinical, Nursing, Pharmacy, and Billing) to ensure that patients are safely transitioned out of the hospital. By generating structured discharge summaries, managing take-home medications, and scheduling follow-ups, this module ensures clinical continuity while securing the hospital's financial and operational assets (bed release).
 
