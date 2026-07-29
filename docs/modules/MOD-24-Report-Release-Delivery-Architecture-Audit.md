@@ -40,6 +40,12 @@ Print HTML (QR SVG) / PDF (QR PNG) / Portal publish flag
 - **LabReportRelease.status** owns `RELEASE_PENDING`, `RELEASED`, `WITHDRAWN`, `AMENDED`.
 - Migration backfills any legacy `LabResult` rows that were set to `RELEASE_PENDING` / `RELEASED`.
 
+## Migration ordering repair (2026-07-29)
+
+- Root cause: `20260724130000_mod24_release_polish` ran before `lab_report_releases` / `lab_results` existed (`42P01` on fresh/QC DBs).
+- Repair: make early polish conditional on prerequisite objects; add idempotent `20260724261000_mod24_release_polish_deferred` after `20260724260000_mod24_report_release`.
+- Do not rename the published polish migration; see `docs/modules/MOD-24-Migration-Notes.md` for QC recovery without reset/reseed.
+
 ## RBAC decision
 
 - **TENANT_ADMIN**: `fullAccess` retained for administration, but seed `denyActions` remove clinical release authorization (`canApprove` on release/withdraw/amend/portal).

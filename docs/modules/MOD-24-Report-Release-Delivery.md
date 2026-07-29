@@ -45,4 +45,14 @@ Authorize release of pathologist-verified laboratory results, enforce a centrali
 
 Automated: PASS | Manual: NOT TESTED | Production: Pending Manual QC
 
+## Migrations
+
+| Migration | Notes |
+| --- | --- |
+| `20260724260000_mod24_report_release` | Creates release/version/delivery tables and `RELEASE_*` lab-result enum labels |
+| `20260724130000_mod24_release_polish` | Tenant policy flags + conditional polish (safe when release tables are absent) |
+| `20260724261000_mod24_release_polish_deferred` | Idempotent polish after report-release create (holds + `state_version` + clinical cleanup) |
+
+Ordering repair details and QC recovery commands: `docs/modules/MOD-24-Migration-Notes.md`.
+
 See also: `docs/modules/MOD-24-Report-Release-Delivery-Architecture-Audit.md`
