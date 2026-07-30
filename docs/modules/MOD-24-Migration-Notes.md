@@ -42,21 +42,39 @@ No other MOD-21–MOD-24 indexes/constraints are required by the polish SQL.
 
 ## Safe QC recovery (no reset / no reseed)
 
-On the QC database that failed with `applied_steps_count = 0`:
+**Prerequisite:** the corrected source must be committed, pushed, pulled on the QC host, **and the app image rebuilt.**
+`Dockerfile` copies `prisma/` into the image at build time (`COPY --from=builder /app/prisma ./prisma`), so a plain
+`docker compose up` on an old image still ships the broken migration directory.
+
+`scripts/docker-entrypoint.sh` is the image `ENTRYPOINT` and runs `prisma migrate deploy` before `node server.js`.
+Manual Prisma commands must therefore override it with `--entrypoint npx`, otherwise the entrypoint script runs instead
+of the requested command.
 
 ```bash
-# 1. Mark the failed polish migration as rolled back (required if Prisma recorded the failure)
-npx prisma migrate resolve --rolled-back 20260724130000_mod24_release_polish
+# 0. On the QC host: get corrected source and rebuild the image
+git pull
+docker compose build app
 
-# 2. Deploy remaining history (includes patched polish + create + deferred polish)
-npx prisma migrate deploy
+# 1. Stop the app so its entrypoint cannot race the manual recovery
+docker compose stop app
 
-# 3. Confirm MOD-24 objects
-npx prisma migrate status
-npm run verify:mod24
+# 2. Mark the failed polish migration as rolled back
+docker compose run --rm --entrypoint npx app \
+  prisma migrate resolve --rolled-back 20260724130000_mod24_release_polish
+
+# 3. Deploy remaining history (patched polish + MOD-21..24 creates + deferred polish)
+docker compose run --rm --entrypoint npx app prisma migrate deploy
+
+# 4. Confirm
+docker compose run --rm --entrypoint npx app prisma migrate status
+docker compose up -d app
 ```
 
-If `migrate resolve` reports the migration is not in a failed state, skip step 1 and run `migrate deploy` only.
+If `migrate resolve` reports the migration is not in a failed state, skip step 2 and run `migrate deploy` only.
+
+Prisma keeps the failed and rolled-back attempts as history rows in `_prisma_migrations`
+(`applied_steps_count = 0`, `rolled_back_at` set). That is expected audit history — do not delete those rows.
+A successful row for the same migration name is appended by step 3.
 
 ### Optional verification queries
 
@@ -76,25 +94,97 @@ ORDER BY 1;
 
 ## Environments that already applied the old polish successfully
 
-Patched migration content changes the file checksum. If `migrate deploy` reports a checksum mismatch for `20260724130000_mod24_release_polish`:
+Some environments (including the local development database) applied the **old** polish migration successfully because
+`migrate dev` had already created `lab_report_releases` before the out-of-order timestamp was reached. Patching the file
+changes its checksum, so the stored `_prisma_migrations.checksum` no longer matches:
 
-1. Confirm polish columns already exist on `lab_report_releases`.
-2. Update the stored checksum to match the repaired file (Prisma records this in `_prisma_migrations.checksum`), **or** follow the current Prisma troubleshooting guide for edited applied migrations.
-3. Deploy so `20260724261000_mod24_release_polish_deferred` runs (no-op via `IF NOT EXISTS` / idempotent `UPDATE`).
+```text
+20260724130000_mod24_release_polish
+  file sha256  : 7410d16e73797522225747c6407b492e44a8bcfc54c2a799cecbb824779a00f7
+  db  checksum : d16ba5c9346c24988d94e5f22f1ad1d55ddb7df58c6cd3787dacdad05763dee1
+```
 
-Do **not** re-run destructive reset/seed.
+Verified on Prisma **7.8.0** (2026-07-30): `migrate deploy` and `migrate status` **do not fail** on this mismatch for an
+already-applied migration. Deploy proceeds and applies only the pending
+`20260724261000_mod24_release_polish_deferred`, which is a no-op on the existing columns
+(`ADD COLUMN IF NOT EXISTS` + idempotent `UPDATE`).
 
-## Fresh database expectation
+Consequently:
+
+- Do **not** hand-edit `_prisma_migrations.checksum`.
+- Do **not** run `migrate resolve --applied` as a workaround.
+- Do **not** run reset / `db push` / reseed.
+
+Limitation: `prisma migrate dev` (development only) is stricter than `deploy` about edited applied migrations and may
+prompt for a reset. Use `migrate deploy` on any database that holds real data.
+
+## Fresh database behavior
 
 Sorted migration history now succeeds from zero:
 
-1. Early polish → tenant flags only (release tables absent).
+1. Early polish → tenant flags only (release tables absent, guarded blocks skipped).
 2. MOD-22 / MOD-24 create migrations → tables + enums.
 3. Deferred polish → release hold/`state_version` columns + clinical cleanup.
 
-## Local smoke tests used
+## Fresh-database test evidence (2026-07-30)
 
-- `npx tsx scripts/tmp-test-mod24-migration-order.ts` — schema-scoped polish behavior
-- `npx tsx scripts/tmp-test-mod24-migration-from-zero.ts` — full SQL history apply in a disposable schema
+Docker is not installed on the development workstation, and the `abshealthcare` role has no `CREATEDB`. A genuinely
+isolated target was therefore produced with a **separate temporary PostgreSQL 18.2 cluster** (own data directory, own
+port `55432`, trust auth), leaving the development instance on `5432` untouched.
 
-(`CREATEDB` is not granted to the app role on the local Postgres used for development, so a true separate temporary database could not be created; the disposable-schema from-zero apply covers the same SQL ordering risk.)
+```text
+cluster : %TEMP%\abs_pg_migtest_20260730065243   (port 55432, disposable)
+test DB : abs_healthcare_migration_test_20260730065243
+command : npx prisma migrate deploy      (not db push)
+```
+
+| Test | Target | Result |
+| --- | --- | --- |
+| A — fresh deploy (working tree, 25 migrations) | `abs_healthcare_migration_test_*` | all 25 applied, `applied_steps_count = 1` each, `migrate status` up to date |
+| B — QC failure reproduction (source `e93ae08`, 19 migrations) | `abs_healthcare_qc_recovery_sim_*` | reproduced `P3018` / `42P01` on `20260724130000`, `applied_steps_count = 0` |
+| B — recovery (`resolve --rolled-back` + `deploy` on corrected source) | same DB | remaining 12 migrations applied, status up to date |
+| C — environment that already applied the old polish | `abs_healthcare_preapplied_sim_*` | changed checksum tolerated, only the deferred polish applied, pre-existing tenant row preserved |
+
+Post-deploy catalog verification on the fresh database (`information_schema` / `pg_catalog`):
+
+- 7 MOD-24 tables present, no duplicate relations.
+- All 15 polish columns on `lab_report_releases`, with `state_version NOT NULL DEFAULT 0` and both
+  `*_hold_active` columns `NOT NULL DEFAULT false`.
+- 3 `tenants` release-policy flags present, `NOT NULL DEFAULT false`.
+- Enums single-instance with expected labels; `LabResultStatus` contains `RELEASE_PENDING` and `RELEASED`.
+- 34 indexes on MOD-24 tables including all unique constraints; no duplicate index names.
+- 22 foreign keys with expected delete rules; no duplicate constraint names.
+
+### Cleanup artifact — not a migration failure
+
+`pg_ctl start` on Windows keeps holding the server process, so the shell that launched the temporary cluster never
+returned. Its trailing connectivity check therefore executed only after the cluster had already been shut down during
+cleanup, producing a late `connection refused` on port `55432` and a non-zero exit.
+
+This is a teardown artifact of the test harness. The cluster started correctly (`server started`), connectivity was
+confirmed separately at the time, and every migration and validation above ran through it successfully. Do not read that
+notification as a migration failure. After cleanup, port `55432` is free, no temporary database or data directory
+remains, and the development instance on `5432` is untouched (migration history row count unchanged).
+
+## Known drift limitations (pre-existing, not MOD-24)
+
+`prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma` against the freshly migrated database
+reports **no MOD-24 drift**. It does report pre-existing, unrelated gaps that this repair intentionally does not touch:
+
+- `user_branches` (`model UserBranch`, added in `1eb7dd8`) has **no migration** that creates it; it exists in the
+  development database only because it was created out of band.
+- Two `audit_logs` indexes declared in `schema.prisma` are absent from migrations.
+- Several index names differ only by PostgreSQL's 63-character identifier truncation (cosmetic).
+- At commit `ba5e4a7`, `LabSample.sampleStatus` is missing `@map("sample_status")`; migrations create the column as
+  `sample_status`. A fix exists in the working tree but is not yet committed.
+
+These require separate, approved migrations and must not be folded into the MOD-24 ordering repair.
+
+Consequence observed during testing: a database built **only** from `prisma/migrations` cannot be seeded —
+`prisma db seed` fails with `P2021 TableDoesNotExist` on model `UserBranch`. This does not affect the QC recovery above
+(recovery applies migrations only and does not reseed), but any brand-new environment provisioning is blocked until
+`user_branches` has a migration. Read-only pre-check before considering a seed anywhere:
+
+```sql
+SELECT to_regclass('public.user_branches') AS user_branches;
+```

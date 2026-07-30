@@ -45,6 +45,9 @@ Authorize release of pathologist-verified laboratory results, enforce a centrali
 
 Automated: PASS | Manual: NOT TESTED | Production: Pending Manual QC
 
+Migration status: **migration fix verified on a fresh PostgreSQL database; QC redeployment pending.**
+The module is not production-approved until the QC server has been redeployed and re-verified.
+
 ## Migrations
 
 | Migration | Notes |
