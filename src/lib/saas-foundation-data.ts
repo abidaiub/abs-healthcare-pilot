@@ -575,7 +575,7 @@ export const SAAS_TENANTS: SaasTenant[] = [
 
 export const MODULE_REGISTRY: ModuleRegistryEntry[] = [
   { moduleCode: "MOD-01", moduleName: "Company/Tenant Management", moduleGroup: "Foundation", coreModule: true, status: "Active", description: "Tenant lifecycle, branding, deployment" },
-  { moduleCode: "MOD-02", moduleName: "User Management & RBAC", moduleGroup: "Foundation", coreModule: true, status: "Active", description: "Users, roles, permissions" },
+  { moduleCode: "MOD-02", moduleName: "User Management & RBAC", moduleGroup: "Foundation", coreModule: true, status: "Active", description: "Users, roles, permissions, and user-branch assignments (UserBranch migration 20260730093000 verified on fresh DB; QC redeployment pending)" },
   { moduleCode: "MOD-04", moduleName: "Audit Center", moduleGroup: "Foundation", coreModule: true, status: "Active", description: "Immutable audit trail" },
   {
     moduleCode: "MOD-06",

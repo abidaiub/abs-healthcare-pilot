@@ -171,8 +171,9 @@ remains, and the development instance on `5432` is untouched (migration history 
 `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma` against the freshly migrated database
 reports **no MOD-24 drift**. It does report pre-existing, unrelated gaps that this repair intentionally does not touch:
 
-- `user_branches` (`model UserBranch`, added in `1eb7dd8`) has **no migration** that creates it; it exists in the
-  development database only because it was created out of band.
+- `user_branches` (`model UserBranch`, added in `1eb7dd8`) previously had **no migration**;
+  repair migration `20260730093000_add_user_branches` is now committed. Fresh databases
+  and seed are verified; QC redeployment is still pending.
 - Two `audit_logs` indexes declared in `schema.prisma` are absent from migrations.
 - Several index names differ only by PostgreSQL's 63-character identifier truncation (cosmetic).
 - At commit `ba5e4a7`, `LabSample.sampleStatus` is missing `@map("sample_status")`; migrations create the column as
@@ -180,10 +181,13 @@ reports **no MOD-24 drift**. It does report pre-existing, unrelated gaps that th
 
 These require separate, approved migrations and must not be folded into the MOD-24 ordering repair.
 
-Consequence observed during testing: a database built **only** from `prisma/migrations` cannot be seeded —
-`prisma db seed` fails with `P2021 TableDoesNotExist` on model `UserBranch`. This does not affect the QC recovery above
-(recovery applies migrations only and does not reseed), but any brand-new environment provisioning is blocked until
-`user_branches` has a migration. Read-only pre-check before considering a seed anywhere:
+Consequence observed during testing before the UserBranch repair: a database built **only**
+from `prisma/migrations` could not be seeded — `prisma db seed` failed with
+`P2021 TableDoesNotExist` on model `UserBranch`. That blocker is resolved by
+`20260730093000_add_user_branches`; see `docs/modules/MOD-02-Migration-Notes.md`.
+This does not affect the QC recovery above (recovery applies migrations only and does
+not reseed), but any brand-new environment provisioning required the UserBranch migration
+before this commit. Read-only pre-check before considering a seed anywhere:
 
 ```sql
 SELECT to_regclass('public.user_branches') AS user_branches;

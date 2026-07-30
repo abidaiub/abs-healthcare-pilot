@@ -5,7 +5,7 @@
 | **Module** | MOD-07 |
 | **Display name** | Branch Management |
 | **Depends on** | MOD-01, MOD-01A, MOD-02, MOD-03, MOD-04, MOD-06 |
-| **Status** | Implemented (foundation coverage) |
+| **Status** | UserBranch migration and fresh seed verified; QC redeployment pending |
 | **Verify** | `npm run verify:mod07` |
 
 ## Purpose
@@ -39,7 +39,7 @@ Out of scope: child Location entities, patient/clinical workflows.
 
 **Branch** — tenant-owned location with code, type, address/regional fields, timezone override, default flag, active status.
 
-**UserBranch** — assignment with `isPrimary` as default working branch per tenant.
+**UserBranch** — assignment with `isPrimary` as default working branch per tenant. Committed migration `20260730093000_add_user_branches` creates `user_branches` on fresh databases; see `docs/modules/MOD-02-Migration-Notes.md`.
 
 ## Branch lifecycle
 
