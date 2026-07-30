@@ -1395,7 +1395,7 @@ model LabSample {
   accessionNumber      String                @map("accession_number")
   barcodeValue         String                @map("barcode_value")
   collectionSite       String?               @map("collection_site")
-  sampleStatus         LabSampleStatus       @default(PENDING_COLLECTION)
+  sampleStatus         LabSampleStatus       @default(PENDING_COLLECTION) @map("sample_status")
   collectedAt          DateTime?             @map("collected_at")
   collectedById        String?               @map("collected_by_id")
   receivedAt           DateTime?             @map("received_at")
