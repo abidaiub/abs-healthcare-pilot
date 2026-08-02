@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   createAppointmentAction,
@@ -10,7 +10,7 @@ import {
 } from "@/app/actions/tenant-appointments";
 import { getDoctorDayAvailabilityAction } from "@/app/actions/tenant-doctor-schedules";
 import type { AvailableSlot } from "@/lib/doctor-schedule/queries";
-import { Badge, Button, Card, CardBody, Input, Select, Textarea } from "@/components/ui";
+import { Button, Card, CardBody, Input, Select, Textarea } from "@/components/ui";
 import {
   APPOINTMENT_TYPES,
   APPOINTMENT_TYPE_I18N_KEYS,
@@ -147,10 +147,8 @@ export function AppointmentForm({
       return;
     }
 
-    const formData = new FormData();
-    formData.set("appointmentType", appointmentType);
-    formData.set("appointmentDate", appointmentDate);
-    formData.set("timeSlot", appointmentType === "SCHEDULED" ? selectedSlot : "");
+    const formData = new FormData(event.currentTarget);
+    formData.set("timeSlot", appointmentType === "SCHEDULED" ? String(formData.get("timeSlot") ?? selectedSlot) : "");
     formData.set("patientId", patientId);
     formData.set("doctorId", doctorId);
     formData.set("reasonForVisit", reasonForVisit);
@@ -219,6 +217,7 @@ export function AppointmentForm({
         <CardBody className="grid gap-4 sm:grid-cols-2">
           <Select
             label={t("appointment.fields.appointmentType")}
+            name="appointmentType"
             value={appointmentType}
             onChange={(e) => setAppointmentType(e.target.value)}
           >
@@ -230,6 +229,7 @@ export function AppointmentForm({
           </Select>
           <Input
             label={t("appointment.fields.appointmentDate")}
+            name="appointmentDate"
             type="date"
             value={appointmentDate}
             onChange={(e) => setAppointmentDate(e.target.value)}
@@ -237,6 +237,7 @@ export function AppointmentForm({
           />
           <Select
             label={t("appointment.fields.doctor")}
+            name="doctorId"
             value={doctorId}
             onChange={(e) => setDoctorId(e.target.value)}
           >
@@ -249,6 +250,7 @@ export function AppointmentForm({
           {appointmentType === "SCHEDULED" && (
             <Select
               label={t("appointment.fields.timeSlot")}
+              name="timeSlot"
               value={selectedSlot}
               onChange={(e) => setTimeSlot(e.target.value)}
               disabled={slotOptions.length === 0}
@@ -267,12 +269,14 @@ export function AppointmentForm({
           )}
           <Input
             label={t("appointment.fields.reasonForVisit")}
+            name="reasonForVisit"
             value={reasonForVisit}
             onChange={(e) => setReasonForVisit(e.target.value)}
           />
           <div className="sm:col-span-2">
             <Textarea
               label={t("appointment.fields.notes")}
+              name="notes"
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import {
   copyRolePermissionsAction,
   createTenantRoleAction,
@@ -85,9 +85,22 @@ export function PermissionMatrixPanel({
   matrix,
   roles,
 }: MatrixProps) {
+  const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [pending, startTransition] = useTransition();
   const groups = getResourceGroups();
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredMatrix = useMemo(() => {
+    if (!normalizedQuery) return matrix;
+
+    return matrix.filter((row) =>
+      [row.label, row.resourceKey, row.group, row.permissionCode, row.moduleCode].some((field) =>
+        field.toLowerCase().includes(normalizedQuery),
+      ),
+    );
+  }, [matrix, normalizedQuery]);
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -96,13 +109,21 @@ export function PermissionMatrixPanel({
     startTransition(async () => {
       const result = await saveRolePermissionMatrixAction(roleId, formData);
       setMessage(result.ok ? "Permission matrix saved." : result.error);
+      if (result.ok) {
+        router.refresh();
+      }
     });
   }
 
   function handleCopy(sourceRoleId: string) {
     startTransition(async () => {
       const result = await copyRolePermissionsAction({ roleId, sourceRoleId });
-      setMessage(result.ok ? "Permissions copied. Refresh to review." : result.error);
+      if (result.ok) {
+        setMessage("Permissions copied.");
+        router.refresh();
+      } else {
+        setMessage(result.error);
+      }
     });
   }
 
@@ -146,57 +167,110 @@ export function PermissionMatrixPanel({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {groups.map((group) => {
-          const rows = matrix.filter((row) => row.group === group);
-          if (rows.length === 0) return null;
+      <Card>
+        <CardBody className="space-y-3">
+          <Input
+            label="Search modules"
+            placeholder="Search by page name, route, or group (e.g. patient, /patients/new, Operations)"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
+          {normalizedQuery && (
+            <p className="text-sm text-slate-500">
+              Showing {filteredMatrix.length} of {matrix.length} resources matching &quot;{searchQuery.trim()}&quot;
+            </p>
+          )}
+        </CardBody>
+      </Card>
 
-          return (
-            <Card key={group}>
-              <CardBody className="space-y-4">
-                <p className="text-sm font-semibold text-slate-900">{group}</p>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        <th className="px-3 py-2">Resource</th>
-                        {PERMISSION_ACTIONS.map((action) => (
-                          <th key={action.key} className="px-3 py-2 text-center">
-                            {action.label}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((row) => {
-                        const prefix = row.resourceKey.replace(/\//g, "_");
-                        return (
-                          <tr key={row.resourceKey} className="border-b border-slate-100">
-                            <td className="px-3 py-2">
-                              <div>
-                                <p className="font-medium text-slate-900">{row.label}</p>
-                                <p className="text-xs text-slate-500">{row.resourceKey}</p>
-                              </div>
-                            </td>
-                            {PERMISSION_ACTIONS.map((action) => (
-                              <td key={action.key} className="px-3 py-2 text-center">
-                                <input
-                                  type="checkbox"
-                                  name={`${prefix}:${action.key}`}
-                                  defaultChecked={row[action.key]}
-                                />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {filteredMatrix.length === 0 ? (
+          <Card>
+            <CardBody className="py-10 text-center text-sm text-slate-500">
+              No resources match your search. Try a route such as <span className="font-mono">/patients/new</span> or a label such as <span className="font-medium">Patient Registration</span>.
+            </CardBody>
+          </Card>
+        ) : (
+          groups.map((group) => {
+            const rows = filteredMatrix.filter((row) => row.group === group);
+            if (rows.length === 0) return null;
+
+            const hiddenRows = matrix.filter((row) => row.group === group && !rows.includes(row));
+
+            return (
+              <Card key={group}>
+                <CardBody className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-slate-900">{group}</p>
+                    {normalizedQuery && hiddenRows.length > 0 && (
+                      <p className="text-xs text-slate-500">
+                        {hiddenRows.length} more hidden by search
+                      </p>
+                    )}
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                          <th className="px-3 py-2">Resource</th>
+                          {PERMISSION_ACTIONS.map((action) => (
+                            <th key={action.key} className="px-3 py-2 text-center">
+                              {action.label}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map((row) => {
+                          const prefix = row.resourceKey.replace(/\//g, "_");
+                          return (
+                            <tr key={row.resourceKey} className="border-b border-slate-100">
+                              <td className="px-3 py-2">
+                                <div>
+                                  <p className="font-medium text-slate-900">{row.label}</p>
+                                  <p className="text-xs text-slate-500">{row.resourceKey}</p>
+                                </div>
                               </td>
-                            ))}
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </CardBody>
-            </Card>
-          );
-        })}
+                              {PERMISSION_ACTIONS.map((action) => (
+                                <td key={action.key} className="px-3 py-2 text-center">
+                                  <input
+                                    type="checkbox"
+                                    name={`${prefix}:${action.key}`}
+                                    defaultChecked={row[action.key]}
+                                  />
+                                </td>
+                              ))}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardBody>
+              </Card>
+            );
+          })
+        )}
+
+        {normalizedQuery
+          ? matrix
+              .filter((row) => !filteredMatrix.some((candidate) => candidate.resourceKey === row.resourceKey))
+              .map((row) => {
+                const prefix = row.resourceKey.replace(/\//g, "_");
+                return (
+                  <div key={`hidden-${row.resourceKey}`} className="hidden" aria-hidden="true">
+                    {PERMISSION_ACTIONS.map((action) => (
+                      <input
+                        key={`${row.resourceKey}-${action.key}`}
+                        type="checkbox"
+                        name={`${prefix}:${action.key}`}
+                        defaultChecked={row[action.key]}
+                      />
+                    ))}
+                  </div>
+                );
+              })
+          : null}
 
         <div className="flex gap-3">
           <Button type="submit" disabled={pending}>

@@ -114,6 +114,11 @@ export const MODULES = {
     name: "Branch / Location Management",
     docPath: "docs/modules/MOD-07-Branch-Location-Management.md",
   },
+  tenantGoLive: {
+    id: "00",
+    name: "Tenant Go-Live Wizard & Operational Readiness",
+    docPath: "docs/Business-Journey/J-00-Tenant-GoLive.md",
+  },
 } as const satisfies Record<string, ModuleDefinition>;
 
 export type ScreenDefinition = {
@@ -201,6 +206,66 @@ export const SCREENS = {
     moduleKey: "userManagement",
     screenName: "User List",
     workflowRef: "Search users → Edit profile → Assign role/branch",
+  },
+  operationalReadiness: {
+    route: "/settings/readiness",
+    moduleKey: "tenantGoLive",
+    screenName: "Operational Readiness Dashboard",
+    workflowRef: "Checklist → Score → READY FOR FIRST PATIENT",
+  },
+  readinessCompanyProfile: {
+    route: "/settings/readiness/company",
+    moduleKey: "tenantGoLive",
+    screenName: "Company Profile",
+    workflowRef: "Branding, contact, invoice/report footers",
+  },
+  readinessDepartments: {
+    route: "/settings/readiness/departments",
+    moduleKey: "tenantGoLive",
+    screenName: "Department Management",
+    workflowRef: "Create → Enable/Disable → Audit",
+  },
+  readinessUsers: {
+    route: "/settings/readiness/users",
+    moduleKey: "tenantGoLive",
+    screenName: "Operational User Wizard",
+    workflowRef: "Role → Branch → Department → Activate",
+  },
+  readinessDoctors: {
+    route: "/settings/readiness/doctors",
+    moduleKey: "tenantGoLive",
+    screenName: "Doctor Setup Readiness",
+    workflowRef: "Doctors → Schedules → Verification permission",
+  },
+  readinessCatalog: {
+    route: "/settings/readiness/catalog",
+    moduleKey: "tenantGoLive",
+    screenName: "Catalog Readiness",
+    workflowRef: "Dept → Price → Sample → Tube → Mapping → Range",
+  },
+  readinessReferenceRanges: {
+    route: "/settings/readiness/reference-ranges",
+    moduleKey: "tenantGoLive",
+    screenName: "Reference Range Readiness",
+    workflowRef: "Male → Female → Paediatric → Critical",
+  },
+  readinessAnalyzers: {
+    route: "/settings/readiness/analyzers",
+    moduleKey: "tenantGoLive",
+    screenName: "Analyzer Readiness",
+    workflowRef: "Analyzer CRUD → Department → Mappings",
+  },
+  readinessLis: {
+    route: "/settings/readiness/lis",
+    moduleKey: "tenantGoLive",
+    screenName: "LIS Readiness",
+    workflowRef: "Endpoint → Connection test → Mapped tests",
+  },
+  readinessPortal: {
+    route: "/settings/readiness/portal",
+    moduleKey: "tenantGoLive",
+    screenName: "Patient Portal Readiness",
+    workflowRef: "Enable → PDF → QR → Notification → Password policy",
   },
   tenantBranchList: {
     route: "/settings/branches",
@@ -557,6 +622,18 @@ export const SCREENS = {
     screenName: "Diagnostic Billing / Test Order",
     workflowRef: "Patient → Add Tests → Bill → Send to Sample Collection",
   },
+  diagnosticInvoice: {
+    route: "/diagnostic/billing/[invoiceId]",
+    moduleKey: "masterServiceCatalog",
+    screenName: "Diagnostic Invoice",
+    workflowRef: "Invoice → Discount authorization → Payment → Due",
+  },
+  diagnosticCashMemo: {
+    route: "/diagnostic/billing/[invoiceId]/receipt",
+    moduleKey: "masterServiceCatalog",
+    screenName: "Cash Memo",
+    workflowRef: "Printable payment receipt",
+  },
   sampleCollection: {
     route: "/lab/collection",
     moduleKey: "sampleCollection",
@@ -706,6 +783,18 @@ export const SCREENS = {
     moduleKey: "patientPortal",
     screenName: "My Reports",
     workflowRef: "Login → View → Download / Print / QR Verify",
+  },
+  patientPortalAdmin: {
+    route: "/settings/patient-portal",
+    moduleKey: "patientPortal",
+    screenName: "Patient Portal Administration",
+    workflowRef: "Enroll account → Record guardian delegation → Suspend/revoke",
+  },
+  portalLogin: {
+    route: "/portal/login",
+    moduleKey: "patientPortal",
+    screenName: "Patient Portal Login",
+    workflowRef: "Username → Password → Session cookie",
   },
 } as const satisfies Record<string, ScreenDefinition>;
 

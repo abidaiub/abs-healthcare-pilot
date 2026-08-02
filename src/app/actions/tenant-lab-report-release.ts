@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { requireTenantSession } from "@/lib/auth";
 import { requireTenantPermission } from "@/lib/rbac/auth";
 import { writeAuditLog } from "@/lib/saas/audit";
+import { syncBillingHoldFromInvoice } from "@/lib/laboratory-report-release/billing-hold";
+import { notify } from "@/lib/notification/service";
 import {
   evaluateReportReleaseEligibility,
   firstBlockingErrorCode,
@@ -215,6 +217,13 @@ export async function prepareReleaseAction(
     });
   });
 
+  const holdSync = await syncBillingHoldFromInvoice({
+    tenantId: session.tenantId,
+    releaseId: release.id,
+    policy,
+    actorUserId: session.userId,
+  });
+
   await auditReleaseEvent({
     tenantId: session.tenantId,
     branchId: result.branchId,
@@ -223,7 +232,12 @@ export async function prepareReleaseAction(
     actionType: "INSERT",
     event: "LAB_REPORT_RELEASE_PREPARED",
     entityId: release.id,
-    changeData: { labResultId, recordVersion },
+    changeData: {
+      labResultId,
+      recordVersion,
+      billingHoldActive: holdSync.holdActive,
+      dueAmount: holdSync.dueAmount,
+    },
   });
 
   revalidateReleasePaths(release.id, labResultId);
@@ -238,11 +252,42 @@ export async function authorizeReleaseAction(
   await requireTenantPermission("/lab/report-release/release", "canApprove");
   const session = await requireTenantSession();
   const policy = await loadReportReleasePolicy(session.tenantId);
-  const release = await assertTenantOwnsRelease(session.tenantId, releaseId);
+  const preSync = await assertTenantOwnsRelease(session.tenantId, releaseId);
 
-  if (session.branchId && release.branchId !== session.branchId) {
+  if (session.branchId && preSync.branchId !== session.branchId) {
     return { ok: false, errorCode: LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_BRANCH_ACCESS_DENIED };
   }
+
+  const holdSync = await syncBillingHoldFromInvoice({
+    tenantId: session.tenantId,
+    releaseId: preSync.id,
+    policy,
+    actorUserId: session.userId,
+  });
+  const release = holdSync.changed
+    ? await assertTenantOwnsRelease(session.tenantId, releaseId)
+    : preSync;
+
+  if (holdSync.changed) {
+    await auditReleaseEvent({
+      tenantId: session.tenantId,
+      branchId: release.branchId,
+      userId: session.userId,
+      actorName: session.user.name,
+      actionType: "UPDATE",
+      event: holdSync.holdActive
+        ? "LAB_REPORT_RELEASE_BILLING_HOLD_AUTO_APPLIED"
+        : "LAB_REPORT_RELEASE_BILLING_HOLD_AUTO_CLEARED",
+      entityId: release.id,
+      changeData: { dueAmount: holdSync.dueAmount },
+    });
+  }
+
+  // A system-driven hold change bumps stateVersion, so the caller's version is stale for a
+  // reason unrelated to a competing edit. Re-anchor on the fresh version in that case.
+  const effectiveStateVersion = holdSync.changed
+    ? release.stateVersion
+    : stateVersion ?? release.stateVersion;
 
   const eligibility = evaluateReportReleaseEligibility({
     tenantId: session.tenantId,
@@ -250,7 +295,7 @@ export async function authorizeReleaseAction(
     result: release.labResult,
     release: releaseEligibilityContext(release),
     expectedRecordVersion: recordVersion,
-    expectedStateVersion: stateVersion ?? release.stateVersion,
+    expectedStateVersion: effectiveStateVersion,
     policy,
     hasPermission: true,
     phase: "authorize",
@@ -287,7 +332,7 @@ export async function authorizeReleaseAction(
         where: {
           id: release.id,
           tenantId: session.tenantId,
-          stateVersion: stateVersion ?? release.stateVersion,
+          stateVersion: effectiveStateVersion,
           status: { in: ["RELEASE_PENDING", "AMENDED"] },
         },
         data: {
@@ -799,6 +844,39 @@ export async function publishPortalAction(releaseId: string): Promise<LabReportR
     });
   }
 
+  const patient = release.labResult.labOrder.patient;
+  const [tenant, contact] = await Promise.all([
+    prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: { tenantName: true, defaultLocale: true },
+    }),
+    prisma.patient.findFirst({
+      where: { id: patient.id, tenantId: session.tenantId },
+      select: { mobile: true, guardianMobile: true },
+    }),
+  ]);
+
+  // Notification failure must never corrupt release state, so `notify` never throws and the
+  // dispatch outcome is only recorded in the audit trail.
+  const dispatch = await notify({
+    tenantId: session.tenantId,
+    branchId: release.branchId,
+    eventType: "LAB_REPORT_READY",
+    channel: "SMS",
+    locale: tenant?.defaultLocale,
+    recipientName: patient.fullName,
+    recipientMobile: contact?.guardianMobile ?? contact?.mobile ?? null,
+    dedupeKey: `LAB_REPORT_READY:${release.id}`,
+    entityType: "LabReportRelease",
+    entityId: release.id,
+    variables: {
+      tenantName: tenant?.tenantName ?? "",
+      orderReference: release.labResult.labOrder.orderNumber,
+      reportReference: release.reportNumber,
+    },
+    createdById: session.userId,
+  });
+
   await auditReleaseEvent({
     tenantId: session.tenantId,
     branchId: release.branchId,
@@ -807,6 +885,11 @@ export async function publishPortalAction(releaseId: string): Promise<LabReportR
     actionType: "UPDATE",
     event: "LAB_REPORT_PORTAL_PUBLISHED",
     entityId: release.id,
+    changeData: {
+      notificationStatus: dispatch.status,
+      notificationReference: dispatch.providerReference,
+      notificationFailureReason: dispatch.failureReason,
+    },
   });
 
   revalidateReleasePaths(release.id);

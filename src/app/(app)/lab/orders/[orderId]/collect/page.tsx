@@ -14,12 +14,39 @@ export default async function LabOrderCollectPage({ params }: PageProps) {
   const order = await getLabOrderByIdAction(orderId).catch(() => null);
   if (!order) notFound();
 
-  const canCollect = await hasTenantPermission(session.tenantId, session.userId, "/lab/orders/collect", "canEdit");
+  const [canCollect, canConfirm] = await Promise.all([
+    hasTenantPermission(session.tenantId, session.userId, "/lab/orders/collect", "canEdit"),
+    hasTenantPermission(session.tenantId, session.userId, "/lab/orders/confirm", "canEdit"),
+  ]);
 
   return (
     <div className="space-y-6">
       <ModulePageHeader screenKey="labOrderCollect" description={t("laboratory.collect.description")} />
-      <LabCollectionPanel orders={[order]} canCollect={canCollect} />
+      <LabCollectionPanel
+        orders={[
+          {
+            id: order.id,
+            orderNumber: order.orderNumber,
+            status: order.status,
+            orderedAt: order.orderedAt,
+            patient: {
+              patientNumber: order.patient.patientNumber,
+              fullName: order.patient.fullName,
+            },
+            samples: order.samples.map((sample) => ({
+              id: sample.id,
+              accessionNumber: sample.accessionNumber,
+              sampleStatus: sample.sampleStatus,
+              sampleType: sample.sampleType ? { sampleType: sample.sampleType.sampleType } : null,
+              sampleContainer: sample.sampleContainer
+                ? { containerType: sample.sampleContainer.containerType }
+                : null,
+            })),
+          },
+        ]}
+        canCollect={canCollect}
+        canConfirm={canConfirm}
+      />
     </div>
   );
 }

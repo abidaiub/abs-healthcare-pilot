@@ -25,4 +25,6 @@ Out of scope: result entry (MOD-22), verification (MOD-23), report release (MOD-
 
 ## QC
 
+J-01 Part 1 browser UAT (2026-08-01): PASS. `LAB-000004` transitioned Draft → Confirmed → Collected; accessions `ACC-000011` (EDTA) and `ACC-000012` (Plain Tube/serum) had printable barcode labels and were each collected once.
+
 Automated: PASS | Manual: NOT TESTED | Production: Pending Manual QC

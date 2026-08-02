@@ -99,6 +99,7 @@ const TENANT_ROLE_SEEDS: RoleSeed[] = [
     description: "Sample collection and label printing",
     resourceKeys: [
       "/lab/orders",
+      "/lab/orders/confirm",
       "/lab/orders/collect",
       "/lab/collection",
       "/lab/samples/label",
@@ -113,6 +114,7 @@ const TENANT_ROLE_SEEDS: RoleSeed[] = [
     description: "Sample collection through report release workflow",
     resourceKeys: [
       "/lab/orders",
+      "/lab/orders/confirm",
       "/lab/collection",
       "/lab/receipt",
       "/lab/processing",
@@ -199,8 +201,13 @@ const TENANT_ROLE_SEEDS: RoleSeed[] = [
   {
     roleCode: "BILLING",
     roleName: "Billing",
-    description: "Diagnostic billing and test orders",
-    resourceKeys: ["/dashboard", "/diagnostic/billing"],
+    description: "Diagnostic billing, test orders, and patient registration",
+    resourceKeys: [
+      "/dashboard",
+      "/patients",
+      "/patients/new",
+      "/diagnostic/billing",
+    ],
     actions: ["canView", "canCreate", "canEdit", "canPrint"],
   },
 ];

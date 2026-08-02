@@ -7,6 +7,7 @@ import { Badge, Button, Card, CardBody, Input, Select } from "@/components/ui";
 import {
   APPOINTMENT_STATUSES,
   APPOINTMENT_STATUS_I18N_KEYS,
+  formatAppointmentDate,
 } from "@/lib/appointment/constants";
 import type { AppointmentListRow } from "@/lib/appointment/queries";
 import { useI18n } from "@/lib/i18n/client";
@@ -148,7 +149,7 @@ export function AppointmentListPanel({
                   <td className="px-4 py-3 text-sm font-medium text-teal-700">{row.appointmentNumber}</td>
                   <td className="px-4 py-3 text-sm">{row.patientName}</td>
                   <td className="px-4 py-3 text-sm">{row.doctorName}</td>
-                  <td className="px-4 py-3 text-sm">{new Date(row.appointmentDate).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-sm">{formatAppointmentDate(row.appointmentDate)}</td>
                   <td className="px-4 py-3 text-sm">{row.timeSlot ?? "—"}</td>
                   <td className="px-4 py-3 text-sm">{row.queueToken ?? "—"}</td>
                   <td className="px-4 py-3">

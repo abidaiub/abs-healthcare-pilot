@@ -58,7 +58,8 @@ export const TERMINAL_STATUSES: AppointmentStatus[] = ["COMPLETED", "CANCELLED",
 export const STATUS_TRANSITIONS: Partial<Record<AppointmentStatus, AppointmentStatus[]>> = {
   SCHEDULED: ["CHECKED_IN", "WAITING", "CANCELLED", "NO_SHOW"],
   CHECKED_IN: ["WAITING", "CANCELLED"],
-  WAITING: ["CALLED", "CANCELLED", "NO_SHOW"],
+  // Doctor worklist may start consultation directly from WAITING (APPOINTMENT_START_STATUSES).
+  WAITING: ["CALLED", "IN_CONSULTATION", "CANCELLED", "NO_SHOW"],
   CALLED: ["IN_CONSULTATION", "WAITING", "CANCELLED", "NO_SHOW"],
   IN_CONSULTATION: ["COMPLETED", "CANCELLED"],
 };
@@ -70,8 +71,13 @@ export function canTransitionStatus(from: AppointmentStatus, to: AppointmentStat
 
 export function startOfDay(date: Date): Date {
   const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
+  d.setUTCHours(0, 0, 0, 0);
   return d;
+}
+
+/** Appointment dates are business date-only values; never shift them through the browser timezone. */
+export function formatAppointmentDate(date: Date | string): string {
+  return new Date(date).toISOString().slice(0, 10);
 }
 
 export function formatAppointmentNumber(sequence: number): string {

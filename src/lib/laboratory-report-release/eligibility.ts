@@ -112,11 +112,19 @@ export function evaluateReportReleaseEligibility(
     );
   }
 
-  if (
-    latestVerification &&
-    (latestVerification.resultVersionReviewed !== input.result.recordVersion ||
-      (input.expectedRecordVersion != null && input.expectedRecordVersion !== input.result.recordVersion))
-  ) {
+  // Verify persists resultVersionReviewed for the content version reviewed, then
+  // increments LabResult.recordVersion. Treat reviewed == current OR reviewed == current-1
+  // (post-verify) as aligned so release is not blocked by the version bump alone.
+  const reviewedVersion = latestVerification?.resultVersionReviewed;
+  const currentVersion = input.result.recordVersion;
+  const reviewedAligned =
+    reviewedVersion == null ||
+    reviewedVersion === currentVersion ||
+    (input.result.status === "VERIFIED" && reviewedVersion === currentVersion - 1);
+  const expectedAligned =
+    input.expectedRecordVersion == null || input.expectedRecordVersion === currentVersion;
+
+  if (latestVerification && (!reviewedAligned || !expectedAligned)) {
     block(
       eligibility,
       LAB_REPORT_RELEASE_ERROR_CODES.LAB_REPORT_RELEASE_VERSION_MISMATCH,

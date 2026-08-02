@@ -1,15 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import {
   checkPatientDuplicatesAction,
   createPatientAction,
   updatePatientAction,
   type PatientActionResult,
 } from "@/app/actions/tenant-patients";
-import { Badge, Button, Card, CardBody, Input, Select, Textarea } from "@/components/ui";
+import { Badge, Button, ButtonLink, Card, CardBody, Input, Select, Textarea } from "@/components/ui";
 import {
   BLOOD_GROUPS,
   BLOOD_GROUP_I18N_KEYS,
@@ -22,7 +21,7 @@ import {
 import type { DuplicateMatch } from "@/lib/patient/duplicates";
 import { useI18n } from "@/lib/i18n/client";
 
-type PatientFormValues = {
+export type PatientFormValues = {
   firstName: string;
   middleName: string;
   lastName: string;
@@ -90,15 +89,9 @@ const EMPTY_FORM: PatientFormValues = {
   emergencyContactMobile: "",
 };
 
-function formatDateInput(value: Date | null | undefined): string {
-  if (!value) return "";
-  return value.toISOString().slice(0, 10);
-}
-
 function buildInitialValues(initial?: Partial<PatientFormValues>): PatientFormValues {
   return { ...EMPTY_FORM, ...initial };
 }
-
 type PatientFormProps = {
   mode: "create" | "edit";
   patientId?: string;
@@ -126,6 +119,8 @@ export function PatientForm({
   const [submitted, setSubmitted] = useState<{ patientId: string; patientNumber: string } | null>(
     null,
   );
+  const formRef = useRef<HTMLFormElement>(null);
+  const submitInFlightRef = useRef(false);
 
   const hasCritical = useMemo(
     () => duplicates.some((match) => match.severity === "critical"),
@@ -137,11 +132,11 @@ export function PatientForm({
   }
 
   function buildFormData(): FormData {
-    const formData = new FormData();
+    const formData = formRef.current ? new FormData(formRef.current) : new FormData();
     for (const [key, value] of Object.entries(form)) {
       if (key === "useEstimatedAge") {
         formData.set(key, value ? "true" : "false");
-      } else {
+      } else if (!formData.has(key)) {
         formData.set(key, String(value ?? ""));
       }
     }
@@ -168,29 +163,34 @@ export function PatientForm({
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (pending) return;
+    if (pending || submitInFlightRef.current) return;
 
+    submitInFlightRef.current = true;
     startTransition(async () => {
-      const formData = buildFormData();
-      const result =
-        mode === "create"
-          ? await createPatientAction(formData)
-          : await updatePatientAction(patientId!, formData);
+      try {
+        const formData = buildFormData();
+        const result =
+          mode === "create"
+            ? await createPatientAction(formData)
+            : await updatePatientAction(patientId!, formData);
 
-      if (!result.ok) {
-        if (result.duplicates) setDuplicates(result.duplicates);
-        setError(translateError(result));
-        return;
+        if (!result.ok) {
+          if (result.duplicates) setDuplicates(result.duplicates);
+          setError(translateError(result));
+          return;
+        }
+
+        setError(null);
+        if (mode === "create" && result.patientId && result.patientNumber) {
+          setSubmitted({ patientId: result.patientId, patientNumber: result.patientNumber });
+          return;
+        }
+
+        router.push(`/patients/${result.patientId}`);
+        router.refresh();
+      } finally {
+        submitInFlightRef.current = false;
       }
-
-      setError(null);
-      if (mode === "create" && result.patientId && result.patientNumber) {
-        setSubmitted({ patientId: result.patientId, patientNumber: result.patientNumber });
-        return;
-      }
-
-      router.push(`/patients/${result.patientId}`);
-      router.refresh();
     });
   }
 
@@ -204,17 +204,15 @@ export function PatientForm({
             <span className="font-semibold text-slate-900">{submitted.patientNumber}</span>
           </p>
           <div className="flex flex-wrap justify-center gap-3">
-            <Link href={`/patients/${submitted.patientId}`}>
-              <Button type="button">{t("patient.actions.view")}</Button>
-            </Link>
+            <ButtonLink href={`/patients/${submitted.patientId}`}>
+              {t("patient.actions.view")}
+            </ButtonLink>
             <Button type="button" variant="secondary" onClick={() => router.push("/patients/new")}>
               {t("patient.actions.register")}
             </Button>
-            <Link href="/patients">
-              <Button type="button" variant="ghost">
-                {t("patient.actions.backToList")}
-              </Button>
-            </Link>
+            <ButtonLink href="/patients" variant="ghost">
+              {t("patient.actions.backToList")}
+            </ButtonLink>
           </div>
         </CardBody>
       </Card>
@@ -222,7 +220,7 @@ export function PatientForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <div className="border-b border-slate-100 px-6 py-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -573,12 +571,10 @@ export function PatientForm({
         </div>
       )}
 
-      <div className="flex flex-wrap justify-end gap-3">
-        <Link href={patientId ? `/patients/${patientId}` : "/patients"}>
-          <Button type="button" variant="secondary">
-            {t("patient.actions.cancel")}
-          </Button>
-        </Link>
+      <div className="relative z-10 flex flex-wrap justify-end gap-3">
+        <ButtonLink href={patientId ? `/patients/${patientId}` : "/patients"} variant="secondary">
+          {t("patient.actions.cancel")}
+        </ButtonLink>
         <Button type="submit" disabled={pending}>
           {t("patient.actions.save")}
         </Button>
@@ -587,69 +583,3 @@ export function PatientForm({
   );
 }
 
-export function patientRecordToFormValues(patient: {
-  firstName: string;
-  middleName: string | null;
-  lastName: string | null;
-  preferredName: string | null;
-  gender: string;
-  dateOfBirth: Date | null;
-  estimatedAge: number | null;
-  bloodGroup: string | null;
-  maritalStatus: string | null;
-  nationality: string | null;
-  countryCode: string | null;
-  mobile: string | null;
-  alternateMobile: string | null;
-  email: string | null;
-  addressLine1: string | null;
-  addressLine2: string | null;
-  city: string | null;
-  district: string | null;
-  postalCode: string | null;
-  nationalId: string | null;
-  passportNumber: string | null;
-  occupation: string | null;
-  religion: string | null;
-  notes: string | null;
-  guardianName: string | null;
-  guardianRelation: string | null;
-  guardianMobile: string | null;
-  emergencyContactName: string | null;
-  emergencyContactRelation: string | null;
-  emergencyContactMobile: string | null;
-}): Partial<PatientFormValues> {
-  return {
-    firstName: patient.firstName,
-    middleName: patient.middleName ?? "",
-    lastName: patient.lastName ?? "",
-    preferredName: patient.preferredName ?? "",
-    gender: patient.gender,
-    dateOfBirth: formatDateInput(patient.dateOfBirth),
-    estimatedAge: patient.estimatedAge != null ? String(patient.estimatedAge) : "",
-    useEstimatedAge: patient.dateOfBirth == null && patient.estimatedAge != null,
-    bloodGroup: patient.bloodGroup ?? "",
-    maritalStatus: patient.maritalStatus ?? "",
-    nationality: patient.nationality ?? "",
-    countryCode: patient.countryCode ?? "BD",
-    mobile: patient.mobile ?? "",
-    alternateMobile: patient.alternateMobile ?? "",
-    email: patient.email ?? "",
-    addressLine1: patient.addressLine1 ?? "",
-    addressLine2: patient.addressLine2 ?? "",
-    city: patient.city ?? "",
-    district: patient.district ?? "",
-    postalCode: patient.postalCode ?? "",
-    nationalId: patient.nationalId ?? "",
-    passportNumber: patient.passportNumber ?? "",
-    occupation: patient.occupation ?? "",
-    religion: patient.religion ?? "",
-    notes: patient.notes ?? "",
-    guardianName: patient.guardianName ?? "",
-    guardianRelation: patient.guardianRelation ?? "",
-    guardianMobile: patient.guardianMobile ?? "",
-    emergencyContactName: patient.emergencyContactName ?? "",
-    emergencyContactRelation: patient.emergencyContactRelation ?? "",
-    emergencyContactMobile: patient.emergencyContactMobile ?? "",
-  };
-}

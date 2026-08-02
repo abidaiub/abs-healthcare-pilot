@@ -1,0 +1,110 @@
+{
+  "title": "Analyzer / LIS Worklist",
+  "description": "Raw analyzer messages, matched results and quarantined messages awaiting reconciliation.",
+  "sections": {
+    "queue": "Received messages",
+    "detail": "Message detail",
+    "rawPayload": "Archived raw payload",
+    "errors": "Integration errors",
+    "reconcile": "Reconcile message",
+    "simulate": "Receive analyzer message"
+  },
+  "status": {
+    "pending": "Pending",
+    "success": "Imported",
+    "error": "Error",
+    "quarantined": "Quarantined",
+    "duplicate": "Duplicate",
+    "reconciled": "Reconciled"
+  },
+  "channel": {
+    "hl7": "HL7",
+    "astm": "ASTM",
+    "csv": "CSV",
+    "api": "API",
+    "middleware": "Middleware"
+  },
+  "resultSource": {
+    "manualEntry": "Manual entry",
+    "analyzerImport": "Analyzer import",
+    "calculated": "Calculated",
+    "externalApi": "External API"
+  },
+  "importError": {
+    "unmappedTestCode": "Machine test code is not mapped",
+    "unknownSampleBarcode": "Sample barcode is unknown",
+    "sampleRejected": "Sample is rejected or awaiting recollection",
+    "testAlreadyCompleted": "Test is already completed",
+    "duplicateMessage": "Duplicate message control id",
+    "parameterNotFound": "Parameter does not exist on the result template",
+    "branchScopeMismatch": "Sample belongs to another branch",
+    "invalidPayload": "Message payload is not usable"
+  },
+  "fields": {
+    "messageControlId": "Message control id",
+    "machineSampleId": "Machine sample id",
+    "machineTestCode": "Machine test code",
+    "analyzer": "Analyzer",
+    "channel": "Channel",
+    "status": "Status",
+    "receivedAt": "Received at",
+    "processedAt": "Processed at",
+    "attemptCount": "Attempts",
+    "sample": "Sample",
+    "test": "Test",
+    "result": "Result",
+    "errorMessage": "Error",
+    "resolutionNote": "Resolution note",
+    "correctedSampleId": "Corrected sample id",
+    "correctedTestCode": "Corrected machine test code",
+    "rawPayload": "Raw payload"
+  },
+  "actions": {
+    "receiveMessage": "Receive message",
+    "reconcile": "Reconcile and replay",
+    "viewResult": "Open result",
+    "manualEntry": "Manual entry",
+    "refresh": "Refresh queue",
+    "viewDetail": "View message"
+  },
+  "hints": {
+    "matchingKey": "Messages are matched only by sample barcode or accession number. Patient names are never used as a matching key.",
+    "idempotency": "A repeated message control id is recorded as a duplicate and never creates a second result value.",
+    "reconcile": "Correct the sample identifier or machine test code, then replay the archived payload. The original message is preserved.",
+    "overrideImport": "Replacing an analyzer-transmitted value requires the override permission and a recorded reason."
+  },
+  "messages": {
+    "imported": "Message imported and attached to the result.",
+    "quarantined": "Message quarantined. It was not attached to any patient record.",
+    "duplicate": "Message was already received and has been recorded as a duplicate.",
+    "reconciled": "Message reconciled and attached to the result.",
+    "queueEmpty": "No analyzer messages have been received for this branch.",
+    "noErrors": "No integration errors recorded."
+  },
+  "errors": {
+    "generic": "The analyzer message could not be processed.",
+    "LAB_LIS_NOT_FOUND": "Message not found.",
+    "LAB_LIS_MESSAGE_INVALID": "Message payload could not be read.",
+    "LAB_LIS_MESSAGE_CONTROL_ID_REQUIRED": "Message control id is missing from the payload.",
+    "LAB_LIS_SAMPLE_ID_REQUIRED": "Machine sample id is missing from the payload.",
+    "LAB_LIS_OBSERVATION_REQUIRED": "Payload contains no observation values.",
+    "LAB_LIS_DUPLICATE_MESSAGE": "This message control id was already received.",
+    "LAB_LIS_BRANCH_ACCESS_DENIED": "You cannot process messages for another branch.",
+    "LAB_LIS_ALREADY_PROCESSED": "Message was already processed and cannot be replayed.",
+    "LAB_LIS_NOT_QUARANTINED": "Only quarantined or pending messages can be reconciled.",
+    "LAB_LIS_RECONCILE_INPUT_REQUIRED": "A resolution note is required.",
+    "LAB_LIS_MAPPING_EXISTS": "This machine test code is already mapped.",
+    "LAB_LIS_MAPPING_SERVICE_INVALID": "Selected catalog service is not valid for this tenant.",
+    "LAB_LIS_ANALYZER_INVALID": "Selected analyzer is not valid for this tenant.",
+    "LAB_LIS_OVERRIDE_NOT_PERMITTED": "You are not permitted to overwrite an analyzer-imported result.",
+    "LAB_LIS_OVERRIDE_REASON_REQUIRED": "A reason is required to overwrite an analyzer-imported result.",
+    "UNMAPPED_TEST_CODE": "Machine test code is not mapped for this analyzer.",
+    "UNKNOWN_SAMPLE_BARCODE": "No sample matches the transmitted barcode.",
+    "SAMPLE_REJECTED": "Sample is rejected or awaiting recollection.",
+    "TEST_ALREADY_COMPLETED": "Test is already completed.",
+    "DUPLICATE_MESSAGE": "Duplicate message control id.",
+    "PARAMETER_NOT_FOUND": "Parameter does not exist on the result template.",
+    "BRANCH_SCOPE_MISMATCH": "Sample belongs to another branch.",
+    "INVALID_PAYLOAD": "Message payload is not usable."
+  }
+}

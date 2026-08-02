@@ -78,6 +78,8 @@ const TENANT_ADMIN_NAV: NavGroup[] = [
 
     items: [
 
+      { href: "/settings/readiness", labelKey: "operationalReadiness", icon: "✓" },
+
       { href: "/settings/users", labelKey: "userManagement", icon: "◌" },
 
       { href: "/settings/branches", labelKey: "branchManagement", icon: "⌂" },
@@ -111,6 +113,8 @@ const TENANT_ADMIN_NAV: NavGroup[] = [
       { href: "/settings/doctors", labelKey: "doctors", icon: "✚" },
 
       { href: "/settings/doctor-schedules", labelKey: "doctorSchedules", icon: "🕘" },
+
+      { href: "/settings/patient-portal", labelKey: "patientPortalAdmin", icon: "☰" },
 
       { href: "/settings/report-layouts", labelKey: "reportLayouts", icon: "⎙" },
 
@@ -266,6 +270,10 @@ const BILLING_NAV: NavGroup[] = [
 
     items: [
 
+      { href: "/patients/new", labelKey: "patientRegistration", icon: "＋" },
+
+      { href: "/patients", labelKey: "patientSearch", icon: "⌕" },
+
       {
 
         href: "/diagnostic/billing",
@@ -333,7 +341,9 @@ export function getTenantNavGroups(session: SessionContext): NavGroup[] {
 
   if (
     roleCode === "TENANT_ADMIN" ||
+    roleCode === "DP_TENANT_ADMIN" ||
     role === "Tenant Admin" ||
+    role === "Tenant Administrator" ||
     role === "Company Admin" ||
     role === "Primary Tenant Admin"
   ) {

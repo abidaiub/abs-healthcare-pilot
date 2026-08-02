@@ -8,7 +8,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { resolveCurrentBranch } from "../src/lib/branch/resolve";
-import { startOfDay } from "../src/lib/appointment/constants";
+import { formatAppointmentDate, startOfDay } from "../src/lib/appointment/constants";
 import { APPOINTMENT_ERROR_CODES } from "../src/lib/appointment/errors";
 import { allocateAppointmentNumber, isValidAppointmentNumber } from "../src/lib/appointment/number";
 import { allocateQueueToken } from "../src/lib/appointment/queue";
@@ -54,6 +54,24 @@ function futureDateOnWeekday(dayOfWeek: number): Date {
 }
 
 async function main() {
+  assert(
+    formatAppointmentDate(new Date("2026-08-01T00:00:00.000Z")) === "2026-08-01",
+    "Appointment business date formatting is timezone invariant",
+  );
+  const parsedDateOnly = parseAppointmentFormData(
+    buildFormData({
+      appointmentType: "SCHEDULED",
+      appointmentDate: "2099-08-01",
+      timeSlot: "10:00",
+      patientId: "test-patient",
+      doctorId: "test-doctor",
+    }),
+  );
+  assert(
+    !("errorCode" in parsedDateOnly) &&
+      parsedDateOnly.appointmentDate.toISOString() === "2099-08-01T00:00:00.000Z",
+    "Appointment input preserves the selected date at UTC midnight",
+  );
   const sampleAppointment = await prisma.appointment.findFirst({
     include: { patient: true, branch: true, doctor: true },
   });

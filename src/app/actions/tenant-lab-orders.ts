@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { LabOrderPriority, LabOrderSource } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { requireTenantSession } from "@/lib/auth";
-import { requireTenantPermission } from "@/lib/rbac/auth";
+import { hasTenantPermission, requireTenantPermission } from "@/lib/rbac/auth";
 import { writeAuditLog } from "@/lib/saas/audit";
 import { canCancelLabOrder, canTransitionLabOrderStatus, isLabOrderEditable } from "@/lib/laboratory/constants";
 import { LAB_ERROR_CODES } from "@/lib/laboratory/errors";
@@ -98,6 +98,45 @@ async function buildTestLineFromTenantService(tenantId: string, tenantServiceId:
   };
 }
 
+/** Resolve free-text investigation advice to an imported tenant catalog service. */
+async function resolveTenantServiceIdByInvestigationText(
+  tenantId: string,
+  investigationText: string,
+): Promise<string | null> {
+  const term = investigationText.trim();
+  if (!term) return null;
+
+  const exact = await prisma.tenantService.findFirst({
+    where: {
+      tenantId,
+      isActive: true,
+      OR: [
+        { localName: { equals: term, mode: "insensitive" } },
+        { hostService: { serviceCode: { equals: term, mode: "insensitive" } } },
+        { hostService: { serviceName: { equals: term, mode: "insensitive" } } },
+      ],
+    },
+    select: { id: true },
+  });
+  if (exact) return exact.id;
+
+  const contains = await prisma.tenantService.findMany({
+    where: {
+      tenantId,
+      isActive: true,
+      OR: [
+        { localName: { contains: term, mode: "insensitive" } },
+        { hostService: { serviceCode: { contains: term, mode: "insensitive" } } },
+        { hostService: { serviceName: { contains: term, mode: "insensitive" } } },
+      ],
+    },
+    select: { id: true, localName: true },
+    take: 5,
+  });
+  if (contains.length === 1) return contains[0]!.id;
+  return null;
+}
+
 async function buildTestLineFromEncounterAdvice(tenantId: string, adviceId: string) {
   const advice = await prisma.encounterInvestigationAdvice.findFirst({
     where: { id: adviceId, tenantId, isActive: true, status: { not: "CANCELLED" } },
@@ -111,9 +150,22 @@ async function buildTestLineFromEncounterAdvice(tenantId: string, adviceId: stri
     },
   });
   if (existing) return { duplicate: true as const };
+  const resolvedServiceId =
+    advice.tenantServiceId ??
+    (await resolveTenantServiceIdByInvestigationText(tenantId, advice.investigationText));
+  const catalog = resolvedServiceId
+    ? await buildTestLineFromTenantService(tenantId, resolvedServiceId)
+    : null;
+  if (resolvedServiceId && !advice.tenantServiceId) {
+    await prisma.encounterInvestigationAdvice.update({
+      where: { id: advice.id },
+      data: { tenantServiceId: resolvedServiceId },
+    });
+  }
   return {
+    ...(catalog ?? {}),
     sourceEncounterInvestigationId: advice.id,
-    testName: advice.investigationText,
+    testName: catalog?.testName ?? advice.investigationText,
     instructions: advice.instructions,
     priority: (advice.priority?.toUpperCase() === "STAT"
       ? "STAT"
@@ -241,9 +293,22 @@ async function buildTestLineFromPrescriptionInvestigation(tenantId: string, inve
     },
   });
   if (existing) return { duplicate: true as const };
+  const resolvedServiceId =
+    investigation.tenantServiceId ??
+    (await resolveTenantServiceIdByInvestigationText(tenantId, investigation.investigationText));
+  const catalog = resolvedServiceId
+    ? await buildTestLineFromTenantService(tenantId, resolvedServiceId)
+    : null;
+  if (resolvedServiceId && !investigation.tenantServiceId) {
+    await prisma.prescriptionInvestigation.update({
+      where: { id: investigation.id },
+      data: { tenantServiceId: resolvedServiceId },
+    });
+  }
   return {
+    ...(catalog ?? {}),
     sourcePrescriptionInvestigationId: investigation.id,
-    testName: investigation.investigationText,
+    testName: catalog?.testName ?? investigation.investigationText,
     instructions: investigation.instructions,
     priority: mapInvestigationPriority(investigation.priority),
   };
@@ -253,8 +318,22 @@ export async function createLabOrderFromPrescriptionAction(
   prescriptionId: string,
   investigationIds: string[],
 ): Promise<LabOrderActionResult> {
-  await requireTenantPermission("/lab/orders/new", "canCreate");
   const session = await requireTenantSession();
+  const canCreateOrder = await hasTenantPermission(
+    session.tenantId,
+    session.userId,
+    "/lab/orders/new",
+    "canCreate",
+  );
+  const canBillFromAdvice = await hasTenantPermission(
+    session.tenantId,
+    session.userId,
+    "/diagnostic/billing/invoice",
+    "canCreate",
+  );
+  if (!canCreateOrder && !canBillFromAdvice) {
+    return { ok: false, errorCode: LAB_ERROR_CODES.LAB_ORDER_SOURCE_INVALID };
+  }
 
   const prescription = await prisma.prescription.findFirst({
     where: { id: prescriptionId, tenantId: session.tenantId },

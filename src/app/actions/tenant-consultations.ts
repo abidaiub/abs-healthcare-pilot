@@ -239,6 +239,9 @@ export async function startConsultationAction(
       encounterNumber: encounter.encounterNumber,
     };
   } catch (error) {
+    if (error instanceof Error && error.message === ENCOUNTER_ERROR_CODES.APPOINTMENT_INVALID_STATUS) {
+      return { ok: false, errorCode: ENCOUNTER_ERROR_CODES.APPOINTMENT_INVALID_STATUS };
+    }
     if (
       error instanceof Error &&
       error.message.includes("clinical_encounters_active_appointment_uidx")

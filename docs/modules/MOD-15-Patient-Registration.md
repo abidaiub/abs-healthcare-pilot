@@ -7,7 +7,7 @@
 | **Category** | Clinical Foundation |
 | **Depends on** | MOD-01, MOD-01A, MOD-02, MOD-03, MOD-04, MOD-06, MOD-07 |
 | **Status** | Implemented (foundation coverage) |
-| **Verify** | `npm run verify:mod15` |
+| **Verify** | `npm run verify:mod15` · `npm run verify:mod15:browser` |
 
 ## Purpose
 
@@ -45,6 +45,10 @@ See `docs/modules/MOD-15-Patient-Registration-Architecture-Audit.md`.
 | Branch context | `src/lib/patient/context.ts` |
 | Actions | `src/app/actions/tenant-patients.ts` |
 | UI | `/patients`, `/patients/new`, `/patients/[patientId]`, `/patients/[patientId]/edit` |
+
+## Hydration-safe actions (2026-07-26)
+
+Patient registration footer and success actions use `ButtonLink` (`src/components/ui/index.tsx`) instead of `<Link><Button>` to avoid invalid interactive HTML nesting that caused React hydration recovery and form state loss on `/patients/new`. Browser regression: `npm run verify:mod15:browser`.
 
 ## Data model
 
@@ -140,6 +144,10 @@ Namespace: `patient` in en-BD, bn-BD, ar-SA, ur-PK, hi-IN. Enum codes stored unt
 National ID and passport masked on detail view (last four digits). Audit payloads avoid full sensitive identifiers.
 
 ## Known limitations
+
+### J-01 Part 1 browser UAT (2026-08-01)
+
+PASS after correcting native-form DOB serialization (`J01-P1-D001`) and isolating the edit-page mapper in a server-safe library (`J01-P1-D002`). Patient `PT-000009` was created and re-opened with DOB 1991-04-20 visible. Browser verification now asserts that DOB is not blank on the detail page.
 
 - No photo capture
 - No patient merge or deceased status

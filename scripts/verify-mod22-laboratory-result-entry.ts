@@ -13,7 +13,11 @@ import { MOD06_PRIMARY_LOCALES } from "../src/lib/i18n/constants";
 import { resolveTextDirectionForLocale } from "../src/lib/locale/registry";
 import { getEffectivePermissionsForUser } from "../src/lib/rbac/queries";
 import { TENANT_PERMISSION_RESOURCES } from "../src/lib/rbac/permission-catalog";
-import { calculateAgeInDays } from "../src/lib/laboratory-result/age";
+import {
+  calculateAgeInDays,
+  estimateAgeInDays,
+  resolvePatientAgeInDays,
+} from "../src/lib/laboratory-result/age";
 import { computeAbnormalFlag } from "../src/lib/laboratory-result/abnormal-flags";
 import {
   canReopenLabResult,
@@ -81,28 +85,150 @@ async function main() {
   });
   assert(flag.flag === "LOW", "Abnormal low flag");
 
-  const rangePick = selectReferenceRange(
-    [
-      {
-        id: "r1",
-        gender: "M",
-        ageFromDays: 6570,
-        ageToDays: null,
-        normalLow: { toString: () => "13" } as never,
-        normalHigh: { toString: () => "17" } as never,
-        criticalLow: { toString: () => "7" } as never,
-        criticalHigh: { toString: () => "20" } as never,
-        textRange: null,
-        unit: "g/dL",
-        priority: 10,
-      },
-    ],
-    { patientGender: "M", ageInDays: 10000, parameterUnit: "g/dL" },
+  const criticalFlag = computeAbnormalFlag({
+    resultType: "NUMERIC",
+    numericValue: 6.5,
+    textValue: null,
+    choiceValue: null,
+    booleanValue: null,
+    lowerBound: 3.5,
+    upperBound: 5.1,
+    criticalLow: 2.5,
+    criticalHigh: 6.0,
+    unitSnapshot: "mmol/L",
+    parameterUnit: "mmol/L",
+    rangeUnit: "mmol/L",
+  });
+  assert(criticalFlag.flag === "CRITICAL_HIGH" && criticalFlag.isCritical, "Critical high flag");
+
+  const normalFlag = computeAbnormalFlag({
+    resultType: "NUMERIC",
+    numericValue: 14,
+    textValue: null,
+    choiceValue: null,
+    booleanValue: null,
+    lowerBound: 13,
+    upperBound: 17,
+    criticalLow: 7,
+    criticalHigh: 20,
+    unitSnapshot: "g/dL",
+    parameterUnit: "g/dL",
+    rangeUnit: "g/dL",
+  });
+  assert(normalFlag.flag === "NORMAL", "Within-range normal flag");
+
+  const unitMismatchFlag = computeAbnormalFlag({
+    resultType: "NUMERIC",
+    numericValue: 14,
+    textValue: null,
+    choiceValue: null,
+    booleanValue: null,
+    lowerBound: 13,
+    upperBound: 17,
+    criticalLow: 7,
+    criticalHigh: 20,
+    unitSnapshot: "g/dL",
+    parameterUnit: "g/dL",
+    rangeUnit: "mmol/L",
+  });
+  assert(unitMismatchFlag.flag === "UNDETERMINED", "Unit mismatch yields UNDETERMINED");
+
+  const cbcRangeCandidates = [
+    {
+      id: "r1",
+      gender: "M",
+      ageFromDays: 6570,
+      ageToDays: null,
+      normalLow: { toString: () => "13" } as never,
+      normalHigh: { toString: () => "17" } as never,
+      criticalLow: { toString: () => "7" } as never,
+      criticalHigh: { toString: () => "20" } as never,
+      textRange: null,
+      unit: "g/dL",
+      priority: 10,
+    },
+    {
+      id: "r2",
+      gender: "F",
+      ageFromDays: 6570,
+      ageToDays: null,
+      normalLow: { toString: () => "12" } as never,
+      normalHigh: { toString: () => "16" } as never,
+      criticalLow: { toString: () => "7" } as never,
+      criticalHigh: { toString: () => "20" } as never,
+      textRange: null,
+      unit: "g/dL",
+      priority: 10,
+    },
+    {
+      id: "r3",
+      gender: "M",
+      ageFromDays: 0,
+      ageToDays: 6569,
+      normalLow: { toString: () => "11.5" } as never,
+      normalHigh: { toString: () => "15.5" } as never,
+      criticalLow: { toString: () => "7" } as never,
+      criticalHigh: { toString: () => "20" } as never,
+      textRange: null,
+      unit: "g/dL",
+      priority: 10,
+    },
+  ];
+
+  const adultMale = selectReferenceRange(cbcRangeCandidates, {
+    patientGender: "M",
+    ageInDays: 52 * 365,
+    parameterUnit: "g/dL",
+  });
+  assert(adultMale.ok && adultMale.range.id === "r1", "Adult male range selection");
+
+  const adultFemale = selectReferenceRange(cbcRangeCandidates, {
+    patientGender: "F",
+    ageInDays: 34 * 365,
+    parameterUnit: "g/dL",
+  });
+  assert(adultFemale.ok && adultFemale.range.id === "r2", "Adult female range selection");
+
+  const paediatricMale = selectReferenceRange(cbcRangeCandidates, {
+    patientGender: "M",
+    ageInDays: 12 * 365,
+    parameterUnit: "g/dL",
+  });
+  assert(paediatricMale.ok && paediatricMale.range.id === "r3", "Paediatric male range selection");
+
+  const missingRange = selectReferenceRange([], {
+    patientGender: "M",
+    ageInDays: 10000,
+    parameterUnit: "g/dL",
+  });
+  assert(
+    !missingRange.ok && missingRange.errorCode === LAB_RESULT_ERROR_CODES.LAB_RESULT_RANGE_NOT_FOUND,
+    "Missing range returns LAB_RESULT_RANGE_NOT_FOUND",
   );
-  assert(rangePick.ok, "Reference range selection");
+
+  const wrongUnitRange = selectReferenceRange(cbcRangeCandidates, {
+    patientGender: "M",
+    ageInDays: 10000,
+    parameterUnit: "mmol/L",
+  });
+  assert(
+    !wrongUnitRange.ok &&
+      wrongUnitRange.errorCode === LAB_RESULT_ERROR_CODES.LAB_RESULT_RANGE_NOT_FOUND,
+    "Wrong unit excludes all candidates",
+  );
 
   const ageDays = calculateAgeInDays(new Date("1990-01-01"), new Date("2026-01-01"));
   assert(ageDays > 12000, "Age in days calculation");
+  assert(estimateAgeInDays(12, null, new Date("2026-07-26")) === 12 * 365, "Estimated age days");
+  assert(
+    resolvePatientAgeInDays({
+      dateOfBirth: null,
+      estimatedAge: 52,
+      ageAsOfDate: new Date("2026-07-26"),
+      referenceDate: new Date("2026-07-26"),
+    }) === 52 * 365,
+    "Estimated age resolves when DOB absent",
+  );
 
   const resultResource = TENANT_PERMISSION_RESOURCES.find((r) => r.route === "/lab/result-entry");
   assert(Boolean(resultResource), "RBAC /lab/result-entry registered");

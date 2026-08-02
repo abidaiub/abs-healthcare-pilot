@@ -51,6 +51,8 @@ Out of scope: pharmacy dispensing, lab order creation, billing, full ICD/medicin
 
 ## QC status
 
+J-01 Part 1 browser UAT (2026-08-01): PASS after aligning doctor-worklist day bounds to UTC (`J01-P1-D004`). The checked-in patient appeared in Dr. Kamrul Hasan's worklist and encounter `EN-000004` completed successfully.
+
 | Check | Status |
 |-------|--------|
 | Automated (`verify:mod18`) | PASS |

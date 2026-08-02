@@ -38,7 +38,7 @@ export function Sidebar({ session }: { session: SessionContext }) {
         {navGroups.map((group) => (
           <div key={group.titleKey}>
             <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
-              {t(group.titleKey)}
+              {t(`navigation.${group.titleKey}`)}
             </p>
             <div className="space-y-1">
               {group.items.map((item) => {

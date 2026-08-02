@@ -79,6 +79,8 @@ Namespace: `appointment` — locales: en-BD, bn-BD, ar-SA, ur-PK, hi-IN (RTL for
 
 ## QC status
 
+J-01 Part 1 browser UAT (2026-08-01): PASS after correcting date-only UTC handling (`J01-P1-D003`). `AP-000005` retained 2026-08-01 at creation/detail/queue and produced token 2. The pre-fix `AP-000004` record was cancelled and retained for audit.
+
 | Check | Status |
 |-------|--------|
 | Automated (`verify:mod17`) | PASS |

@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { collectLabSampleAction } from "@/app/actions/tenant-lab-orders";
+import { collectLabSampleAction, confirmLabOrderAction } from "@/app/actions/tenant-lab-orders";
 import { Badge, Button, Card, CardBody } from "@/components/ui";
 import type { LabOrderStatus, LabSampleStatus } from "@/generated/prisma/client";
-import { LAB_ORDER_STATUS_I18N, LAB_SAMPLE_STATUS_I18N } from "@/lib/laboratory/constants";
+import { LAB_ORDER_STATUS_I18N, LAB_SAMPLE_STATUS_I18N, isLabOrderEditable } from "@/lib/laboratory/constants";
 import { useI18n } from "@/lib/i18n/client";
 
 export type LabCollectionOrder = {
@@ -20,15 +20,18 @@ export type LabCollectionOrder = {
     accessionNumber: string;
     sampleStatus: LabSampleStatus;
     sampleType: { sampleType: string } | null;
+    sampleContainer?: { containerType: string } | null;
   }>;
 };
 
 export function LabCollectionPanel({
   orders,
   canCollect,
+  canConfirm = false,
 }: {
   orders: LabCollectionOrder[];
   canCollect: boolean;
+  canConfirm?: boolean;
 }) {
   const router = useRouter();
   const { t } = useI18n();
@@ -48,26 +51,52 @@ export function LabCollectionPanel({
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
-      {orders.map((order) => (
-        <Card key={order.id}>
-          <CardBody className="space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="font-mono font-semibold text-teal-700">{order.orderNumber}</p>
-                <p className="text-sm text-slate-600">
-                  {order.patient.fullName} ({order.patient.patientNumber})
-                </p>
+      {orders.map((order) => {
+        const pendingSamples = order.samples.filter((sample) => sample.sampleStatus === "PENDING_COLLECTION");
+        return (
+          <Card key={order.id}>
+            <CardBody className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-mono font-semibold text-teal-700">{order.orderNumber}</p>
+                  <p className="text-sm text-slate-600">
+                    {order.patient.fullName} ({order.patient.patientNumber})
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="info">{t(LAB_ORDER_STATUS_I18N[order.status])}</Badge>
+                  {canConfirm && isLabOrderEditable(order.status) && (
+                    <Button
+                      type="button"
+                      disabled={pending}
+                      onClick={() =>
+                        startTransition(async () => {
+                          const result = await confirmLabOrderAction(order.id);
+                          if (!result.ok) {
+                            setError(t(`laboratory.errors.${result.errorCode}`, t("laboratory.errors.generic")));
+                            return;
+                          }
+                          setError(null);
+                          router.refresh();
+                        })
+                      }
+                    >
+                      {t("laboratory.actions.confirm")}
+                    </Button>
+                  )}
+                </div>
               </div>
-              <Badge variant="info">{t(LAB_ORDER_STATUS_I18N[order.status])}</Badge>
-            </div>
-            <div className="space-y-3">
-              {order.samples
-                .filter((sample) => sample.sampleStatus === "PENDING_COLLECTION")
-                .map((sample) => (
+              <div className="space-y-3">
+                {pendingSamples.map((sample) => (
                   <div key={sample.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-100 px-4 py-3">
                     <div>
                       <p className="font-mono text-sm">{sample.accessionNumber}</p>
-                      <p className="text-xs text-slate-500">{sample.sampleType?.sampleType ?? "—"}</p>
+                      <p className="text-xs text-slate-500">
+                        {sample.sampleType?.sampleType ?? "—"}
+                        {sample.sampleContainer?.containerType
+                          ? ` · ${sample.sampleContainer.containerType}`
+                          : ""}
+                      </p>
                       <Badge variant="warning">{t(LAB_SAMPLE_STATUS_I18N[sample.sampleStatus])}</Badge>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -96,13 +125,17 @@ export function LabCollectionPanel({
                     </div>
                   </div>
                 ))}
-            </div>
-            <Link href={`/lab/orders/${order.id}/collect`}>
-              <Button type="button" variant="ghost">{t("laboratory.actions.viewOrder")}</Button>
-            </Link>
-          </CardBody>
-        </Card>
-      ))}
+                {isLabOrderEditable(order.status) && !pendingSamples.length && (
+                  <p className="text-sm text-slate-600">{t("laboratory.collect.confirmRequired")}</p>
+                )}
+              </div>
+              <Link href={`/lab/orders/${order.id}`}>
+                <Button type="button" variant="ghost">{t("laboratory.actions.viewOrder")}</Button>
+              </Link>
+            </CardBody>
+          </Card>
+        );
+      })}
     </div>
   );
 }

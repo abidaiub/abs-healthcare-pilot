@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { Prisma, type LabResultStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { requireTenantSession } from "@/lib/auth";
-import { requireTenantPermission } from "@/lib/rbac/auth";
+import { hasTenantPermission, requireTenantPermission } from "@/lib/rbac/auth";
+import { LAB_LIS_ERROR_CODES } from "@/lib/laboratory-lis/errors";
 import { writeAuditLog } from "@/lib/saas/audit";
-import { calculateAgeInDays } from "@/lib/laboratory-result/age";
 import { computeAbnormalFlag } from "@/lib/laboratory-result/abnormal-flags";
+import { ensureLabResultDraft } from "@/lib/laboratory-result/draft";
 import {
   canReopenLabResult,
   canTransitionLabResultStatus,
@@ -20,7 +21,6 @@ import {
   findActiveLabResultForOrderTest,
   listResultEntryWorklist,
 } from "@/lib/laboratory-result/queries";
-import { selectReferenceRange } from "@/lib/laboratory-result/range-selection";
 import { validateResultValue } from "@/lib/laboratory-result/validation";
 
 export type LabResultActionResult =
@@ -34,6 +34,8 @@ export type SaveLabResultItemInput = {
   choiceValue?: string | null;
   booleanValue?: boolean | null;
   technicianComment?: string | null;
+  /** Required when replacing a value that an analyzer transmitted (MOD-22 Appendix A). */
+  overrideReason?: string | null;
 };
 
 export type SaveLabResultDraftInput = {
@@ -94,139 +96,51 @@ export async function createLabResultDraftAction(labOrderTestId: string): Promis
   await requireTenantPermission("/lab/result-entry", "canEdit");
   const session = await requireTenantSession();
 
-  const orderTest = await prisma.labOrderTest.findFirst({
-    where: { id: labOrderTestId, tenantId: session.tenantId },
-    include: {
-      labOrder: {
-        include: {
-          patient: { select: { gender: true, dateOfBirth: true } },
-        },
-      },
-      sampleTests: {
-        include: {
-          labSample: true,
-        },
-      },
-      tenantService: true,
-    },
-  });
-
-  if (!orderTest) {
-    return { ok: false, errorCode: LAB_RESULT_ERROR_CODES.LAB_RESULT_ORDER_TEST_INVALID };
-  }
-
-  if (orderTest.status !== "READY_FOR_RESULT" && orderTest.status !== "RESULT_IN_PROGRESS") {
-    return { ok: false, errorCode: LAB_RESULT_ERROR_CODES.LAB_RESULT_SOURCE_NOT_READY };
-  }
-
   const existing = await findActiveLabResultForOrderTest(session.tenantId, labOrderTestId);
   if (existing) {
     return { ok: true, resultId: existing.id, recordVersion: existing.recordVersion };
   }
 
-  const sampleLink = orderTest.sampleTests.find(
-    (row) =>
-      row.labSample.sampleStatus === "READY_FOR_RESULT" ||
-      row.labSample.sampleStatus === "IN_PROCESS" ||
-      row.labSample.sampleStatus === "RECEIVED",
+  const draft = await prisma.$transaction((tx) =>
+    ensureLabResultDraft(tx, {
+      tenantId: session.tenantId,
+      labOrderTestId,
+      userId: session.userId,
+      branchId: session.branchId,
+    }),
   );
-  if (!sampleLink) {
-    return { ok: false, errorCode: LAB_RESULT_ERROR_CODES.LAB_RESULT_SAMPLE_INVALID };
+
+  if (!draft.ok) {
+    return { ok: false, errorCode: draft.errorCode };
   }
-
-  const sample = sampleLink.labSample;
-  if (session.branchId && sample.branchId !== session.branchId) {
-    return { ok: false, errorCode: LAB_RESULT_ERROR_CODES.LAB_RESULT_BRANCH_ACCESS_DENIED };
-  }
-
-  const referenceDate = sample.collectedAt ?? sample.receivedAt ?? new Date();
-  const patient = orderTest.labOrder.patient;
-  const patientAgeDays = patient?.dateOfBirth
-    ? calculateAgeInDays(patient.dateOfBirth, referenceDate)
-    : null;
-
-  const parameters = orderTest.tenantServiceId
-    ? await prisma.serviceParameter.findMany({
-        where: {
-          tenantId: session.tenantId,
-          tenantServiceId: orderTest.tenantServiceId,
-          isActive: true,
-        },
-        include: {
-          referenceRanges: { where: { isActive: true }, orderBy: { priority: "desc" } },
-        },
-        orderBy: { displayOrder: "asc" },
-      })
-    : [];
-
-  if (!parameters.length) {
-    return { ok: false, errorCode: LAB_RESULT_ERROR_CODES.LAB_RESULT_PARAMETER_NOT_FOUND };
-  }
-
-  const created = await prisma.$transaction(async (tx) => {
-    const result = await tx.labResult.create({
-      data: {
-        tenantId: session.tenantId,
-        branchId: sample.branchId,
-        labOrderId: orderTest.labOrderId,
-        labOrderTestId,
-        labSampleId: sample.id,
-        status: "DRAFT",
-        referenceDate,
-        patientAgeDays,
-        enteredById: session.userId,
-        enteredAt: new Date(),
-        items: {
-          create: parameters.map((parameter) => {
-            const rangeSelection = selectReferenceRange(parameter.referenceRanges, {
-              patientGender: patient?.gender ?? null,
-              ageInDays: patientAgeDays ?? 0,
-              parameterUnit: parameter.unit,
-            });
-            const range = rangeSelection.ok ? rangeSelection.range : null;
-            return {
-              tenantId: session.tenantId,
-              serviceParameterId: parameter.id,
-              parameterCode: parameter.parameterCode,
-              parameterName: parameter.parameterName,
-              resultType: parameter.resultType,
-              decimalPlaces: parameter.decimalPlaces,
-              isRequired: parameter.isRequired,
-              unitSnapshot: parameter.unit,
-              referenceRangeSnapshot: range?.snapshot ?? null,
-              lowerBoundSnapshot: decimalOrNull(range?.lowerBound),
-              upperBoundSnapshot: decimalOrNull(range?.upperBound),
-              criticalLowSnapshot: decimalOrNull(range?.criticalLow),
-              criticalHighSnapshot: decimalOrNull(range?.criticalHigh),
-              selectedReferenceRangeId: range?.id ?? null,
-              displayOrder: parameter.displayOrder,
-            };
-          }),
-        },
-      },
-    });
-
-    await tx.labOrderTest.update({
-      where: { id: labOrderTestId },
-      data: { status: "RESULT_IN_PROGRESS" },
-    });
-
-    return result;
-  });
 
   await auditLabResultEvent({
     tenantId: session.tenantId,
-    branchId: sample.branchId,
+    branchId: draft.branchId,
     userId: session.userId,
     actorName: session.user.name,
     actionType: "INSERT",
     event: "LAB_RESULT_DRAFT_CREATED",
-    entityId: created.id,
+    entityId: draft.labResultId,
     changeData: { labOrderTestId },
   });
 
-  revalidateResultPaths(created.id);
-  return { ok: true, resultId: created.id, recordVersion: created.recordVersion };
+  revalidateResultPaths(draft.labResultId);
+  return { ok: true, resultId: draft.labResultId, recordVersion: 1 };
+}
+
+function isSameSubmittedValue(
+  dbItem: { numericValue: Prisma.Decimal | null; textValue: string | null; choiceValue: string | null; booleanValue: boolean | null },
+  itemInput: SaveLabResultItemInput,
+) {
+  const currentNumeric = dbItem.numericValue == null ? null : Number(dbItem.numericValue);
+  const nextNumeric = itemInput.numericValue ?? null;
+  return (
+    currentNumeric === nextNumeric &&
+    (dbItem.textValue ?? null) === (itemInput.textValue?.trim() || null) &&
+    (dbItem.choiceValue ?? null) === (itemInput.choiceValue?.trim() || null) &&
+    (dbItem.booleanValue ?? null) === (itemInput.booleanValue ?? null)
+  );
 }
 
 async function applyItemUpdates(
@@ -236,6 +150,7 @@ async function applyItemUpdates(
     userId: string;
     resultId: string;
     items: SaveLabResultItemInput[];
+    canOverrideImportedResult: boolean;
   },
 ) {
   const dbItems = await tx.labResultItem.findMany({
@@ -247,6 +162,19 @@ async function applyItemUpdates(
     const dbItem = itemMap.get(itemInput.itemId);
     if (!dbItem) {
       throw new Error(LAB_RESULT_ERROR_CODES.LAB_RESULT_PARAMETER_NOT_FOUND);
+    }
+
+    // An analyzer-transmitted value may only be replaced by a user holding the override
+    // permission, and the reason is persisted on the item for the report audit trail.
+    const isImportedOverride =
+      dbItem.resultSource === "ANALYZER_IMPORT" && !isSameSubmittedValue(dbItem, itemInput);
+    if (isImportedOverride) {
+      if (!input.canOverrideImportedResult) {
+        throw new Error(LAB_LIS_ERROR_CODES.LAB_LIS_OVERRIDE_NOT_PERMITTED);
+      }
+      if (!itemInput.overrideReason?.trim()) {
+        throw new Error(LAB_LIS_ERROR_CODES.LAB_LIS_OVERRIDE_REASON_REQUIRED);
+      }
     }
 
     const validation = validateResultValue({
@@ -287,6 +215,14 @@ async function applyItemUpdates(
         technicianComment: itemInput.technicianComment?.trim() || null,
         abnormalFlag: flagResult.flag,
         isCritical: flagResult.isCritical,
+        ...(isImportedOverride
+          ? {
+              resultSource: "MANUAL_ENTRY" as const,
+              manualOverrideReason: itemInput.overrideReason?.trim() ?? null,
+              manualOverriddenAt: new Date(),
+              manualOverriddenById: input.userId,
+            }
+          : {}),
       },
     });
 
@@ -324,6 +260,13 @@ export async function saveLabResultDraftAction(
     return { ok: false, errorCode: LAB_RESULT_ERROR_CODES.LAB_RESULT_BRANCH_ACCESS_DENIED };
   }
 
+  const canOverrideImportedResult = await hasTenantPermission(
+    session.tenantId,
+    session.userId,
+    "/lab/result-entry/override-import",
+    "canEdit",
+  );
+
   try {
     const updated = await prisma.$transaction(async (tx) => {
       await applyItemUpdates(tx, {
@@ -331,6 +274,7 @@ export async function saveLabResultDraftAction(
         userId: session.userId,
         resultId,
         items: input.items,
+        canOverrideImportedResult,
       });
 
       return tx.labResult.update({

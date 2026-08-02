@@ -1,14 +1,20 @@
-import { PortalReportsPanel } from "@/components/diagnostic/PortalReportsPanel";
-import { ModulePageHeader } from "@/components/layout/ModulePageHeader";
+import { redirect } from "next/navigation";
+import { getPortalReportsAction } from "@/app/actions/portal-reports";
+import { PortalReportsPanel } from "@/components/portal/PortalReportsPanel";
 
-export default function PortalReportsPage() {
+export default async function PortalReportsPage() {
+  const data = await getPortalReportsAction();
+  if (!data) redirect("/portal/login");
+
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-6 py-8">
-      <ModulePageHeader
-        screenKey="portalReports"
-        description="Patient self-service report list with OTP login readiness."
-      />
-      <PortalReportsPanel />
-    </div>
+    <main className="mx-auto max-w-4xl space-y-6 px-6 py-10">
+      <div>
+        <h1 className="text-xl font-semibold text-slate-900">My reports</h1>
+        <p className="text-sm text-slate-600">
+          Only reports released to you are shown here. Each download is recorded.
+        </p>
+      </div>
+      <PortalReportsPanel data={data} />
+    </main>
   );
 }

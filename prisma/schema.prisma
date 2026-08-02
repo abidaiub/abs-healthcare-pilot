@@ -149,43 +149,50 @@ enum ResultType {
 
 /// Multi-tenant company profile (hospital group, clinic network, diagnostic center)
 model Tenant {
-  id                  String           @id @default(cuid())
-  tenantCode          String           @unique @map("tenant_code")
-  tenantName          String           @map("tenant_name")
-  shortCode           String           @map("short_code")
-  legalName           String?          @map("legal_name")
-  tradeLicenseNo      String?          @map("trade_license_no")
-  taxBinNo            String?          @map("tax_bin_no")
-  contactPerson       String           @map("contact_person")
-  contactMobile       String           @map("contact_mobile")
-  contactEmail        String           @map("contact_email")
-  address             String?
-  city                String?
-  district            String?
-  country             String           @default("Bangladesh")
-  countryCode         String           @default("BD") @map("country_code")
-  timezone            String           @default("Asia/Dhaka")
-  defaultLanguage     String           @default("EN") @map("default_language")
-  defaultLocale       String           @default("en-BD") @map("default_locale")
-  supportedLocales    Json             @default("[\"bn-BD\",\"en-BD\"]") @map("supported_locales")
-  currencyCode        String           @default("BDT") @map("currency_code")
-  dateFormat          String           @default("DD/MM/YYYY") @map("date_format")
-  numberFormat        String           @default("en-IN") @map("number_format")
-  textDirection       String           @default("ltr") @map("text_direction")
-  tenantType          TenantType       @map("tenant_type")
-  tenantStatus        TenantStatus     @default(TRIAL) @map("tenant_status")
-  onboardingStatus    OnboardingStatus @default(DRAFT) @map("onboarding_status")
-  logoUrl             String?          @map("logo_url")
-  reportHeaderLogoUrl String?          @map("report_header_logo_url")
-  reportFooterText    String?          @map("report_footer_text")
-  labReportReleaseEnforceBillingClearance Boolean @default(false) @map("lab_report_release_enforce_billing_clearance")
-  labReportReleaseEnforceQualityClearance Boolean @default(false) @map("lab_report_release_enforce_quality_clearance")
-  labReportReleaseEnforceCriticalAck      Boolean @default(false) @map("lab_report_release_enforce_critical_ack")
-  isActive            Boolean          @default(true) @map("is_active")
-  createdAt           DateTime         @default(now()) @map("created_at")
-  createdBy           String?          @map("created_by")
-  updatedAt           DateTime         @updatedAt @map("updated_at")
-  updatedBy           String?          @map("updated_by")
+  id                                      String           @id @default(cuid())
+  tenantCode                              String           @unique @map("tenant_code")
+  tenantName                              String           @map("tenant_name")
+  shortCode                               String           @map("short_code")
+  legalName                               String?          @map("legal_name")
+  tradeLicenseNo                          String?          @map("trade_license_no")
+  taxBinNo                                String?          @map("tax_bin_no")
+  contactPerson                           String           @map("contact_person")
+  contactMobile                           String           @map("contact_mobile")
+  contactEmail                            String           @map("contact_email")
+  address                                 String?
+  city                                    String?
+  district                                String?
+  country                                 String           @default("Bangladesh")
+  countryCode                             String           @default("BD") @map("country_code")
+  timezone                                String           @default("Asia/Dhaka")
+  defaultLanguage                         String           @default("EN") @map("default_language")
+  defaultLocale                           String           @default("en-BD") @map("default_locale")
+  supportedLocales                        Json             @default("[\"bn-BD\",\"en-BD\"]") @map("supported_locales")
+  currencyCode                            String           @default("BDT") @map("currency_code")
+  dateFormat                              String           @default("DD/MM/YYYY") @map("date_format")
+  numberFormat                            String           @default("en-IN") @map("number_format")
+  textDirection                           String           @default("ltr") @map("text_direction")
+  tenantType                              TenantType       @map("tenant_type")
+  tenantStatus                            TenantStatus     @default(TRIAL) @map("tenant_status")
+  onboardingStatus                        OnboardingStatus @default(DRAFT) @map("onboarding_status")
+  logoUrl                                 String?          @map("logo_url")
+  reportHeaderLogoUrl                     String?          @map("report_header_logo_url")
+  reportFooterText                        String?          @map("report_footer_text")
+  website                                 String?
+  invoiceFooterText                       String?          @map("invoice_footer_text")
+  headerBrandingText                      String?          @map("header_branding_text")
+  footerBrandingText                      String?          @map("footer_branding_text")
+  barcodePrefix                           String?          @map("barcode_prefix")
+  readyForFirstPatientAt                  DateTime?        @map("ready_for_first_patient_at")
+  readyForFirstPatientById                String?          @map("ready_for_first_patient_by_id")
+  labReportReleaseEnforceBillingClearance Boolean          @default(false) @map("lab_report_release_enforce_billing_clearance")
+  labReportReleaseEnforceQualityClearance Boolean          @default(false) @map("lab_report_release_enforce_quality_clearance")
+  labReportReleaseEnforceCriticalAck      Boolean          @default(false) @map("lab_report_release_enforce_critical_ack")
+  isActive                                Boolean          @default(true) @map("is_active")
+  createdAt                               DateTime         @default(now()) @map("created_at")
+  createdBy                               String?          @map("created_by")
+  updatedAt                               DateTime         @updatedAt @map("updated_at")
+  updatedBy                               String?          @map("updated_by")
 
   branches                      Branch[]
   users                         User[]
@@ -261,6 +268,23 @@ model Tenant {
   labSamples                    LabSample[]
   labSampleTests                LabSampleTest[]
   sampleRejectionReasons        SampleRejectionReason[]
+  invoiceCounter                TenantInvoiceCounter?
+  receiptCounter                TenantReceiptCounter?
+  invoices                      Invoice[]
+  invoiceItems                  InvoiceItem[]
+  invoicePayments               InvoicePayment[]
+  invoiceDiscountEvents         InvoiceDiscountEvent[]
+  notificationTemplates         NotificationTemplate[]
+  notificationOutbox            NotificationOutbox[]
+  analyzerMappings              AnalyzerMapping[]
+  analyzerImportQueue           AnalyzerImportQueue[]
+  analyzerErrorQueue            AnalyzerErrorQueue[]
+  patientPortalAccounts         PatientPortalAccount[]
+  patientPortalSessions         PatientPortalSession[]
+  patientPortalLoginHistory     PatientPortalLoginHistory[]
+  patientPortalDelegations      PatientPortalDelegation[]
+  portalSettings                TenantPortalSettings?
+  operationalReadinessSnapshots OperationalReadinessSnapshot[]
 
   @@index([tenantStatus])
   @@index([createdAt])
@@ -295,33 +319,37 @@ model Branch {
   updatedAt    DateTime     @updatedAt @map("updated_at")
   updatedBy    String?      @map("updated_by")
 
-  tenant                   Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userBranches             UserBranch[]
-  auditLogs                AuditLog[]
-  statusHistories          StatusHistory[]
-  testMethods              TestMethod[]
-  analyzers                Analyzer[]
-  doctorBranches           DoctorBranch[]
+  tenant                      Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userBranches                UserBranch[]
+  auditLogs                   AuditLog[]
+  statusHistories             StatusHistory[]
+  testMethods                 TestMethod[]
+  analyzers                   Analyzer[]
+  doctorBranches              DoctorBranch[]
   doctorSchedules             DoctorSchedule[]
-  reportDoctorAssignments  ReportDoctorAssignment[]
-  reportSignatureTemplates ReportSignatureTemplate[]
-  tenantServiceBranches    TenantServiceBranch[]
-  registeredPatients       Patient[]                  @relation("PatientRegistrationBranch")
-  appointments             Appointment[]
-  queueCounters            BranchDoctorQueueCounter[]
-  clinicalEncounters       ClinicalEncounter[]
-  prescriptions            Prescription[]
-  branchMedications        BranchMedication[]
-  labOrders                LabOrder[]
-  labSamples               LabSample[]
-  labResults               LabResult[]
-  labResultVerifications   LabResultVerification[]
-  labReportReleases        LabReportRelease[]
-  labReportVersions        LabReportVersion[]
-  labReportDeliveries      LabReportDelivery[]
-  labReportAccessAudits    LabReportAccessAudit[]
-  labReportReprintAudits   LabReportReprintAudit[]
+  reportDoctorAssignments     ReportDoctorAssignment[]
+  reportSignatureTemplates    ReportSignatureTemplate[]
+  tenantServiceBranches       TenantServiceBranch[]
+  registeredPatients          Patient[]                    @relation("PatientRegistrationBranch")
+  appointments                Appointment[]
+  queueCounters               BranchDoctorQueueCounter[]
+  clinicalEncounters          ClinicalEncounter[]
+  prescriptions               Prescription[]
+  branchMedications           BranchMedication[]
+  labOrders                   LabOrder[]
+  labSamples                  LabSample[]
+  labResults                  LabResult[]
+  labResultVerifications      LabResultVerification[]
+  labReportReleases           LabReportRelease[]
+  labReportVersions           LabReportVersion[]
+  labReportDeliveries         LabReportDelivery[]
+  labReportAccessAudits       LabReportAccessAudit[]
+  labReportReprintAudits      LabReportReprintAudit[]
   labReportVerificationTokens LabReportVerificationToken[]
+  invoices                    Invoice[]
+  invoicePayments             InvoicePayment[]
+  notificationOutbox          NotificationOutbox[]
+  analyzerImportQueue         AnalyzerImportQueue[]
 
   @@unique([tenantId, code])
   @@index([tenantId])
@@ -393,12 +421,15 @@ model Patient {
   updatedAt                        DateTime       @updatedAt @map("updated_at")
   updatedBy                        String?        @map("updated_by")
 
-  tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  registrationBranch Branch              @relation("PatientRegistrationBranch", fields: [registrationBranchId], references: [id])
+  tenant             Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  registrationBranch Branch                    @relation("PatientRegistrationBranch", fields: [registrationBranchId], references: [id])
   appointments       Appointment[]
   clinicalEncounters ClinicalEncounter[]
   prescriptions      Prescription[]
   labOrders          LabOrder[]
+  invoices           Invoice[]
+  portalAccount      PatientPortalAccount?
+  portalDelegations  PatientPortalDelegation[] @relation("PortalDelegationGrantor")
 
   @@unique([tenantId, patientNumber])
   @@index([tenantId])
@@ -686,6 +717,7 @@ model EncounterInvestigationAdvice {
   id                String                    @id @default(cuid())
   tenantId          String                    @map("tenant_id")
   encounterId       String                    @map("encounter_id")
+  tenantServiceId   String?                   @map("tenant_service_id")
   investigationText String                    @map("investigation_text")
   priority          String?
   instructions      String?
@@ -700,10 +732,12 @@ model EncounterInvestigationAdvice {
 
   tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   encounter     ClinicalEncounter @relation(fields: [encounterId], references: [id], onDelete: Cascade)
+  tenantService TenantService?    @relation(fields: [tenantServiceId], references: [id], onDelete: SetNull)
   labOrderTests LabOrderTest[]
 
   @@index([tenantId])
   @@index([tenantId, encounterId])
+  @@index([tenantId, tenantServiceId])
   @@map("encounter_investigation_advices")
 }
 
@@ -847,6 +881,7 @@ model PrescriptionInvestigation {
   tenantId                       String                    @map("tenant_id")
   prescriptionId                 String                    @map("prescription_id")
   sourceEncounterInvestigationId String?                   @map("source_encounter_investigation_id")
+  tenantServiceId                String?                   @map("tenant_service_id")
   investigationText              String                    @map("investigation_text")
   priority                       String?
   instructions                   String?
@@ -858,10 +893,12 @@ model PrescriptionInvestigation {
 
   tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   prescription  Prescription   @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  tenantService TenantService? @relation(fields: [tenantServiceId], references: [id], onDelete: SetNull)
   labOrderTests LabOrderTest[]
 
   @@index([tenantId])
   @@index([tenantId, prescriptionId])
+  @@index([tenantId, tenantServiceId])
   @@map("prescription_investigations")
 }
 
@@ -1248,6 +1285,45 @@ enum AbnormalFlag {
   UNDETERMINED
 }
 
+/// How a result value was populated (MOD-22 Appendix A ResultSource)
+enum ResultSource {
+  MANUAL_ENTRY
+  ANALYZER_IMPORT
+  CALCULATED
+  EXTERNAL_API
+}
+
+/// Transport used by the analyzer/LIS message
+enum AnalyzerImportChannel {
+  HL7
+  ASTM
+  CSV
+  API
+  MIDDLEWARE
+}
+
+/// Processing state of a raw analyzer message (MOD-22 AnalyzerImportQueue.ProcessedStatus)
+enum AnalyzerImportStatus {
+  PENDING
+  SUCCESS
+  ERROR
+  QUARANTINED
+  DUPLICATE
+  RECONCILED
+}
+
+/// Reason an analyzer message was quarantined instead of attached to a result
+enum AnalyzerImportErrorCode {
+  UNMAPPED_TEST_CODE
+  UNKNOWN_SAMPLE_BARCODE
+  SAMPLE_REJECTED
+  TEST_ALREADY_COMPLETED
+  DUPLICATE_MESSAGE
+  PARAMETER_NOT_FOUND
+  BRANCH_SCOPE_MISMATCH
+  INVALID_PAYLOAD
+}
+
 enum LabSampleStatus {
   PENDING_COLLECTION
   COLLECTED
@@ -1335,6 +1411,7 @@ model LabOrder {
   tests        LabOrderTest[]
   samples      LabSample[]
   labResults   LabResult[]
+  invoice      Invoice?
 
   @@unique([tenantId, orderNumber])
   @@index([tenantId])
@@ -1377,6 +1454,8 @@ model LabOrderTest {
   sourcePrescriptionInvestigation PrescriptionInvestigation?    @relation(fields: [sourcePrescriptionInvestigationId], references: [id], onDelete: SetNull)
   sampleTests                     LabSampleTest[]
   labResult                       LabResult?
+  invoiceItem                     InvoiceItem?
+  analyzerImportQueue             AnalyzerImportQueue[]
 
   @@index([tenantId])
   @@index([tenantId, labOrderId])
@@ -1412,16 +1491,17 @@ model LabSample {
   createdAt            DateTime              @default(now()) @map("created_at")
   updatedAt            DateTime              @updatedAt @map("updated_at")
 
-  tenant           Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  branch           Branch                 @relation(fields: [branchId], references: [id], onDelete: Restrict)
-  labOrder         LabOrder               @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
-  sampleType       SampleType?            @relation(fields: [sampleTypeId], references: [id], onDelete: SetNull)
-  sampleContainer  SampleContainer?       @relation(fields: [sampleContainerId], references: [id], onDelete: SetNull)
-  rejectionReason  SampleRejectionReason? @relation(fields: [rejectionReasonId], references: [id], onDelete: SetNull)
-  supersedesSample LabSample?             @relation("SampleRecollection", fields: [supersedesSampleId], references: [id], onDelete: SetNull)
-  supersededBy     LabSample[]            @relation("SampleRecollection")
-  sampleTests      LabSampleTest[]
-  labResults       LabResult[]
+  tenant              Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch              Branch                 @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  labOrder            LabOrder               @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
+  sampleType          SampleType?            @relation(fields: [sampleTypeId], references: [id], onDelete: SetNull)
+  sampleContainer     SampleContainer?       @relation(fields: [sampleContainerId], references: [id], onDelete: SetNull)
+  rejectionReason     SampleRejectionReason? @relation(fields: [rejectionReasonId], references: [id], onDelete: SetNull)
+  supersedesSample    LabSample?             @relation("SampleRecollection", fields: [supersedesSampleId], references: [id], onDelete: SetNull)
+  supersededBy        LabSample[]            @relation("SampleRecollection")
+  sampleTests         LabSampleTest[]
+  labResults          LabResult[]
+  analyzerImportQueue AnalyzerImportQueue[]
 
   @@unique([tenantId, accessionNumber])
   @@index([tenantId])
@@ -1476,16 +1556,17 @@ model LabResult {
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
-  tenant             Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  branch             Branch                       @relation(fields: [branchId], references: [id], onDelete: Restrict)
-  labOrder           LabOrder                     @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
-  labOrderTest       LabOrderTest                 @relation(fields: [labOrderTestId], references: [id], onDelete: Cascade)
-  labSample          LabSample                    @relation(fields: [labSampleId], references: [id], onDelete: Restrict)
-  items              LabResultItem[]
-  criticalEvents     LabCriticalValueEvent[]
-  verifications      LabResultVerification[]
-  correctionRequests LabResultCorrectionRequest[]
-  reportRelease      LabReportRelease?
+  tenant              Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch              Branch                       @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  labOrder            LabOrder                     @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
+  labOrderTest        LabOrderTest                 @relation(fields: [labOrderTestId], references: [id], onDelete: Cascade)
+  labSample           LabSample                    @relation(fields: [labSampleId], references: [id], onDelete: Restrict)
+  items               LabResultItem[]
+  criticalEvents      LabCriticalValueEvent[]
+  verifications       LabResultVerification[]
+  correctionRequests  LabResultCorrectionRequest[]
+  reportRelease       LabReportRelease?
+  analyzerImportQueue AnalyzerImportQueue[]
 
   @@index([tenantId])
   @@index([tenantId, branchId])
@@ -1522,6 +1603,14 @@ model LabResultItem {
   isCritical               Boolean      @default(false) @map("is_critical")
   flagOverrideReason       String?      @map("flag_override_reason")
   technicianComment        String?      @map("technician_comment")
+  resultSource             ResultSource @default(MANUAL_ENTRY) @map("result_source")
+  analyzerId               String?      @map("analyzer_id")
+  importedAt               DateTime?    @map("imported_at")
+  /// Analyzer import queue row this value came from, for raw-payload traceability.
+  importQueueId            String?      @map("import_queue_id")
+  manualOverrideReason     String?      @map("manual_override_reason")
+  manualOverriddenAt       DateTime?    @map("manual_overridden_at")
+  manualOverriddenById     String?      @map("manual_overridden_by_id")
   displayOrder             Int          @default(0) @map("display_order")
   createdAt                DateTime     @default(now()) @map("created_at")
   updatedAt                DateTime     @updatedAt @map("updated_at")
@@ -1677,15 +1766,15 @@ model LabReportRelease {
   updatedAt              DateTime               @updatedAt @map("updated_at")
   updatedById            String?                @map("updated_by_id")
 
-  tenant              Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  branch              Branch                       @relation(fields: [branchId], references: [id], onDelete: Restrict)
-  labResult           LabResult                    @relation(fields: [labResultId], references: [id], onDelete: Cascade)
-  currentVersion      LabReportVersion?            @relation("CurrentReportVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
-  versions            LabReportVersion[]           @relation("ReleaseVersions")
-  deliveries          LabReportDelivery[]
-  accessAudits        LabReportAccessAudit[]
-  reprintAudits       LabReportReprintAudit[]
-  verificationTokens  LabReportVerificationToken[]
+  tenant             Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch             Branch                       @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  labResult          LabResult                    @relation(fields: [labResultId], references: [id], onDelete: Cascade)
+  currentVersion     LabReportVersion?            @relation("CurrentReportVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
+  versions           LabReportVersion[]           @relation("ReleaseVersions")
+  deliveries         LabReportDelivery[]
+  accessAudits       LabReportAccessAudit[]
+  reprintAudits      LabReportReprintAudit[]
+  verificationTokens LabReportVerificationToken[]
 
   @@unique([tenantId, reportNumber])
   @@index([tenantId])
@@ -1698,21 +1787,21 @@ model LabReportRelease {
 
 /// Immutable released report version snapshot (MOD-24)
 model LabReportVersion {
-  id               String                 @id @default(cuid())
-  tenantId         String                 @map("tenant_id")
-  branchId         String                 @map("branch_id")
-  releaseId        String                 @map("release_id")
-  versionNumber    Int                    @map("version_number")
-  status           LabReportVersionStatus @default(DRAFT)
-  isCurrent        Boolean                @default(false) @map("is_current")
-  snapshotJson     String                 @map("snapshot_json")
-  amendmentReason  String?                @map("amendment_reason")
-  amendedFromId    String?                @map("amended_from_id")
-  releasedById     String?                @map("released_by_id")
-  releasedAt       DateTime?              @map("released_at")
-  createdAt        DateTime               @default(now()) @map("created_at")
-  createdById      String?                @map("created_by_id")
-  updatedAt        DateTime               @updatedAt @map("updated_at")
+  id              String                 @id @default(cuid())
+  tenantId        String                 @map("tenant_id")
+  branchId        String                 @map("branch_id")
+  releaseId       String                 @map("release_id")
+  versionNumber   Int                    @map("version_number")
+  status          LabReportVersionStatus @default(DRAFT)
+  isCurrent       Boolean                @default(false) @map("is_current")
+  snapshotJson    String                 @map("snapshot_json")
+  amendmentReason String?                @map("amendment_reason")
+  amendedFromId   String?                @map("amended_from_id")
+  releasedById    String?                @map("released_by_id")
+  releasedAt      DateTime?              @map("released_at")
+  createdAt       DateTime               @default(now()) @map("created_at")
+  createdById     String?                @map("created_by_id")
+  updatedAt       DateTime               @updatedAt @map("updated_at")
 
   tenant             Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branch             Branch                       @relation(fields: [branchId], references: [id], onDelete: Restrict)
@@ -1805,16 +1894,16 @@ model LabReportReprintAudit {
 
 /// QR verification token (MOD-24)
 model LabReportVerificationToken {
-  id         String    @id @default(cuid())
-  tenantId   String    @map("tenant_id")
-  branchId   String    @map("branch_id")
-  releaseId  String    @map("release_id")
-  versionId  String    @map("version_id")
-  token      String    @unique
-  isRevoked  Boolean   @default(false) @map("is_revoked")
-  expiresAt  DateTime? @map("expires_at")
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  id        String    @id @default(cuid())
+  tenantId  String    @map("tenant_id")
+  branchId  String    @map("branch_id")
+  releaseId String    @map("release_id")
+  versionId String    @map("version_id")
+  token     String    @unique
+  isRevoked Boolean   @default(false) @map("is_revoked")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
   tenant  Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branch  Branch           @relation(fields: [branchId], references: [id], onDelete: Restrict)
@@ -1970,6 +2059,7 @@ model User {
   username            String
   email               String
   phone               String?
+  departmentId        String?    @map("department_id")
   passwordHash        String     @map("password_hash")
   userStatus          UserStatus @default(ACTIVE) @map("user_status")
   preferredLocale     String?    @map("preferred_locale")
@@ -1982,6 +2072,7 @@ model User {
   updatedBy           String?    @map("updated_by")
 
   tenant       Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  department   Department?  @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   userRoles    UserRole[]
   userBranches UserBranch[]
   auditLogs    AuditLog[]
@@ -1994,6 +2085,7 @@ model User {
   @@index([userStatus])
   @@index([username])
   @@index([email])
+  @@index([departmentId])
   @@index([createdAt])
   @@map("users")
 }
@@ -2195,6 +2287,8 @@ model Department {
   clinicalEncounters       ClinicalEncounter[]
   prescriptions            Prescription[]
   labOrderTests            LabOrderTest[]
+  invoiceItems             InvoiceItem[]
+  users                    User[]
 
   @@unique([tenantId, deptCode])
   @@index([tenantId])
@@ -2342,19 +2436,23 @@ model TenantService {
   updatedAt         DateTime  @updatedAt @map("updated_at")
   updatedBy         String?   @map("updated_by")
 
-  tenant                  Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  hostService             HostService?             @relation(fields: [hostServiceId], references: [id], onDelete: SetNull)
-  department              Department               @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  category                Category                 @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  sampleType              SampleType?              @relation(fields: [sampleTypeId], references: [id], onDelete: SetNull)
-  sampleContainer         SampleContainer?         @relation(fields: [sampleContainerId], references: [id], onDelete: SetNull)
-  testMethod              TestMethod?              @relation(fields: [testMethodId], references: [id], onDelete: SetNull)
-  reportingMethod         ReportingMethod?         @relation(fields: [reportingMethodId], references: [id], onDelete: SetNull)
-  analyzer                Analyzer?                @relation(fields: [analyzerId], references: [id], onDelete: SetNull)
-  serviceParameters       ServiceParameter[]
-  reportDoctorAssignments ReportDoctorAssignment[]
-  tenantServiceBranches   TenantServiceBranch[]
-  labOrderTests           LabOrderTest[]
+  tenant                        Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  hostService                   HostService?                   @relation(fields: [hostServiceId], references: [id], onDelete: SetNull)
+  department                    Department                     @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  category                      Category                       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  sampleType                    SampleType?                    @relation(fields: [sampleTypeId], references: [id], onDelete: SetNull)
+  sampleContainer               SampleContainer?               @relation(fields: [sampleContainerId], references: [id], onDelete: SetNull)
+  testMethod                    TestMethod?                    @relation(fields: [testMethodId], references: [id], onDelete: SetNull)
+  reportingMethod               ReportingMethod?               @relation(fields: [reportingMethodId], references: [id], onDelete: SetNull)
+  analyzer                      Analyzer?                      @relation(fields: [analyzerId], references: [id], onDelete: SetNull)
+  serviceParameters             ServiceParameter[]
+  reportDoctorAssignments       ReportDoctorAssignment[]
+  tenantServiceBranches         TenantServiceBranch[]
+  labOrderTests                 LabOrderTest[]
+  invoiceItems                  InvoiceItem[]
+  encounterInvestigationAdvices EncounterInvestigationAdvice[]
+  prescriptionInvestigations    PrescriptionInvestigation[]
+  analyzerMappings              AnalyzerMapping[]
 
   @@unique([tenantId, hostServiceId])
   @@index([tenantId])
@@ -2570,27 +2668,32 @@ model ReportingMethod {
 
 /// Lab/radiology analyzer machine master
 model Analyzer {
-  id            String   @id @default(cuid())
-  tenantId      String   @map("tenant_id")
-  branchId      String   @map("branch_id")
-  departmentId  String   @map("department_id")
-  analyzerCode  String   @map("analyzer_code")
-  machineName   String   @map("machine_name")
-  model         String?
-  manufacturer  String?
-  interfaceType String   @map("interface_type")
-  protocol      String?
-  isActive      Boolean  @default(true) @map("is_active")
-  createdAt     DateTime @default(now()) @map("created_at")
-  createdBy     String?  @map("created_by")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  updatedBy     String?  @map("updated_by")
+  id                      String    @id @default(cuid())
+  tenantId                String    @map("tenant_id")
+  branchId                String    @map("branch_id")
+  departmentId            String    @map("department_id")
+  analyzerCode            String    @map("analyzer_code")
+  machineName             String    @map("machine_name")
+  model                   String?
+  manufacturer            String?
+  interfaceType           String    @map("interface_type")
+  protocol                String?
+  lisEndpoint             String?   @map("lis_endpoint")
+  lisConnectionStatus     String    @default("NOT_CONFIGURED") @map("lis_connection_status")
+  lisLastCommunicationAt  DateTime? @map("lis_last_communication_at")
+  isActive                Boolean   @default(true) @map("is_active")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  createdBy               String?   @map("created_by")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+  updatedBy               String?   @map("updated_by")
 
   tenant                 Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   branch                 Branch                         @relation(fields: [branchId], references: [id], onDelete: Cascade)
   department             Department                     @relation(fields: [departmentId], references: [id], onDelete: Restrict)
   tenantServices         TenantService[]
   hostSampleRequirements HostServiceSampleRequirement[] @relation("HostSampleRequirementAnalyzer")
+  mappings               AnalyzerMapping[]
+  importQueue            AnalyzerImportQueue[]
 
   @@unique([tenantId, branchId, analyzerCode])
   @@index([tenantId])
@@ -2598,6 +2701,241 @@ model Analyzer {
   @@index([tenantId, isActive])
   @@index([createdAt])
   @@map("analyzers")
+}
+
+/// Tenant-level patient portal policy switches (MOD-00)
+model TenantPortalSettings {
+  id                 String   @id @default(cuid())
+  tenantId           String   @unique @map("tenant_id")
+  portalEnabled      Boolean  @default(true) @map("portal_enabled")
+  selfRegistration   Boolean  @default(false) @map("self_registration")
+  downloadPdfEnabled Boolean  @default(true) @map("download_pdf_enabled")
+  qrVerificationEnabled Boolean @default(true) @map("qr_verification_enabled")
+  notificationEnabled Boolean @default(true) @map("notification_enabled")
+  passwordMinLength  Int      @default(8) @map("password_min_length")
+  passwordRequireMixed Boolean @default(true) @map("password_require_mixed")
+  createdAt          DateTime @default(now()) @map("created_at")
+  createdBy          String?  @map("created_by")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  updatedBy          String?  @map("updated_by")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_portal_settings")
+}
+
+/// Auditable go-live readiness snapshot (MOD-00)
+model OperationalReadinessSnapshot {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  branchId        String?  @map("branch_id")
+  scorePercent    Int      @map("score_percent")
+  readyStatus     String   @map("ready_status")
+  checklistJson   Json     @map("checklist_json")
+  softwareVersion String   @map("software_version")
+  declaredReady   Boolean  @default(false) @map("declared_ready")
+  createdAt       DateTime @default(now()) @map("created_at")
+  createdById     String?  @map("created_by_id")
+  createdByName   String?  @map("created_by_name")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt])
+  @@map("operational_readiness_snapshots")
+}
+
+/// Patient portal login account bound to the Master Patient Index (MOD-30 PatientPortalAccount)
+model PatientPortalAccount {
+  id                 String    @id @default(cuid())
+  tenantId           String    @map("tenant_id")
+  patientId          String    @unique @map("patient_id")
+  /// Email or normalised mobile used as the portal login.
+  username           String
+  passwordHash       String    @map("password_hash")
+  isVerified         Boolean   @default(false) @map("is_verified")
+  isSuspended        Boolean   @default(false) @map("is_suspended")
+  suspendedAt        DateTime? @map("suspended_at")
+  suspendReason      String?   @map("suspend_reason")
+  lastLoginAt        DateTime? @map("last_login_at")
+  failedAttemptCount Int       @default(0) @map("failed_attempt_count")
+  isActive           Boolean   @default(true) @map("is_active")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  createdById        String?   @map("created_by_id")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  updatedById        String?   @map("updated_by_id")
+
+  tenant       Tenant                      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient      Patient                     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  sessions     PatientPortalSession[]
+  loginHistory PatientPortalLoginHistory[]
+  delegations  PatientPortalDelegation[]   @relation("PortalDelegationGrantee")
+
+  @@unique([tenantId, username])
+  @@unique([tenantId, patientId])
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@map("patient_portal_accounts")
+}
+
+/// Server-side portal session with hard expiry and revocation (MOD-30 PatientPortalSession)
+model PatientPortalSession {
+  id           String    @id @default(cuid())
+  tenantId     String    @map("tenant_id")
+  accountId    String    @map("account_id")
+  /// SHA-256 of the cookie value; the raw token is never stored.
+  sessionToken String    @unique @map("session_token")
+  expiresAt    DateTime  @map("expires_at")
+  isRevoked    Boolean   @default(false) @map("is_revoked")
+  revokedAt    DateTime? @map("revoked_at")
+  lastSeenAt   DateTime? @map("last_seen_at")
+  ipAddress    String?   @map("ip_address")
+  deviceInfo   String?   @map("device_info")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  tenant  Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  account PatientPortalAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, accountId])
+  @@index([expiresAt])
+  @@map("patient_portal_sessions")
+}
+
+/// Portal login attempt audit including failures (MOD-30 PatientPortalLoginHistory)
+model PatientPortalLoginHistory {
+  id         String   @id @default(cuid())
+  tenantId   String   @map("tenant_id")
+  accountId  String?  @map("account_id")
+  /// Login identifier as submitted, so failed attempts on unknown users stay auditable.
+  username   String
+  loginAt    DateTime @default(now()) @map("login_at")
+  isSuccess  Boolean  @map("is_success")
+  failReason String?  @map("fail_reason")
+  ipAddress  String?  @map("ip_address")
+  deviceInfo String?  @map("device_info")
+
+  tenant  Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  account PatientPortalAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, accountId])
+  @@index([tenantId, loginAt])
+  @@map("patient_portal_login_history")
+}
+
+/// Explicit family/caregiver access grant (MOD-30 PatientPortalDelegation).
+/// Access is never inferred from demographic guardian fields; a staff user must record consent.
+model PatientPortalDelegation {
+  id               String    @id @default(cuid())
+  tenantId         String    @map("tenant_id")
+  grantorPatientId String    @map("grantor_patient_id")
+  granteeAccountId String    @map("grantee_account_id")
+  relationship     String
+  accessLevel      String    @map("access_level")
+  consentReference String?   @map("consent_reference")
+  isActive         Boolean   @default(true) @map("is_active")
+  revokedAt        DateTime? @map("revoked_at")
+  revokedById      String?   @map("revoked_by_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  createdById      String?   @map("created_by_id")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  tenant         Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  grantorPatient Patient              @relation("PortalDelegationGrantor", fields: [grantorPatientId], references: [id], onDelete: Cascade)
+  granteeAccount PatientPortalAccount @relation("PortalDelegationGrantee", fields: [granteeAccountId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, grantorPatientId, granteeAccountId])
+  @@index([tenantId])
+  @@index([tenantId, granteeAccountId])
+  @@map("patient_portal_delegations")
+}
+
+/// Maps an analyzer machine test code to a tenant catalog service (MOD-22 AnalyzerMapping)
+model AnalyzerMapping {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  analyzerId      String   @map("analyzer_id")
+  machineTestCode String   @map("machine_test_code")
+  tenantServiceId String   @map("tenant_service_id")
+  parameterCode   String?  @map("parameter_code")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  createdById     String?  @map("created_by_id")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  updatedById     String?  @map("updated_by_id")
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  analyzer      Analyzer      @relation(fields: [analyzerId], references: [id], onDelete: Cascade)
+  tenantService TenantService @relation(fields: [tenantServiceId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, analyzerId, machineTestCode, parameterCode])
+  @@index([tenantId])
+  @@index([tenantId, analyzerId])
+  @@index([tenantId, tenantServiceId])
+  @@map("analyzer_mappings")
+}
+
+/// Raw analyzer/LIS message archive and processing queue (MOD-22 AnalyzerImportQueue)
+model AnalyzerImportQueue {
+  id               String                @id @default(cuid())
+  tenantId         String                @map("tenant_id")
+  branchId         String                @map("branch_id")
+  analyzerId       String?               @map("analyzer_id")
+  /// Barcode/accession value transmitted by the machine, never the patient name.
+  machineSampleId  String                @map("machine_sample_id")
+  machineTestCode  String?               @map("machine_test_code")
+  /// Message control identifier from the transport payload; makes ingest idempotent.
+  messageControlId String                @map("message_control_id")
+  importChannel    AnalyzerImportChannel @map("import_channel")
+  rawPayload       String                @map("raw_payload")
+  processedStatus  AnalyzerImportStatus  @default(PENDING) @map("processed_status")
+  labSampleId      String?               @map("lab_sample_id")
+  labOrderTestId   String?               @map("lab_order_test_id")
+  labResultId      String?               @map("lab_result_id")
+  receivedAt       DateTime              @default(now()) @map("received_at")
+  processedAt      DateTime?             @map("processed_at")
+  processedById    String?               @map("processed_by_id")
+  attemptCount     Int                   @default(0) @map("attempt_count")
+  createdAt        DateTime              @default(now()) @map("created_at")
+  updatedAt        DateTime              @updatedAt @map("updated_at")
+
+  tenant       Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch       Branch               @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  analyzer     Analyzer?            @relation(fields: [analyzerId], references: [id], onDelete: SetNull)
+  labSample    LabSample?           @relation(fields: [labSampleId], references: [id], onDelete: SetNull)
+  labOrderTest LabOrderTest?        @relation(fields: [labOrderTestId], references: [id], onDelete: SetNull)
+  labResult    LabResult?           @relation(fields: [labResultId], references: [id], onDelete: SetNull)
+  errors       AnalyzerErrorQueue[]
+
+  @@unique([tenantId, messageControlId])
+  @@index([tenantId])
+  @@index([tenantId, processedStatus])
+  @@index([tenantId, machineSampleId])
+  @@index([tenantId, receivedAt])
+  @@map("analyzer_import_queue")
+}
+
+/// Quarantine record for an analyzer message that could not be safely attached (MOD-22 AnalyzerErrorQueue)
+model AnalyzerErrorQueue {
+  id             String                  @id @default(cuid())
+  tenantId       String                  @map("tenant_id")
+  queueId        String                  @map("queue_id")
+  errorCode      AnalyzerImportErrorCode @map("error_code")
+  errorMessage   String                  @map("error_message")
+  resolvedAt     DateTime?               @map("resolved_at")
+  resolvedById   String?                 @map("resolved_by_id")
+  resolutionNote String?                 @map("resolution_note")
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+
+  tenant Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  queue  AnalyzerImportQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, queueId])
+  @@index([tenantId, resolvedAt])
+  @@map("analyzer_error_queue")
 }
 
 /// Provider/doctor registry
@@ -2808,4 +3146,276 @@ model ReportSignatureTemplate {
   @@index([doctorId])
   @@index([createdAt])
   @@map("report_signature_templates")
+}
+
+enum NotificationChannel {
+  SMS
+  WHATSAPP
+  EMAIL
+  IN_APP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum NotificationEventType {
+  LAB_REPORT_READY
+  INVOICE_PAYMENT_RECEIPT
+  CRITICAL_RESULT_ALERT
+}
+
+/// Tenant notification message template per event, channel and locale (MOD-05)
+model NotificationTemplate {
+  id           String                @id @default(cuid())
+  tenantId     String                @map("tenant_id")
+  eventType    NotificationEventType @map("event_type")
+  channel      NotificationChannel
+  locale       String                @default("en-BD")
+  /// Body may reference {{tenantName}}, {{orderReference}}, {{patientName}} only.
+  bodyTemplate String                @map("body_template")
+  isActive     Boolean               @default(true) @map("is_active")
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, eventType, channel, locale])
+  @@index([tenantId])
+  @@map("notification_templates")
+}
+
+/// Outbound notification queue with delivery state and provider reference (MOD-05)
+model NotificationOutbox {
+  id                String                @id @default(cuid())
+  tenantId          String                @map("tenant_id")
+  branchId          String?               @map("branch_id")
+  eventType         NotificationEventType @map("event_type")
+  channel           NotificationChannel
+  status            NotificationStatus    @default(PENDING)
+  recipientName     String?               @map("recipient_name")
+  recipientMobile   String?               @map("recipient_mobile")
+  recipientEmail    String?               @map("recipient_email")
+  messageBody       String                @map("message_body")
+  /// Stable key that makes enqueue and retry idempotent for the same business event.
+  dedupeKey         String                @map("dedupe_key")
+  entityType        String?               @map("entity_type")
+  entityId          String?               @map("entity_id")
+  attemptCount      Int                   @default(0) @map("attempt_count")
+  lastAttemptAt     DateTime?             @map("last_attempt_at")
+  sentAt            DateTime?             @map("sent_at")
+  failureReason     String?               @map("failure_reason")
+  providerName      String?               @map("provider_name")
+  providerReference String?               @map("provider_reference")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  createdById       String?               @map("created_by_id")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch Branch? @relation(fields: [branchId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, dedupeKey])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([tenantId, eventType])
+  @@index([tenantId, createdAt])
+  @@map("notification_outbox")
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  CANCELLED
+}
+
+enum InvoiceDiscountType {
+  NONE
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum InvoicePaymentMethod {
+  CASH
+  CARD
+  MOBILE_BANKING
+  BANK_TRANSFER
+  CHEQUE
+}
+
+enum InvoicePaymentStatus {
+  RECEIVED
+  REVERSED
+}
+
+enum InvoiceDiscountEventType {
+  APPLIED
+  MODIFIED
+  REMOVED
+}
+
+/// Tenant-scoped invoice counter (MOD-10)
+model TenantInvoiceCounter {
+  tenantId   String @id @map("tenant_id")
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_invoice_counters")
+}
+
+/// Tenant-scoped payment receipt counter (MOD-10)
+model TenantReceiptCounter {
+  tenantId   String @id @map("tenant_id")
+  lastNumber Int    @default(0) @map("last_number")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_receipt_counters")
+}
+
+/// Diagnostic invoice header (MOD-10). Gross - Discount = Net; Net - Paid = Due.
+model Invoice {
+  id                     String              @id @default(cuid())
+  tenantId               String              @map("tenant_id")
+  branchId               String              @map("branch_id")
+  patientId              String              @map("patient_id")
+  labOrderId             String?             @unique @map("lab_order_id")
+  invoiceNumber          String              @map("invoice_number")
+  status                 InvoiceStatus       @default(DRAFT)
+  currencyCode           String              @default("BDT") @map("currency_code")
+  grossAmount            Decimal             @default(0) @map("gross_amount") @db.Decimal(18, 2)
+  discountType           InvoiceDiscountType @default(NONE) @map("discount_type")
+  discountValue          Decimal             @default(0) @map("discount_value") @db.Decimal(18, 2)
+  discountAmount         Decimal             @default(0) @map("discount_amount") @db.Decimal(18, 2)
+  discountReason         String?             @map("discount_reason")
+  discountApprovedById   String?             @map("discount_approved_by_id")
+  discountApprovedByName String?             @map("discount_approved_by_name")
+  discountApprovedAt     DateTime?           @map("discount_approved_at")
+  netAmount              Decimal             @default(0) @map("net_amount") @db.Decimal(18, 2)
+  paidAmount             Decimal             @default(0) @map("paid_amount") @db.Decimal(18, 2)
+  dueAmount              Decimal             @default(0) @map("due_amount") @db.Decimal(18, 2)
+  recordVersion          Int                 @default(1) @map("record_version")
+  issuedAt               DateTime?           @map("issued_at")
+  cancelledAt            DateTime?           @map("cancelled_at")
+  cancellationReason     String?             @map("cancellation_reason")
+  createdAt              DateTime            @default(now()) @map("created_at")
+  createdById            String?             @map("created_by_id")
+  updatedAt              DateTime            @updatedAt @map("updated_at")
+  updatedById            String?             @map("updated_by_id")
+
+  tenant         Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch         Branch                 @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  patient        Patient                @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  labOrder       LabOrder?              @relation(fields: [labOrderId], references: [id], onDelete: SetNull)
+  items          InvoiceItem[]
+  payments       InvoicePayment[]
+  discountEvents InvoiceDiscountEvent[]
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId])
+  @@index([tenantId, branchId])
+  @@index([tenantId, patientId])
+  @@index([tenantId, status])
+  @@index([tenantId, invoiceNumber])
+  @@index([tenantId, createdAt])
+  @@map("invoices")
+}
+
+/// Invoice line with catalog price snapshot preserved at billing time (MOD-10)
+model InvoiceItem {
+  id                      String   @id @default(cuid())
+  tenantId                String   @map("tenant_id")
+  invoiceId               String   @map("invoice_id")
+  tenantServiceId         String?  @map("tenant_service_id")
+  labOrderTestId          String?  @unique @map("lab_order_test_id")
+  testCode                String?  @map("test_code")
+  testName                String   @map("test_name")
+  departmentId            String?  @map("department_id")
+  unitPrice               Decimal  @map("unit_price") @db.Decimal(18, 2)
+  quantity                Int      @default(1)
+  lineGrossAmount         Decimal  @map("line_gross_amount") @db.Decimal(18, 2)
+  lineDiscountAmount      Decimal  @default(0) @map("line_discount_amount") @db.Decimal(18, 2)
+  lineNetAmount           Decimal  @map("line_net_amount") @db.Decimal(18, 2)
+  priceSource             String?  @map("price_source")
+  discountAllowedSnapshot Boolean  @default(true) @map("discount_allowed_snapshot")
+  sequence                Int      @default(0)
+  createdAt               DateTime @default(now()) @map("created_at")
+  updatedAt               DateTime @updatedAt @map("updated_at")
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoice       Invoice        @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  tenantService TenantService? @relation(fields: [tenantServiceId], references: [id], onDelete: SetNull)
+  labOrderTest  LabOrderTest?  @relation(fields: [labOrderTestId], references: [id], onDelete: SetNull)
+  department    Department?    @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, invoiceId])
+  @@map("invoice_items")
+}
+
+/// Payment receipt against an invoice; idempotency key blocks duplicate submits (MOD-10)
+model InvoicePayment {
+  id             String               @id @default(cuid())
+  tenantId       String               @map("tenant_id")
+  branchId       String               @map("branch_id")
+  invoiceId      String               @map("invoice_id")
+  receiptNumber  String               @map("receipt_number")
+  amount         Decimal              @db.Decimal(18, 2)
+  paymentMethod  InvoicePaymentMethod @default(CASH) @map("payment_method")
+  status         InvoicePaymentStatus @default(RECEIVED)
+  referenceNo    String?              @map("reference_no")
+  note           String?
+  idempotencyKey String?              @map("idempotency_key")
+  receivedAt     DateTime             @default(now()) @map("received_at")
+  receivedById   String?              @map("received_by_id")
+  receivedByName String?              @map("received_by_name")
+  reversedAt     DateTime?            @map("reversed_at")
+  reversedById   String?              @map("reversed_by_id")
+  reversalReason String?              @map("reversal_reason")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Restrict)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, receiptNumber])
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId])
+  @@index([tenantId, invoiceId])
+  @@index([tenantId, status])
+  @@index([tenantId, receivedAt])
+  @@map("invoice_payments")
+}
+
+/// Immutable discount authorization trail for an invoice (MOD-10)
+model InvoiceDiscountEvent {
+  id                     String                   @id @default(cuid())
+  tenantId               String                   @map("tenant_id")
+  invoiceId              String                   @map("invoice_id")
+  eventType              InvoiceDiscountEventType @map("event_type")
+  previousDiscountType   InvoiceDiscountType      @default(NONE) @map("previous_discount_type")
+  previousDiscountAmount Decimal                  @default(0) @map("previous_discount_amount") @db.Decimal(18, 2)
+  newDiscountType        InvoiceDiscountType      @default(NONE) @map("new_discount_type")
+  newDiscountValue       Decimal                  @default(0) @map("new_discount_value") @db.Decimal(18, 2)
+  newDiscountAmount      Decimal                  @default(0) @map("new_discount_amount") @db.Decimal(18, 2)
+  reason                 String?
+  appliedAfterPayment    Boolean                  @default(false) @map("applied_after_payment")
+  authorizedById         String?                  @map("authorized_by_id")
+  authorizedByName       String?                  @map("authorized_by_name")
+  authorizedAt           DateTime                 @default(now()) @map("authorized_at")
+  createdAt              DateTime                 @default(now()) @map("created_at")
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([tenantId, invoiceId])
+  @@index([tenantId, authorizedAt])
+  @@map("invoice_discount_events")
 }

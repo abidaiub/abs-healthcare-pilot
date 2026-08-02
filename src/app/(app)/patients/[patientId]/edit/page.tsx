@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { ModulePageHeader } from "@/components/layout/ModulePageHeader";
-import { PatientForm, patientRecordToFormValues } from "@/components/patients/PatientForm";
+import { PatientForm } from "@/components/patients/PatientForm";
+import { patientRecordToFormValues } from "@/lib/patient/form-values";
 import { getPatientById } from "@/lib/patient/queries";
 import { getServerI18n } from "@/lib/i18n/server";
 import { hasTenantPermission, requireTenantPermission } from "@/lib/rbac/auth";

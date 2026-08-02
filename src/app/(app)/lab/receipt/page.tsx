@@ -16,7 +16,28 @@ export default async function LabReceiptPage() {
   return (
     <div className="space-y-6">
       <ModulePageHeader screenKey="labReceiptWorklist" description={t("laboratory.receipt.description")} />
-      <LabReceiptPanel samples={samples} rejectionReasons={rejectionReasons} canEdit={canEdit} />
+      <LabReceiptPanel
+        samples={samples.map((sample) => ({
+          id: sample.id,
+          accessionNumber: sample.accessionNumber,
+          sampleStatus: sample.sampleStatus,
+          collectedAt: sample.collectedAt,
+          sampleType: sample.sampleType ? { sampleType: sample.sampleType.sampleType } : null,
+          labOrder: {
+            orderNumber: sample.labOrder.orderNumber,
+            patient: {
+              patientNumber: sample.labOrder.patient.patientNumber,
+              fullName: sample.labOrder.patient.fullName,
+            },
+          },
+        }))}
+        rejectionReasons={rejectionReasons.map((reason) => ({
+          id: reason.id,
+          reasonCode: reason.reasonCode,
+          displayName: reason.displayName,
+        }))}
+        canEdit={canEdit}
+      />
     </div>
   );
 }

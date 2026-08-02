@@ -43,6 +43,8 @@ Authorize release of pathologist-verified laboratory results, enforce a centrali
 
 ## QC
 
+J-01 Part 2 browser UAT (2026-08-01): PASS. Eligibility confirmed paid invoice/no holds/current verified versions for `LAB-000004`; `RPT-0000012`–`RPT-0000014` were separately authorized, printed, QR-verified, and portal-published. The public QR page exposed only report number, release status, validity, and version. TSH PDF download incremented its audit count. Three idempotent `LAB_REPORT_READY` outbox rows were verified without claiming live SMS delivery.
+
 Automated: PASS | Manual: NOT TESTED | Production: Pending Manual QC
 
 Migration status: **migration fix verified on a fresh PostgreSQL database; QC redeployment pending.**

@@ -74,5 +74,5 @@ export function shiftsOverlap(
 }
 
 export function dayOfWeekFromDate(date: Date): DayOfWeek {
-  return date.getDay() as DayOfWeek;
+  return date.getUTCDay() as DayOfWeek;
 }

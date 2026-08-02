@@ -54,5 +54,7 @@
   "corrections": "Corrections",
   "reportRelease": "Report Release",
   "myReports": "My Reports",
-  "doctorSchedules": "Doctor Schedules"
+  "doctorSchedules": "Doctor Schedules",
+  "patientPortalAdmin": "Patient Portal",
+  "operationalReadiness": "Operational Readiness"
 }

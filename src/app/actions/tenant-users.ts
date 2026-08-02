@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import type { UserStatus } from "@/generated/prisma/client";
-import { requireTenantSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { requireTenantPermission } from "@/lib/rbac/auth";

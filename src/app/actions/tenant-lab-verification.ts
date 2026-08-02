@@ -186,7 +186,9 @@ export async function verifyLabResultAction(input: {
         verifierDisplayNameSnapshot: verifier.displayName,
         verifierDesignationSnapshot: verifier.designation,
         verifierRegistrationNumberSnapshot: verifier.registrationNumber,
-        resultVersionReviewed: result.recordVersion,
+        // Store the post-verify record version so release eligibility can match
+        // LabResult.recordVersion after the increment below.
+        resultVersionReviewed: result.recordVersion + 1,
         reviewStartedAt: new Date(),
         verifiedAt: new Date(),
         verificationComment: input.verificationComment?.trim() || null,

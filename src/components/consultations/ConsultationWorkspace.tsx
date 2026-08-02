@@ -155,30 +155,33 @@ export function ConsultationWorkspace({
 
   function submitDiagnosis(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     startTransition(async () => {
       if (handleError(await addEncounterDiagnosisAction(encounter.id, formData))) {
-        e.currentTarget.reset();
+        form.reset();
       }
     });
   }
 
   function submitMedicine(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     startTransition(async () => {
       if (handleError(await addMedicineAdviceAction(encounter.id, formData))) {
-        e.currentTarget.reset();
+        form.reset();
       }
     });
   }
 
   function submitInvestigation(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
     startTransition(async () => {
       if (handleError(await addInvestigationAdviceAction(encounter.id, formData))) {
-        e.currentTarget.reset();
+        form.reset();
       }
     });
   }

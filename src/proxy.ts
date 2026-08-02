@@ -2,7 +2,9 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { parseSession, SESSION_COOKIE } from "@/lib/session";
 
-const PUBLIC_PATHS = ["/login", "/host/login", "/portal/reports"];
+// The patient portal and the public QR verification page carry their own authorization and
+// must never be gated by the staff session cookie.
+const PUBLIC_PATHS = ["/login", "/host/login", "/portal", "/verify/report"];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(

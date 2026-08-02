@@ -3,11 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import {
-  listRejectionReasonsAction,
-  receiveLabSampleAction,
-  rejectLabSampleAction,
-} from "@/app/actions/tenant-lab-orders";
+import { receiveLabSampleAction, rejectLabSampleAction } from "@/app/actions/tenant-lab-orders";
 import { Badge, Button, Card, CardBody, Select, Textarea } from "@/components/ui";
 import type { LabSampleStatus } from "@/generated/prisma/client";
 import { LAB_SAMPLE_STATUS_I18N } from "@/lib/laboratory/constants";
@@ -25,7 +21,11 @@ export type LabReceiptSample = {
   };
 };
 
-type RejectionReason = Awaited<ReturnType<typeof listRejectionReasonsAction>>[number];
+type RejectionReasonOption = {
+  id: string;
+  reasonCode: string;
+  displayName: string;
+};
 
 export function LabReceiptPanel({
   samples,
@@ -33,7 +33,7 @@ export function LabReceiptPanel({
   canEdit,
 }: {
   samples: LabReceiptSample[];
-  rejectionReasons: RejectionReason[];
+  rejectionReasons: RejectionReasonOption[];
   canEdit: boolean;
 }) {
   const router = useRouter();

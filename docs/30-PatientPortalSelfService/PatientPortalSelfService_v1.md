@@ -22,6 +22,9 @@ To transition routine administrative tasks (e.g., booking appointments, requesti
 #### A. Patient Registration & Portal Enrollment
 *   **Methods**: Self-registration (matching against existing hospital records), Hospital-assisted registration (at the counter).
 *   **Verification**: Mandatory OTP verification via Mobile or Email for activation.
+*   **Staff enrollment**: `/settings/patient-portal` — counter-assisted enrollment binds a portal account to the selected patient's **`patientId`** (primary key). Username defaults to normalized mobile or email.
+*   **Username reassignment**: When seed/UAT patient numbers diverge from runtime registration (e.g. seeded `DP-000002` vs registered `PT-000006`), tenant admins with `canApprove` may use **Reassign portal username** to archive the superseded account (username renamed, account deactivated, sessions revoked) and enroll the correct patient. Audit events: `PORTAL_ACCOUNT_USERNAME_RELEASED`, `PORTAL_ACCOUNT_REASSIGNED`. Clinical reports are **not** moved — only portal ownership changes.
+*   **Conflict rules**: One active portal account per patient; one active username per tenant; duplicate mobile/username returns `PORTAL_USERNAME_TAKEN` or `PORTAL_ACCOUNT_EXISTS`; reassignment rejects unknown usernames (`PORTAL_USERNAME_NOT_HELD`) and same-patient targets (`PORTAL_REASSIGN_SAME_PATIENT`).
 
 #### B. Secure Authentication
 *   **Methods**: Username/Password, Mobile OTP, Email OTP.

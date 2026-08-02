@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { type ReactNode } from "react";
 
 export function cn(...classes: Array<string | false | null | undefined>) {
@@ -122,34 +123,55 @@ export function StatCard({
   );
 }
 
+const BUTTON_VARIANTS = {
+  primary:
+    "bg-teal-600 text-white hover:bg-teal-700 focus-visible:ring-teal-500",
+  secondary:
+    "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
+  ghost: "text-slate-600 hover:bg-slate-100",
+  danger: "bg-rose-600 text-white hover:bg-rose-700",
+} as const;
+
+const BUTTON_BASE_CLASS =
+  "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+
 export function Button({
   children,
   variant = "primary",
   className,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: keyof typeof BUTTON_VARIANTS;
 }) {
-  const styles = {
-    primary:
-      "bg-teal-600 text-white hover:bg-teal-700 focus-visible:ring-teal-500",
-    secondary:
-      "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
-    ghost: "text-slate-600 hover:bg-slate-100",
-    danger: "bg-rose-600 text-white hover:bg-rose-700",
-  };
-
   return (
     <button
-      className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-        styles[variant],
-        className,
-      )}
+      className={cn(BUTTON_BASE_CLASS, BUTTON_VARIANTS[variant], className)}
       {...props}
     >
       {children}
     </button>
+  );
+}
+
+/** Link styled as a button — avoids invalid interactive `<a><button>` nesting during SSR hydration. */
+export function ButtonLink({
+  href,
+  children,
+  variant = "primary",
+  className,
+  ...props
+}: Omit<React.ComponentProps<typeof Link>, "className"> & {
+  variant?: keyof typeof BUTTON_VARIANTS;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(BUTTON_BASE_CLASS, BUTTON_VARIANTS[variant], className)}
+      {...props}
+    >
+      {children}
+    </Link>
   );
 }
 

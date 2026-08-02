@@ -28,4 +28,6 @@ Out of scope: report release (MOD-24), digital signatures on reports.
 
 ## QC
 
+J-01 Part 2 browser UAT (2026-08-01): PASS. CBC, TSH, and Free T4 for `LAB-000004` were independently reviewed and verified by `dp.verify.doctor`; the report-entry role was denied the verification route, and history retained verifier, timestamp, and reviewed record version.
+
 Automated: PASS | Manual: NOT TESTED | Production: Pending Manual QC

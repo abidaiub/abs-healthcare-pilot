@@ -16,14 +16,25 @@ export default async function ConsultationDetailPage({ params }: PageProps) {
   const encounter = await getEncounterAction(encounterId);
   if (!encounter) notFound();
 
-  const [canPrint, canReopen, encounterPrescription, canCreatePrescription, encounterLabOrder, canCreateLabOrder] = await Promise.all([
+  const [
+    canPrint,
+    canReopen,
+    encounterPrescription,
+    canCreatePrescription,
+    canViewLabOrders,
+    canCreateLabOrder,
+  ] = await Promise.all([
     hasTenantPermission(session.tenantId, session.userId, "/consultations/print", "canPrint"),
     hasTenantPermission(session.tenantId, session.userId, "/consultations/reopen", "canApprove"),
     findCurrentPrescriptionForEncounterAction(encounterId),
     hasTenantPermission(session.tenantId, session.userId, "/prescriptions/new", "canCreate"),
-    findEncounterLabOrderDraftAction(encounterId),
+    hasTenantPermission(session.tenantId, session.userId, "/lab/orders", "canView"),
     hasTenantPermission(session.tenantId, session.userId, "/lab/orders/new", "canCreate"),
   ]);
+
+  const encounterLabOrder = canViewLabOrders
+    ? await findEncounterLabOrderDraftAction(encounterId)
+    : null;
 
   return (
     <div className="space-y-6">

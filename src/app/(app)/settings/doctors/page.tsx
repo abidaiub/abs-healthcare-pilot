@@ -2,23 +2,14 @@ import { DoctorsPanel } from "@/components/diagnostic-setup/DoctorsPanel";
 import { SetupErrorState } from "@/components/diagnostic-setup/SetupDataStates";
 import { ModulePageHeader } from "@/components/layout/ModulePageHeader";
 import { requireTenantSession } from "@/lib/auth";
-import { listDoctors, listTenantBranches } from "@/lib/diagnostic/queries";
+import { listDoctors, listTenantBranches, listTenantDepartments } from "@/lib/diagnostic/queries";
 
 export default async function DoctorsPage() {
   const session = await requireTenantSession();
+  let data: Awaited<ReturnType<typeof loadDoctorsPageData>>;
 
   try {
-    const [doctors, branches] = await Promise.all([
-      listDoctors(session.tenantId),
-      listTenantBranches(session.tenantId),
-    ]);
-
-    return (
-      <div className="space-y-6">
-        <ModulePageHeader screenKey="diagnosticDoctors" description="Tenant doctor registry with branch and department mappings." />
-        <DoctorsPanel doctors={doctors} branches={branches} />
-      </div>
-    );
+    data = await loadDoctorsPageData(session.tenantId);
   } catch (error) {
     return (
       <div className="space-y-6">
@@ -27,4 +18,21 @@ export default async function DoctorsPage() {
       </div>
     );
   }
+
+  return (
+    <div className="space-y-6">
+      <ModulePageHeader screenKey="diagnosticDoctors" description="Tenant doctor registry with branch and department mappings." />
+      <DoctorsPanel doctors={data.doctors} branches={data.branches} departments={data.departments} />
+    </div>
+  );
+}
+
+async function loadDoctorsPageData(tenantId: string) {
+  const [doctors, branches, departments] = await Promise.all([
+    listDoctors(tenantId),
+    listTenantBranches(tenantId),
+    listTenantDepartments(tenantId),
+  ]);
+
+  return { doctors, branches, departments };
 }

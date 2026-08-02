@@ -77,6 +77,20 @@ async function main() {
     );
   }
 
+  const billing = await prisma.user.findUnique({ where: { username: "billing.ops" } });
+  record("Billing user exists", Boolean(billing));
+  if (billing) {
+    const permissions = await getEffectivePermissionsForUser(tenant.id, billing.id);
+    record(
+      "Billing can create patients",
+      permissions.get("/patients/new")?.canCreate === true,
+    );
+    record(
+      "Billing can search patients",
+      permissions.get("/patients")?.canView === true,
+    );
+  }
+
   const tenantAdminRole = await prisma.role.findFirst({
     where: { tenantId: tenant.id, roleCode: "TENANT_ADMIN" },
     include: { permissions: { where: { isActive: true } } },

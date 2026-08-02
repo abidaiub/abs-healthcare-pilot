@@ -154,8 +154,8 @@ export async function createPrescriptionDraftAction(
       changeData: { encounterId, versionNumber: 1 },
     });
 
-    revalidatePrescriptionPaths(prescription.id, prescription.prescriptionNumber);
-    revalidatePath(`/consultations/${encounterId}`);
+    // Do not call revalidatePath here: /prescriptions/new invokes this action during
+    // RSC render + redirect. Next.js forbids revalidatePath during render.
     return {
       ok: true,
       prescriptionId: prescription.id,

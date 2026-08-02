@@ -18,4 +18,8 @@ Draft, sync from encounter, finalize, cancel, revision, print/reprint audit, his
 
 ## QC
 
+J-01 Part 1 browser UAT (2026-08-01): PASS. `RX-000004` version 1 finalized with CBC, TSH, and Free T4 and all three lines appeared in print preview and downstream billing.
+
+J-01 Part 3 browser UAT (2026-08-02): PASS. The doctor created `RX-000004` version 2 through the revision UI with an auditable reason. Version 1 was preserved as SUPERSEDED; version 2 is FINALIZED/current with fictional Levothyroxine 50 mcg OD, a 42-day follow-up and repeat TSH instruction. History and print preview passed.
+
 Automated: PASS | Manual: NOT TESTED | Production: Pending Manual QC

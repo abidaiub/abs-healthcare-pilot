@@ -12,6 +12,7 @@ import { Badge, Button, Card, CardBody } from "@/components/ui";
 import {
   APPOINTMENT_STATUS_I18N_KEYS,
   APPOINTMENT_TYPE_I18N_KEYS,
+  formatAppointmentDate,
 } from "@/lib/appointment/constants";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -99,7 +100,7 @@ export function AppointmentDetailPanel({
           <div><dt className="text-xs uppercase text-slate-500">{t("appointment.fields.patient")}</dt><dd>{appointment.patient.fullName} ({appointment.patient.patientNumber})</dd></div>
           <div><dt className="text-xs uppercase text-slate-500">{t("appointment.fields.doctor")}</dt><dd>{appointment.doctor.doctorName}</dd></div>
           <div><dt className="text-xs uppercase text-slate-500">{t("appointment.fields.appointmentType")}</dt><dd>{t(APPOINTMENT_TYPE_I18N_KEYS[appointment.appointmentType])}</dd></div>
-          <div><dt className="text-xs uppercase text-slate-500">{t("appointment.fields.appointmentDate")}</dt><dd>{new Date(appointment.appointmentDate).toLocaleDateString()}</dd></div>
+          <div><dt className="text-xs uppercase text-slate-500">{t("appointment.fields.appointmentDate")}</dt><dd>{formatAppointmentDate(appointment.appointmentDate)}</dd></div>
           <div><dt className="text-xs uppercase text-slate-500">{t("appointment.fields.timeSlot")}</dt><dd>{appointment.timeSlot ?? "—"}</dd></div>
           <div><dt className="text-xs uppercase text-slate-500">{t("appointment.fields.queueToken")}</dt><dd>{appointment.queueToken ?? "—"}</dd></div>
           <div><dt className="text-xs uppercase text-slate-500">{t("appointment.fields.branch")}</dt><dd>{appointment.branch.code} — {appointment.branch.name}</dd></div>

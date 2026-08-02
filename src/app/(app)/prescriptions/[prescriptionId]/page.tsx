@@ -20,15 +20,21 @@ export default async function PrescriptionDetailPage({ params }: PageProps) {
     redirect(`/prescriptions/${prescriptionId}/edit`);
   }
 
-  const [canEdit, canFinalize, canCancel, canRevise, canPrint, prescriptionLabOrder, canCreateLabOrder] = await Promise.all([
-    hasTenantPermission(session.tenantId, session.userId, "/prescriptions/edit", "canEdit"),
-    hasTenantPermission(session.tenantId, session.userId, "/prescriptions/finalize", "canEdit"),
-    hasTenantPermission(session.tenantId, session.userId, "/prescriptions/cancel", "canEdit"),
-    hasTenantPermission(session.tenantId, session.userId, "/prescriptions/revise", "canApprove"),
-    hasTenantPermission(session.tenantId, session.userId, "/prescriptions/print", "canPrint"),
-    findPrescriptionLabOrderDraftAction(prescriptionId),
-    hasTenantPermission(session.tenantId, session.userId, "/lab/orders/new", "canCreate"),
-  ]);
+  const [canEdit, canFinalize, canCancel, canRevise, canPrint, canViewLabOrders, canCreateLabOrder] =
+    await Promise.all([
+      hasTenantPermission(session.tenantId, session.userId, "/prescriptions/edit", "canEdit"),
+      hasTenantPermission(session.tenantId, session.userId, "/prescriptions/finalize", "canEdit"),
+      hasTenantPermission(session.tenantId, session.userId, "/prescriptions/cancel", "canEdit"),
+      hasTenantPermission(session.tenantId, session.userId, "/prescriptions/revise", "canApprove"),
+      hasTenantPermission(session.tenantId, session.userId, "/prescriptions/print", "canPrint"),
+      hasTenantPermission(session.tenantId, session.userId, "/lab/orders", "canView"),
+      hasTenantPermission(session.tenantId, session.userId, "/lab/orders/new", "canCreate"),
+    ]);
+
+  // Doctors may finalize/print without lab-order resource access; avoid hard redirect.
+  const prescriptionLabOrder = canViewLabOrders
+    ? await findPrescriptionLabOrderDraftAction(prescriptionId)
+    : null;
 
   return (
     <div className="space-y-6">
