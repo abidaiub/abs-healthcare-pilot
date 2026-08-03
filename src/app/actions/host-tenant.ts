@@ -29,6 +29,7 @@ import {
   mapLocaleToLegacyLanguage,
   parseTenantLocaleProfileFromForm,
 } from "@/lib/locale/validation";
+import { provisionTenantRbacBaseline, ensureTenantAdminRbacBaseline } from "@/lib/saas/tenant-rbac-provisioning";
 
 export type HostActionResult =
   | { ok: true; tenantId?: string; branchId?: string }
@@ -267,6 +268,21 @@ export async function createTenantAction(
       },
     });
 
+    await provisionTenantRbacBaseline(tx, {
+      tenantId: created.id,
+      adminRoleId: tenantRole.id,
+      actor: actor.username,
+      writeAudit: true,
+      adminUserId: adminUser.id,
+      tenantCode: created.tenantCode,
+      tenantName: created.tenantName,
+      city: created.city,
+      district: created.district,
+      address: created.address,
+      phone: created.contactMobile,
+      email: created.contactEmail,
+    });
+
     await tx.statusHistory.create({
       data: {
         tenantId: created.id,
@@ -489,13 +505,22 @@ export async function changeTenantStatusAction(input: {
     return { ok: false, error: "No status change required." };
   }
 
-  await prisma.tenant.update({
-    where: { id: input.tenantId },
-    data: {
-      tenantStatus: newStatus,
-      onboardingStatus: newOnboarding,
-      updatedBy: actor.username,
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.tenant.update({
+      where: { id: input.tenantId },
+      data: {
+        tenantStatus: newStatus,
+        onboardingStatus: newOnboarding,
+        updatedBy: actor.username,
+      },
+    });
+
+    if (input.action === "activate" || input.action === "reactivate") {
+      await ensureTenantAdminRbacBaseline(tx, {
+        tenantId: input.tenantId,
+        actor: actor.username,
+      });
+    }
   });
 
   await writeStatusHistory({

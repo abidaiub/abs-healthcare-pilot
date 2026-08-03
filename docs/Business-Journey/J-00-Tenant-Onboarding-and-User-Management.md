@@ -145,3 +145,6 @@ Operational Readiness page-এ সব rule green, score **100%**, এবং **RE
 | `npm run verify:mod07` | PASS |
 | `npm run verify:dpdc` | PASS |
 
+## Host grant prerequisite
+
+Host tenant creation now auto-provisions the Tenant Admin permission bundle, operational roles, default branch, and suggested departments. Host **Tenant Administrator Access** remains available to customize grants, but is no longer required before Tenant Admin can manage users or prepare go-live. Evidence for the independent new-tenant path lives under `docs/Business-Journey/evidence/J-00-Tenant-Admin-User-Management/`.

@@ -204,3 +204,7 @@ The branding model uses a "CSS Variable Injection" approach for the UI (ThemeCol
 - **Branding**: Changes to `ReportHeaderText` are immediately reflected in the "Print Preview" of a bill.
 - **Audit**: Every change to `MaxUsers` appears in the `CompanyAuditLog` with the correct `OldValue` and `NewValue`.
 - **License**: An expired company shows a prominent red banner on all screens.
+
+### Host-managed Tenant Administrator access (2026-08-03)
+
+The existing `/host/tenants/[tenantId]` detail flow includes **Tenant Administrator Access**. An active Host Administrator can manage only the tenant-owned `TENANT_ADMIN`/`DP_TENANT_ADMIN` role grants needed for user administration. The server accepts only the documented allowlist, validates tenant/user/role ownership, uses a serializable transaction and deterministic permission-state token, and records before/after/added/removed grants in `AuditLog`. Host, platform, cross-tenant, clinical, laboratory, billing, and pharmacy capabilities are not selectable or accepted.

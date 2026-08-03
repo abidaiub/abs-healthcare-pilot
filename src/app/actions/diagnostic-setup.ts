@@ -22,6 +22,7 @@ import {
   listTestParameters,
 } from "@/lib/diagnostic/queries";
 import { getSession, requireHostSession, requireTenantSession } from "@/lib/auth";
+import { requireTenantPermission } from "@/lib/rbac/auth";
 
 export type DiagnosticQueryResult<T> =
   | { ok: true; data: T }
@@ -318,7 +319,7 @@ export async function createTenantDoctorAction(input: {
   isPathologist?: boolean;
 }): Promise<DiagnosticQueryResult<{ id: string }>> {
   try {
-    const session = await requireTenantSession();
+    const session = await requireTenantPermission("/settings/doctors", "canCreate");
     const createdBy = await auditUser();
 
     const doctorCode = input.doctorCode.trim().toUpperCase();

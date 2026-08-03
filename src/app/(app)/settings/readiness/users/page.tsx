@@ -3,12 +3,20 @@ import { ReadinessPageShell } from "@/components/operational-readiness/Readiness
 import { prisma } from "@/lib/db";
 import { READINESS_RESOURCE } from "@/lib/operational-readiness/constants";
 import { hasTenantPermission, requireTenantPermission } from "@/lib/rbac/auth";
+import { isTenantAdminRoleCode } from "@/lib/saas/tenant-admin-access";
 
 export default async function OperationalUsersReadinessPage() {
   const session = await requireTenantPermission(READINESS_RESOURCE);
+  const excludeAdminRoles = isTenantAdminRoleCode(session.user.roleCode);
   const [roles, branches, departments, users, canCreate] = await Promise.all([
     prisma.role.findMany({
-      where: { tenantId: session.tenantId, isActive: true },
+      where: {
+        tenantId: session.tenantId,
+        isActive: true,
+        ...(excludeAdminRoles
+          ? { roleCode: { notIn: ["TENANT_ADMIN", "DP_TENANT_ADMIN"] } }
+          : {}),
+      },
       select: { id: true, roleCode: true, roleName: true },
       orderBy: { roleName: "asc" },
     }),

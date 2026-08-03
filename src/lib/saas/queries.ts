@@ -20,6 +20,7 @@ import type {
   TenantSettingsPayload,
   TenantUsageSnapshotRow,
 } from "@/lib/saas/types";
+import { TENANT_ADMIN_ROLE_CODES } from "@/lib/saas/tenant-admin-access";
 
 const tenantListInclude = {
   branches: { where: { isActive: true }, select: { id: true } },
@@ -30,7 +31,11 @@ const tenantListInclude = {
     include: { package: true },
   },
   users: {
-    where: { isActive: true, isHostAdmin: false },
+    where: {
+      isActive: true,
+      isHostAdmin: false,
+      userRoles: { some: { isActive: true, role: { roleCode: { in: [...TENANT_ADMIN_ROLE_CODES] }, isActive: true } } },
+    },
     include: {
       userRoles: { where: { isActive: true, isPrimary: true }, take: 1 },
     },
@@ -60,10 +65,14 @@ const tenantDetailInclude = {
     take: 20,
   },
   users: {
-    where: { isActive: true, isHostAdmin: false },
+    where: {
+      isActive: true,
+      isHostAdmin: false,
+      userRoles: { some: { isActive: true, role: { roleCode: { in: [...TENANT_ADMIN_ROLE_CODES] }, isActive: true } } },
+    },
     include: {
       userRoles: {
-        where: { isActive: true, isPrimary: true },
+        where: { isActive: true, role: { roleCode: { in: [...TENANT_ADMIN_ROLE_CODES] }, isActive: true } },
         include: { role: true },
         take: 1,
       },

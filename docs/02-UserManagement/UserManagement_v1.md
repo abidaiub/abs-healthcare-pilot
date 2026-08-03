@@ -237,3 +237,17 @@ Effective Date: [ 2026-06-07 ]
 *   **Primary Branch**: A user's data entry must default to their `PrimaryBranch` unless manually changed.
 *   **Audit**: Changing a user's `Email` must create a record in `UserAuditLog` showing the old and new email addresses.
 *   **Multilingual**: Switching the system language to Arabic must flip the UI to RTL and display Arabic text from resources.
+
+### Tenant Administrator administrative ceiling (2026-08-03, updated)
+
+On Host tenant creation, the platform auto-provisions:
+
+1. `TENANT_ADMIN` role + primary admin user
+2. Recommended Tenant Admin permission bundle (user management, branch create/edit, go-live readiness configure/declare, doctors/schedules, diagnostic catalog masters, portal, audit view)
+3. Standard operational roles (Reception, Billing, Phlebotomist, Lab Tech, Pathologist, Report Officer, etc.)
+4. Default main branch assigned to the admin
+5. Suggested operating departments
+
+After creation, Tenant Admin can independently create/manage operational users (branch, department, approved tenant roles), activate/deactivate, reset passwords, manage doctors/schedules, and complete MOD-00 go-live preparation without further Host intervention. Host Tenant Administrator Access remains available to customize the allowlist.
+
+Runtime mapping: `/settings/users` view=`canView`, create=`canCreate`, edit/status/password/assignment=`canEdit`. Role/branch must belong to the session tenant; departments may be global or tenant-owned. Tenant Admin cannot create/assign another admin role or change their own primary admin role. Clinical verify/release `canApprove` remains denied.

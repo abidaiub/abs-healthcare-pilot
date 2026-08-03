@@ -54,6 +54,7 @@ export type TenantUserDetail = TenantUserRow & {
   primaryRoleId: string | null;
   branchIds: string[];
   primaryBranchId: string | null;
+  departmentId: string | null;
 };
 
 export type PermissionCheckAction = Exclude<PermissionAction, never>;

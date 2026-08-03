@@ -16,10 +16,11 @@ type Props = {
   mode: "create" | "edit";
   roles: TenantRoleRow[];
   branches: BranchOption[];
+  departments: Array<{ id: string; name: string }>;
   user?: TenantUserDetail;
 };
 
-export function UserFormPanel({ mode, roles, branches, user }: Props) {
+export function UserFormPanel({ mode, roles, branches, departments, user }: Props) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -118,6 +119,10 @@ export function UserFormPanel({ mode, roles, branches, user }: Props) {
                 {branch.name}
               </option>
             ))}
+          </Select>
+          <Select label="Department" name="departmentId" defaultValue={user?.departmentId ?? ""} required>
+            <option value="" disabled>Select department</option>
+            {departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}
           </Select>
           {mode === "edit" && (
             <Select

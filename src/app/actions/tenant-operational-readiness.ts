@@ -10,6 +10,7 @@ import {
 import { loadOperationalReadiness } from "@/lib/operational-readiness/queries";
 import { requireTenantPermission } from "@/lib/rbac/auth";
 import { writeAuditLog } from "@/lib/saas/audit";
+import { isTenantAdminRoleCode } from "@/lib/saas/tenant-admin-access";
 
 export type Mod00ActionResult<T = undefined> =
   | { ok: true; data?: T }
@@ -38,6 +39,7 @@ async function actor(action: "canView" | "canEdit" | "canApprove" | "canCreate" 
     branchId: session.branchId,
     userId: session.userId,
     username: session.user.name,
+    roleCode: session.user.roleCode,
   };
 }
 
@@ -328,6 +330,12 @@ export async function createOperationalUserAction(input: {
     if (!branch) return { ok: false, error: "Selected branch is invalid." };
     if (input.departmentId && !department) {
       return { ok: false, error: "Selected department is invalid." };
+    }
+    if (isTenantAdminRoleCode(a.roleCode) && isTenantAdminRoleCode(role.roleCode)) {
+      return {
+        ok: false,
+        error: "Tenant Administrators cannot create or assign another administrative role.",
+      };
     }
 
     const user = await prisma.$transaction(async (tx) => {

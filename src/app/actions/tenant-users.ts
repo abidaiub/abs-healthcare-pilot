@@ -10,6 +10,7 @@ import {
   getTenantUserDetail,
 } from "@/lib/rbac/queries";
 import { writeAuditLog } from "@/lib/saas/audit";
+import { isTenantAdminRoleCode } from "@/lib/saas/tenant-admin-access";
 
 export type TenantUserActionResult =
   | { ok: true; userId?: string }
@@ -29,13 +30,14 @@ function parseUserStatus(value: string): UserStatus | null {
   return null;
 }
 
-async function getActor() {
-  const session = await requireTenantPermission("/settings/users", "canEdit");
+async function getActor(action: "canCreate" | "canEdit" = "canEdit") {
+  const session = await requireTenantPermission("/settings/users", action);
   return {
     session,
     username: session.user.name,
     userId: session.userId,
     tenantId: session.tenantId,
+    roleCode: session.user.roleCode,
   };
 }
 
@@ -50,7 +52,7 @@ function revalidateUserPaths(tenantId: string, userId?: string) {
 export async function createTenantUserAction(
   formData: FormData,
 ): Promise<TenantUserActionResult> {
-  const actor = await getActor();
+  const actor = await getActor("canCreate");
 
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
@@ -58,13 +60,14 @@ export async function createTenantUserAction(
   const password = String(formData.get("password") ?? "").trim() || "Tenant@2026!";
   const primaryRoleId = String(formData.get("primaryRoleId") ?? "").trim();
   const primaryBranchId = String(formData.get("primaryBranchId") ?? "").trim();
+  const departmentId = String(formData.get("departmentId") ?? "").trim();
   const forcePasswordChange = String(formData.get("forcePasswordChange") ?? "") === "true";
 
-  if (!username || !email || !primaryRoleId || !primaryBranchId) {
-    return { ok: false, error: "Username, email, primary role, and primary branch are required." };
+  if (!username || !email || !primaryRoleId || !primaryBranchId || !departmentId) {
+    return { ok: false, error: "Username, email, primary role, primary branch, and department are required." };
   }
 
-  const [existingUsername, existingEmail, role, branch] = await Promise.all([
+  const [existingUsername, existingEmail, role, branch, department] = await Promise.all([
     prisma.user.findUnique({ where: { username }, select: { id: true } }),
     prisma.user.findUnique({ where: { email }, select: { id: true } }),
     prisma.role.findFirst({
@@ -73,12 +76,15 @@ export async function createTenantUserAction(
     prisma.branch.findFirst({
       where: { id: primaryBranchId, tenantId: actor.tenantId, isActive: true },
     }),
+    prisma.department.findFirst({ where: { id: departmentId, isActive: true, OR: [{ tenantId: null }, { tenantId: actor.tenantId }] } }),
   ]);
 
   if (existingUsername) return { ok: false, error: "Username already exists." };
   if (existingEmail) return { ok: false, error: "Email already exists." };
   if (!role) return { ok: false, error: "Selected role is invalid." };
   if (!branch) return { ok: false, error: "Selected branch is invalid." };
+  if (!department) return { ok: false, error: "Selected department is invalid." };
+  if (isTenantAdminRoleCode(actor.roleCode) && isTenantAdminRoleCode(role.roleCode)) return { ok: false, error: "Tenant Administrators cannot create or assign another administrative role." };
 
   const user = await prisma.$transaction(async (tx) => {
     const created = await tx.user.create({
@@ -87,6 +93,7 @@ export async function createTenantUserAction(
         username,
         email,
         phone,
+        departmentId,
         passwordHash: hashPassword(password),
         forcePasswordChange,
         isHostAdmin: false,
@@ -132,6 +139,7 @@ export async function createTenantUserAction(
       email,
       roleCode: role.roleCode,
       branchId: primaryBranchId,
+      departmentId,
     },
     createdBy: actor.username,
   });
@@ -144,7 +152,7 @@ export async function updateTenantUserAction(
   userId: string,
   formData: FormData,
 ): Promise<TenantUserActionResult> {
-  const actor = await getActor();
+  const actor = await getActor("canEdit");
   await assertTenantOwnsUser(actor.tenantId, userId);
 
   const existing = await getTenantUserDetail(actor.tenantId, userId);
@@ -155,10 +163,11 @@ export async function updateTenantUserAction(
   const userStatus = parseUserStatus(String(formData.get("userStatus") ?? existing.userStatus));
   const primaryRoleId = String(formData.get("primaryRoleId") ?? "").trim();
   const primaryBranchId = String(formData.get("primaryBranchId") ?? "").trim();
+  const departmentId = String(formData.get("departmentId") ?? "").trim();
   const forcePasswordChange = String(formData.get("forcePasswordChange") ?? "") === "true";
 
-  if (!email || !userStatus || !primaryRoleId || !primaryBranchId) {
-    return { ok: false, error: "Email, status, primary role, and primary branch are required." };
+  if (!email || !userStatus || !primaryRoleId || !primaryBranchId || !departmentId) {
+    return { ok: false, error: "Email, status, primary role, primary branch, and department are required." };
   }
 
   const emailOwner = await prisma.user.findUnique({
@@ -169,17 +178,23 @@ export async function updateTenantUserAction(
     return { ok: false, error: "Email already belongs to another user." };
   }
 
-  const [role, branch] = await Promise.all([
+  const [role, branch, department] = await Promise.all([
     prisma.role.findFirst({
       where: { id: primaryRoleId, tenantId: actor.tenantId, isActive: true },
     }),
     prisma.branch.findFirst({
       where: { id: primaryBranchId, tenantId: actor.tenantId, isActive: true },
     }),
+    prisma.department.findFirst({ where: { id: departmentId, isActive: true, OR: [{ tenantId: null }, { tenantId: actor.tenantId }] } }),
   ]);
 
   if (!role) return { ok: false, error: "Selected role is invalid." };
   if (!branch) return { ok: false, error: "Selected branch is invalid." };
+  if (!department) return { ok: false, error: "Selected department is invalid." };
+  if (isTenantAdminRoleCode(actor.roleCode)) {
+    if (userId === actor.userId && existing.primaryRoleId !== role.id) return { ok: false, error: "Tenant Administrators cannot change their own administrative role." };
+    if (userId !== actor.userId && isTenantAdminRoleCode(role.roleCode)) return { ok: false, error: "Tenant Administrators cannot assign another administrative role." };
+  }
 
   await prisma.$transaction(async (tx) => {
     await tx.user.update({
@@ -187,6 +202,7 @@ export async function updateTenantUserAction(
       data: {
         email,
         phone,
+        departmentId,
         userStatus,
         forcePasswordChange,
         isActive: userStatus !== "ARCHIVED",
@@ -260,7 +276,7 @@ export async function updateTenantUserAction(
     entityId: userId,
     changeData: {
       oldValue: { email: existing.email, userStatus: existing.userStatus },
-      newValue: { email, userStatus, roleCode: role.roleCode },
+      newValue: { email, userStatus, roleCode: role.roleCode, branchId: primaryBranchId, departmentId },
     },
     createdBy: actor.username,
   });

@@ -113,12 +113,22 @@ export async function getTenantUserDetail(
     primaryRoleId: primaryRole?.roleId ?? null,
     branchIds: user.userBranches.map((entry) => entry.branchId),
     primaryBranchId: primaryBranch?.branchId ?? null,
+    departmentId: user.departmentId,
   };
 }
 
-export async function listTenantRoles(tenantId: string): Promise<TenantRoleRow[]> {
+export async function listTenantRoles(
+  tenantId: string,
+  options?: { excludeAdminRoles?: boolean; activeOnly?: boolean },
+): Promise<TenantRoleRow[]> {
   const roles = await prisma.role.findMany({
-    where: { tenantId },
+    where: {
+      tenantId,
+      ...(options?.activeOnly ? { isActive: true } : {}),
+      ...(options?.excludeAdminRoles
+        ? { roleCode: { notIn: ["TENANT_ADMIN", "DP_TENANT_ADMIN"] } }
+        : {}),
+    },
     include: {
       _count: {
         select: {

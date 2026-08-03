@@ -140,3 +140,7 @@ Copy Permissions From: [ Junior Doctor v ] [ Copy ]
 *   **Isolation**: Company A cannot see Company B's custom roles.
 *   **Enforcement**: User with "View Only" role cannot see the "Save" button.
 *   **Audit**: Changing "CanDelete" for a role must be recorded in the audit log.
+
+### Host-approved Tenant Administrator permission matrix (2026-08-03, updated)
+
+Host create auto-applies the recommended Tenant Admin allowlist plus standard operational role packs. The Host Tenant Administrator Access panel can still customize grants. Allowlisted resources cover user management, branch create/edit, roles view, operational readiness (view/create/edit/approve for go-live declare), doctors/schedules, diagnostic catalog masters, patient portal settings, dashboard view, and audit view. Clinical verify/release approve remains denied for Tenant Admin. Role create/permission-edit and Host/platform administration remain out of scope. Non-allowlisted identifiers are rejected by the Host save action.

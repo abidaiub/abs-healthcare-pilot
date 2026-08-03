@@ -13,7 +13,15 @@ function statusVariant(status: string) {
   return "default" as const;
 }
 
-export function UserManagementPanel({ users }: { users: TenantUserRow[] }) {
+export function UserManagementPanel({
+  users,
+  canCreate = false,
+  canEdit = false,
+}: {
+  users: TenantUserRow[];
+  canCreate?: boolean;
+  canEdit?: boolean;
+}) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [message, setMessage] = useState<string | null>(null);
@@ -69,9 +77,11 @@ export function UserManagementPanel({ users }: { users: TenantUserRow[] }) {
             <option value="LOCKED">Locked</option>
             <option value="SUSPENDED">Suspended</option>
           </Select>
-          <Link href="/settings/users/new">
-            <Button>Create User</Button>
-          </Link>
+          {canCreate && (
+            <Link href="/settings/users/new">
+              <Button>Create User</Button>
+            </Link>
+          )}
         </CardBody>
       </Card>
 
@@ -100,34 +110,37 @@ export function UserManagementPanel({ users }: { users: TenantUserRow[] }) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
-                      <Link href={`/settings/users/${user.id}`}>
-                        <Button variant="secondary">Edit</Button>
-                      </Link>
-                      {user.userStatus === "LOCKED" ? (
-                        <Button
-                          variant="ghost"
-                          disabled={pending}
-                          onClick={() => handleToggle(user, "unlock")}
-                        >
-                          Unlock
-                        </Button>
-                      ) : user.isActive ? (
-                        <Button
-                          variant="ghost"
-                          disabled={pending}
-                          onClick={() => handleToggle(user, "deactivate")}
-                        >
-                          Deactivate
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          disabled={pending}
-                          onClick={() => handleToggle(user, "activate")}
-                        >
-                          Activate
-                        </Button>
+                      {canEdit && (
+                        <Link href={`/settings/users/${user.id}`}>
+                          <Button variant="secondary">Edit</Button>
+                        </Link>
                       )}
+                      {canEdit &&
+                        (user.userStatus === "LOCKED" ? (
+                          <Button
+                            variant="ghost"
+                            disabled={pending}
+                            onClick={() => handleToggle(user, "unlock")}
+                          >
+                            Unlock
+                          </Button>
+                        ) : user.isActive ? (
+                          <Button
+                            variant="ghost"
+                            disabled={pending}
+                            onClick={() => handleToggle(user, "deactivate")}
+                          >
+                            Deactivate
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            disabled={pending}
+                            onClick={() => handleToggle(user, "activate")}
+                          >
+                            Activate
+                          </Button>
+                        ))}
                     </div>
                   </td>
                 </tr>
