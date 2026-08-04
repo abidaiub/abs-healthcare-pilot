@@ -1,4 +1,6 @@
 node_modules
+node_modules.corrupt-*
+node_modules.partial-*
 .next
 .git
 .gitignore
@@ -7,8 +9,13 @@ node_modules
 !.env.example
 README.md
 npm-debug.log*
+*.log
 Dockerfile
 docker-compose.yml
 coverage
+tmp
+docs/tmp
+scripts/tmp-*
+scripts/__pycache__
 .vscode
 .idea
