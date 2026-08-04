@@ -26,6 +26,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner
     container_name: abs-healthcare-pilot-app
     restart: unless-stopped
     depends_on:
@@ -39,6 +40,37 @@ services:
       NEXT_PUBLIC_SAMPLE_BRANCH: ${NEXT_PUBLIC_SAMPLE_BRANCH:-"Dhaka Central Hospital"}
     ports:
       - "${APP_PORT:-3000}:3000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then((response) => { if (!response.ok) process.exit(1); }).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  qc:
+    profiles: ["qc"]
+    init: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: qc
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://${POSTGRES_USER:-abshealthcare}:${POSTGRES_PASSWORD:-abshealthcare_dev}@postgres:5432/${POSTGRES_DB:-abs_healthcare_pilot}?schema=public
+      APP_BASE_URL: http://app:3000
+      BASE_URL: http://app:3000
+      APP_HEALTH_URL: http://app:3000/api/health
+    working_dir: /app
+    command: ["npm", "run", "verify:smoke"]
 
 volumes:
   postgres_data:

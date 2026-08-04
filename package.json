@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:seed:host-catalog": "tsx scripts/seed-host-catalog.ts",
@@ -40,6 +41,7 @@
     "verify:mod23": "tsx scripts/verify-mod23-pathologist-verification.ts",
     "verify:mod24": "tsx scripts/verify-mod24-report-release-delivery.ts",
     "verify:dpdc": "tsx scripts/verify-dpdc-e2e.ts",
+    "verify:smoke": "node scripts/verify-docker-smoke.mjs",
     "generate:mod24-manual-qc-docs": "node scripts/generate-mod24-manual-qc-docs.mjs",
     "postinstall": "prisma generate"
   },

@@ -1,9 +1,12 @@
 # ABSHealthcareLite Pilot — Docker QC Guide
 
-**Document version:** 1.0  
-**Date:** 20 June 2026  
-**Environment:** Docker deployment on LAN server  
-**Application:** ABSHealthcareLite Pilot  
+**Document version:** 2.0
+
+**Date:** 4 August 2026
+
+**Environment:** Docker deployment on LAN server
+
+**Application:** ABSHealthcareLite Pilot
 
 ---
 
@@ -29,7 +32,7 @@ Run these checks before functional QC:
    ```powershell
    docker ps --filter name=abs-healthcare-pilot
    ```
-3. Confirm database seed has been applied (see [Section 13 — Known Pending Issues](#13-known-pending-issues)). Docker entrypoint runs migrations only; seed is **not** automatic.
+3. Confirm migrations and any environment-specific seed/backfill have been run explicitly through the `qc` service. The production app never changes database structure or reference data during startup.
 
 ---
 
@@ -40,7 +43,8 @@ Run these checks before functional QC:
 | Service | Container name | Image / build | Host port | Internal port |
 | --- | --- | --- | --- | --- |
 | `postgres` | `abs-healthcare-pilot-db` | `postgres:16-alpine` | 5432 (default) | 5432 |
-| `app` | `abs-healthcare-pilot-app` | Built from `Dockerfile` | 3000 (default) | 3000 |
+| `app` | `abs-healthcare-pilot-app` | `runner` target | 3000 (default) | 3000 |
+| `qc` | Ephemeral (`docker compose run --rm`) | `qc` target | None | None |
 
 ### 2.2 Default environment variables
 
@@ -55,21 +59,39 @@ Run these checks before functional QC:
 | `NEXT_PUBLIC_SAMPLE_TENANT` | `Al Baraka Medical Group` | Sample tenant label |
 | `NEXT_PUBLIC_SAMPLE_BRANCH` | `Dhaka Central Hospital` | Sample branch label |
 | `DATABASE_URL` | `postgresql://abshealthcare:abshealthcare_dev@postgres:5432/abs_healthcare_pilot?schema=public` | Prisma connection (inside Docker network) |
+| `APP_BASE_URL` | `http://app:3000` | Internal app URL for QC and maintenance jobs |
+| `BASE_URL` | `http://app:3000` | Compatibility URL used by existing browser QC scripts and as the smoke runner fallback |
+| `APP_HEALTH_URL` | `http://app:3000/api/health` | Endpoint used by `verify:smoke` |
 
-### 2.3 App startup sequence (`scripts/docker-entrypoint.sh`)
+### 2.3 Production and maintenance startup
 
-1. `npx prisma migrate deploy` — applies pending migrations  
-2. `node server.js` — starts Next.js production server  
+The production `app` starts only `node server.js`. It does not include the full source tree,
+development dependencies, Prisma CLI, or `tsx`, and it never runs migrations or seed logic at
+startup.
 
-**Note:** `npm run db:seed` is **not** invoked at container startup.
+Run database preparation and source-based checks as explicit, auditable maintenance jobs:
+
+```powershell
+docker compose run --rm qc npm run db:migrate:deploy
+docker compose run --rm qc npm run db:seed
+docker compose run --rm qc npm run verify:dpdc
+docker compose run --rm qc npm run backfill:tenant-admin-user-mgmt
+```
+
+The `qc` service is in the `qc` Compose profile. Explicit `docker compose run qc ...` commands
+activate it on demand; normal production startup does not create a long-running QC container.
 
 ### 2.4 Dockerfile summary
 
 - Base: `node:20-alpine`
-- Multi-stage build: deps → builder → runner
+- Multi-stage build: base/deps → builder → production `runner`, plus a separate `qc` target
 - Runs as non-root user `nextjs`
 - Exposes port `3000`, binds `0.0.0.0`
-- Includes Prisma client, migrations, and PostgreSQL driver for runtime DB access
+- Production target includes only public assets and Next.js standalone output, including the traced Prisma runtime client and PostgreSQL driver
+- QC target includes the repository source, development dependencies, `tsx`, Prisma CLI, generated Prisma client, migrations, and maintenance scripts
+
+See [`Docker-Deployment-Architecture.md`](Docker-Deployment-Architecture.md) for the complete
+image boundary and deployment workflow.
 
 ### 2.5 pgAdmin (external to repo compose file)
 
@@ -102,8 +124,12 @@ pgAdmin login credentials are managed on the server; they are not stored in this
 ```powershell
 git clone https://github.com/abidaiub/abs-healthcare-pilot.git
 cd abs-healthcare-pilot
-docker compose up -d --build
-docker compose exec app npx prisma db seed
+docker compose build app qc
+docker compose up -d postgres
+docker compose run --rm qc npm run db:migrate:deploy
+docker compose run --rm qc npm run db:seed
+docker compose up -d app
+docker compose run --rm qc npm run verify:smoke
 ```
 
 ---
@@ -560,7 +586,7 @@ Each flow lists: **Steps → Expected result → Pass/Fail criteria**
 
 ## 12. Known Pending Issues
 
-1. **Seed not run on Docker startup** — `scripts/docker-entrypoint.sh` runs `prisma migrate deploy` only. Run `docker compose exec app npx prisma db seed` manually after first deploy.
+1. **Database maintenance is explicit** — Production startup intentionally does not run migrations or seed data. Use `docker compose run --rm qc ...` under an approved deployment or maintenance procedure.
 2. **Mock authentication** — Host and tenant logins do not validate against `users.password_hash`. Production auth is marked TODO in `src/app/actions/auth.ts` and `src/lib/mock-session.ts`.
 3. **No User/Role seed data** — Prisma seed creates tenants, catalog, and diagnostic masters but **no login users** in the database.
 4. **ECG import gap** — `prisma/seed/tenant-imported-services.ts` requests service code `ECG`, but `ECG` is **not** defined in `prisma/seed/data/host-diagnostic-catalog-data.ts`. Seed imports CBC, FBS, LIPID, XRCHEST only (4 services).
@@ -578,7 +604,7 @@ Each flow lists: **Steps → Expected result → Pass/Fail criteria**
 
 Priority order for post-pilot development:
 
-1. **Wire Docker seed into entrypoint** — Add optional `RUN_DB_SEED=true` or run `prisma db seed` after migrate in `docker-entrypoint.sh` for repeatable QC environments.
+1. **Automate the QC maintenance workflow** — Run the same versioned `qc` image in CI/CD for migration, verification, and smoke gates while keeping the production app immutable.
 2. **Implement real authentication** — Seed host admin + tenant users with hashed passwords; replace mock session actions with credential verification against `User` table.
 3. **Seed RBAC** — Insert default roles, permissions, and `UserRole` assignments matching `TENANT_PRIMARY_ROLES` and demo users.
 4. **Add ECG to host catalog seed** — Align `HOST_SERVICES` with `DEFAULT_IMPORT_CODES` or remove ECG from import list.
@@ -607,7 +633,7 @@ Priority order for post-pilot development:
 
 ```powershell
 # From project root on Docker host
-docker compose exec app npx prisma db seed
+docker compose run --rm qc npm run db:seed
 ```
 
 Expected console output includes:
@@ -632,8 +658,9 @@ Expected console output includes:
 | `src/components/login/TenantLoginForm.tsx` | Tenant login UI |
 | `src/components/login/HostLoginForm.tsx` | Host login UI |
 | `docker-compose.yml` | Docker services |
-| `Dockerfile` | App image build |
-| `scripts/docker-entrypoint.sh` | Container startup |
+| `Dockerfile` | Production runner and QC image targets |
+| `scripts/verify-docker-smoke.mjs` | App/database smoke verification |
+| `docs/QC/Docker-Deployment-Architecture.md` | Deployment and maintenance boundary |
 
 ---
 

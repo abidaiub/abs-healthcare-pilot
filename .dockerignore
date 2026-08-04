@@ -17,5 +17,6 @@ tmp
 docs/tmp
 scripts/tmp-*
 scripts/__pycache__
+src/generated/prisma
 .vscode
 .idea

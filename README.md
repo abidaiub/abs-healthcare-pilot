@@ -82,13 +82,38 @@ Health check: [http://localhost:3000/api/health](http://localhost:3000/api/healt
 
 ## Docker server deployment
 
-Build and run the full stack (PostgreSQL + Next.js app):
+The production app image contains only the Next.js standalone server. Database migrations,
+seeding, backfills, and repository verification run in the on-demand `qc` container so that
+development tooling is not added to the runtime image.
+
+Build both targets, prepare the database, and then start the app:
 
 ```powershell
-docker compose up -d --build
+docker compose build app qc
+docker compose up -d postgres
+docker compose run --rm qc npm run db:migrate:deploy
+# Optional for a new QC environment:
+docker compose run --rm qc npm run db:seed
+docker compose up -d app
+docker compose run --rm qc npm run verify:smoke
 ```
 
 The app is available at [http://localhost:3000](http://localhost:3000) (or the port set in `APP_PORT`).
+Normal `docker compose up -d` starts only PostgreSQL and the production app; the profiled `qc`
+service is created only for an explicit `docker compose run`.
+
+Common maintenance commands:
+
+```powershell
+docker compose run --rm qc npm run verify:dpdc
+docker compose run --rm qc npm run backfill:tenant-admin-user-mgmt
+docker compose run --rm qc npm run db:migrate:deploy
+docker compose run --rm qc npm run db:seed
+```
+
+Rebuild `qc` after changing source, scripts, Prisma schema, or dependencies. See
+[`docs/QC/Docker-Deployment-Architecture.md`](docs/QC/Docker-Deployment-Architecture.md) for the
+deployment boundary and operator workflow.
 
 To stop:
 
@@ -131,8 +156,8 @@ abs-healthcare-pilot/
 │   ├── app/               # Next.js App Router pages and API
 │   ├── lib/db.ts          # Prisma client singleton
 │   └── generated/prisma/  # Generated Prisma client (gitignored)
-├── docker-compose.yml     # PostgreSQL + app services
-├── Dockerfile             # Production Next.js image
+├── docker-compose.yml     # PostgreSQL + production app + on-demand QC runner
+├── Dockerfile             # Production runner and QC/maintenance targets
 ├── .env.example           # Environment template
 └── README.md
 ```
@@ -170,6 +195,7 @@ See [`.env.example`](.env.example) for the full list. Key variables:
 - `.env` is gitignored; commit only `.env.example`.
 - On Windows, run Docker commands from PowerShell or Windows Terminal with Docker Desktop running.
 - For local dev, only the `postgres` service is required. The `app` service is for containerized deployment.
+- The production `app` container does not run migrations, seeds, backfills, or source-based verification scripts. Use the on-demand `qc` service for those operations.
 - Prisma client is generated to `src/generated/prisma` and regenerated on `npm install` via `postinstall`.
 
 ---

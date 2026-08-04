@@ -42,32 +42,29 @@ No other MOD-21–MOD-24 indexes/constraints are required by the polish SQL.
 
 ## Safe QC recovery (no reset / no reseed)
 
-**Prerequisite:** the corrected source must be committed, pushed, pulled on the QC host, **and the app image rebuilt.**
-`Dockerfile` copies `prisma/` into the image at build time (`COPY --from=builder /app/prisma ./prisma`), so a plain
-`docker compose up` on an old image still ships the broken migration directory.
-
-`scripts/docker-entrypoint.sh` is the image `ENTRYPOINT` and runs `prisma migrate deploy` before `node server.js`.
-Manual Prisma commands must therefore override it with `--entrypoint npx`, otherwise the entrypoint script runs instead
-of the requested command.
+**Prerequisite:** the corrected source must be committed, pushed, pulled on the QC host, and the version-matched
+`qc` image rebuilt. The production `app` image has no Prisma CLI or migration directory; all migration recovery runs
+as an explicit one-off QC job.
 
 ```bash
-# 0. On the QC host: get corrected source and rebuild the image
+# 0. On the QC host: get corrected source and build version-matched images
 git pull
-docker compose build app
+docker compose build app qc
 
-# 1. Stop the app so its entrypoint cannot race the manual recovery
+# 1. Stop the app while repairing migration state
 docker compose stop app
 
 # 2. Mark the failed polish migration as rolled back
-docker compose run --rm --entrypoint npx app \
+docker compose run --rm qc npx \
   prisma migrate resolve --rolled-back 20260724130000_mod24_release_polish
 
 # 3. Deploy remaining history (patched polish + MOD-21..24 creates + deferred polish)
-docker compose run --rm --entrypoint npx app prisma migrate deploy
+docker compose run --rm qc npm run db:migrate:deploy
 
 # 4. Confirm
-docker compose run --rm --entrypoint npx app prisma migrate status
+docker compose run --rm qc npx prisma migrate status
 docker compose up -d app
+docker compose run --rm qc npm run verify:smoke
 ```
 
 If `migrate resolve` reports the migration is not in a failed state, skip step 2 and run `migrate deploy` only.

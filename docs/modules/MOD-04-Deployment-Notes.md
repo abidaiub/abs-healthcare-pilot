@@ -43,7 +43,11 @@ No new variables. Requires working `DATABASE_URL`.
 Same stack as MOD-01. Rebuild container after pull:
 
 ```bash
-docker compose up -d --build
+docker compose build app qc
+docker compose up -d postgres
+docker compose run --rm qc npm run db:migrate:deploy
+docker compose up -d app
+docker compose run --rm qc npm run verify:smoke
 ```
 
 ## Rollback

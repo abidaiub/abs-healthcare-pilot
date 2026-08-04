@@ -19,6 +19,18 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npx prisma generate
 RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
+FROM deps AS qc
+COPY --chown=node:node . .
+
+ENV NODE_ENV=test
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN npx prisma generate && chown -R node:node /app/src/generated
+
+USER node
+
+CMD ["npm", "run", "verify:smoke"]
+
 FROM base AS runner
 WORKDIR /app
 
@@ -31,15 +43,6 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/scripts/docker-entrypoint.sh ./docker-entrypoint.sh
-COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/src ./src
-
-RUN chmod +x ./docker-entrypoint.sh
 
 USER nextjs
 
@@ -47,4 +50,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["node", "server.js"]

@@ -53,8 +53,12 @@ Run on the QC Docker host after `git pull`:
 ```powershell
 cd abs-healthcare-pilot
 git pull origin main
-docker compose up -d --build
-docker compose exec app npx prisma db seed
+docker compose build app qc
+docker compose up -d postgres
+docker compose run --rm qc npm run db:migrate:deploy
+docker compose run --rm qc npm run db:seed
+docker compose up -d app
+docker compose run --rm qc npm run verify:smoke
 ```
 
 Verify:
@@ -64,7 +68,7 @@ curl http://192.168.2.44:3000/api/health
 docker ps --filter name=abs-healthcare-pilot
 ```
 
-> **Note:** Container startup runs migrations only. Seed is **manual** (command above).
+> **Note:** The production app serves Next.js only. Migration, seed, verification, and smoke commands run as explicit one-off jobs in the `qc` service.
 
 ---
 
@@ -152,8 +156,11 @@ Complete sign-off only when exit criteria in Manual QC guide Section 13 are met.
 | Task | Command |
 |---|---|
 | Pull latest code | `git pull origin main` |
-| QC Docker deploy | `docker compose up -d --build` |
-| QC database seed | `docker compose exec app npx prisma db seed` |
+| Build app + QC images | `docker compose build app qc` |
+| Deploy migrations | `docker compose run --rm qc npm run db:migrate:deploy` |
+| QC database seed | `docker compose run --rm qc npm run db:seed` |
+| Start production app | `docker compose up -d app` |
+| Docker smoke check | `docker compose run --rm qc npm run verify:smoke` |
 | Health check | `curl http://192.168.2.44:3000/api/health` |
 | List containers | `docker ps --filter name=abs-healthcare-pilot` |
 | MOD-01 auth verify (local) | `npx tsx scripts/verify-mod01-auth.ts` |
