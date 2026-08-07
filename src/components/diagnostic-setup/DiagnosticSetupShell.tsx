@@ -3,10 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/components/ui";
-import {
-  DIAGNOSTIC_SETUP_NAV,
-  SECURITY_SETUP_NAV,
-} from "@/lib/diagnostic-master-data";
+
+export type SetupNavItem = { href: string; label: string };
 
 function NavSection({
   title,
@@ -14,9 +12,11 @@ function NavSection({
   pathname,
 }: {
   title: string;
-  items: ReadonlyArray<{ href: string; label: string }>;
+  items: ReadonlyArray<SetupNavItem>;
   pathname: string;
 }) {
+  if (items.length === 0) return null;
+
   return (
     <div>
       <p className="px-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
@@ -46,20 +46,26 @@ function NavSection({
   );
 }
 
-export function DiagnosticSetupNav() {
+export function DiagnosticSetupNav({
+  securityItems,
+  diagnosticItems,
+}: {
+  securityItems: SetupNavItem[];
+  diagnosticItems: SetupNavItem[];
+}) {
   const pathname = usePathname();
+
+  if (securityItems.length === 0 && diagnosticItems.length === 0) {
+    return null;
+  }
 
   return (
     <aside className="w-full shrink-0 lg:w-56">
       <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-3">
-        <NavSection
-          title="Security & IAM"
-          items={SECURITY_SETUP_NAV}
-          pathname={pathname}
-        />
+        <NavSection title="Security & IAM" items={securityItems} pathname={pathname} />
         <NavSection
           title="Diagnostic Setup"
-          items={DIAGNOSTIC_SETUP_NAV}
+          items={diagnosticItems}
           pathname={pathname}
         />
       </div>

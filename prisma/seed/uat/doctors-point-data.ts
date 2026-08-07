@@ -174,6 +174,8 @@ export const DOCTORS_POINT_ROLES: UatRoleSeed[] = [
       "/lab/orders",
       "/lab/orders/new",
       "/prescriptions",
+      "/settings/doctors",
+      "/settings/doctor-schedules",
     ],
     actions: ["canView", "canCreate", "canEdit", "canApprove", "canPrint"],
   },

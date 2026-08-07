@@ -1,11 +1,17 @@
 import { DoctorsPanel } from "@/components/diagnostic-setup/DoctorsPanel";
 import { SetupErrorState } from "@/components/diagnostic-setup/SetupDataStates";
 import { ModulePageHeader } from "@/components/layout/ModulePageHeader";
-import { requireTenantSession } from "@/lib/auth";
 import { listDoctors, listTenantBranches, listTenantDepartments } from "@/lib/diagnostic/queries";
+import { hasTenantPermission, requireTenantPermission } from "@/lib/rbac/auth";
 
 export default async function DoctorsPage() {
-  const session = await requireTenantSession();
+  const session = await requireTenantPermission("/settings/doctors", "canView");
+  const canCreate = await hasTenantPermission(
+    session.tenantId,
+    session.userId,
+    "/settings/doctors",
+    "canCreate",
+  );
   let data: Awaited<ReturnType<typeof loadDoctorsPageData>>;
 
   try {
@@ -22,7 +28,12 @@ export default async function DoctorsPage() {
   return (
     <div className="space-y-6">
       <ModulePageHeader screenKey="diagnosticDoctors" description="Tenant doctor registry with branch and department mappings." />
-      <DoctorsPanel doctors={data.doctors} branches={data.branches} departments={data.departments} />
+      <DoctorsPanel
+        doctors={data.doctors}
+        branches={data.branches}
+        departments={data.departments}
+        canCreate={canCreate}
+      />
     </div>
   );
 }

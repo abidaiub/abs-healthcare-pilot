@@ -7,13 +7,18 @@ import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { BranchSwitcher, type SwitchableBranchOption } from "@/components/layout/BranchSwitcher";
 import { Badge, Button, cn } from "@/components/ui";
 import { useI18n } from "@/lib/i18n/client";
-import { getNavGroups } from "@/lib/navigation";
+import type { NavGroup } from "@/lib/navigation";
 import { clearMockSessionClient } from "@/lib/mock-session";
 import { isHostSession, type SessionContext } from "@/lib/session";
 
-export function Sidebar({ session }: { session: SessionContext }) {
+export function Sidebar({
+  session,
+  navGroups,
+}: {
+  session: SessionContext;
+  navGroups: NavGroup[];
+}) {
   const pathname = usePathname();
-  const navGroups = getNavGroups(session);
   const hostMode = isHostSession(session);
   const { t } = useI18n();
 
@@ -150,16 +155,18 @@ export function TopBar({
 
 export function AppShell({
   session,
+  navGroups,
   switchableBranches = [],
   children,
 }: {
   session: SessionContext;
+  navGroups: NavGroup[];
   switchableBranches?: SwitchableBranchOption[];
   children: React.ReactNode;
 }) {
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <Sidebar session={session} />
+      <Sidebar session={session} navGroups={navGroups} />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar session={session} switchableBranches={switchableBranches} />
         <main className="flex-1 overflow-auto p-6">{children}</main>

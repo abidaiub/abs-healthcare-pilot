@@ -12,6 +12,7 @@ type Props = {
   doctors: DoctorRow[];
   branches: BranchOption[];
   departments: DepartmentOption[];
+  canCreate?: boolean;
 };
 
 const EMPTY_FORM = {
@@ -21,12 +22,19 @@ const EMPTY_FORM = {
   specialty: "",
   phone: "",
   departmentId: "",
+  isReferring: false,
+  commissionApplicable: false,
   isReporting: false,
   isVerifying: false,
   isPathologist: false,
 };
 
-export function DoctorsPanel({ doctors, branches, departments }: Props) {
+export function DoctorsPanel({
+  doctors,
+  branches,
+  departments,
+  canCreate = false,
+}: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState<(typeof DOCTOR_TABS)[number]>("Basic");
@@ -50,6 +58,8 @@ export function DoctorsPanel({ doctors, branches, departments }: Props) {
         specialty: form.specialty || undefined,
         phone: form.phone || undefined,
         departmentId: form.departmentId || undefined,
+        isReferring: form.isReferring,
+        commissionApplicable: form.commissionApplicable,
         isReporting: form.isReporting,
         isVerifying: form.isVerifying,
         isPathologist: form.isPathologist,
@@ -181,6 +191,7 @@ export function DoctorsPanel({ doctors, branches, departments }: Props) {
         </Card>
       )}
 
+      {canCreate && (
       <Card>
         <div className="border-b border-slate-100 px-6 py-4">
           <h3 className="text-sm font-semibold text-slate-900">Register new doctor</h3>
@@ -235,6 +246,24 @@ export function DoctorsPanel({ doctors, branches, departments }: Props) {
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
+                  checked={form.isReferring}
+                  onChange={(e) => updateForm("isReferring", e.target.checked)}
+                  className="rounded text-teal-600"
+                />
+                Referring
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.commissionApplicable}
+                  onChange={(e) => updateForm("commissionApplicable", e.target.checked)}
+                  className="rounded text-teal-600"
+                />
+                Commission eligible (calculation deferred)
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
                   checked={form.isReporting}
                   onChange={(e) => updateForm("isReporting", e.target.checked)}
                   className="rounded text-teal-600"
@@ -280,6 +309,7 @@ export function DoctorsPanel({ doctors, branches, departments }: Props) {
           </Button>
         </div>
       </Card>
+      )}
     </div>
   );
 }

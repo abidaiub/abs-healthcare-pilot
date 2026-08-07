@@ -41,6 +41,8 @@
     "verify:mod23": "tsx scripts/verify-mod23-pathologist-verification.ts",
     "verify:mod24": "tsx scripts/verify-mod24-report-release-delivery.ts",
     "verify:dpdc": "tsx scripts/verify-dpdc-e2e.ts",
+    "verify:navigation-permissions": "tsx scripts/verify-navigation-permissions.ts",
+    "verify:navigation-permissions:browser": "tsx scripts/verify-navigation-permissions-browser.ts",
     "verify:smoke": "node scripts/verify-docker-smoke.mjs",
     "generate:mod24-manual-qc-docs": "node scripts/generate-mod24-manual-qc-docs.mjs",
     "postinstall": "prisma generate"
