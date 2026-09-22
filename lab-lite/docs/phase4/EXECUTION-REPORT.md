@@ -8,7 +8,42 @@ Verdict: **BLOCKED**
 
 The frozen Phase 3 architecture remains technically sound for a controlled pilot, and the available automated, packaging, upgrade, rollback, encryption, synchronization, and restore tests passed. Customer installation is nevertheless blocked because the evidence explicitly required for final readiness is incomplete: the installer is unsigned; an actual Windows reboot and offline cold-start were not run; native operator UAT could not be controlled by the available test harness; physical output was not inspected for any paper format; no production HTTPS endpoint or production secrets were provisioned; and no real operator acceptance session occurred.
 
-No parallel authentication, synchronization, billing, or ledger path was introduced. Production code remained frozen. Phase 4 changed only documentation and strengthened the existing encrypted-backup test to assert restored operation ID, receipt identity, and sync checkpoint.
+No parallel authentication, synchronization, billing, or ledger path was introduced. The validated financial/synchronization paths remained frozen; remediation is limited to deployment/operations assets, privacy-minimized logging, the guarded restore orchestration, evidence, and regression coverage.
+
+## Final blocker-remediation pass
+
+Source-control blocker 1 is closed by commit `b49280f` (`feat(lab-lite): add pilot deployment and phase 4 controls`), pushed to GitHub `main` on 2026-09-22. The commit contains the complete independent Lab Lite source, QC Compose/reverse-proxy configuration, safe master seed, health endpoint, backup/monitor scripts, and Phase 4 evidence. Local/runtime `.env` files, databases, build output, and unsigned installer artifacts were excluded.
+
+Live SSH reached `192.168.2.44` but authentication failed with `Permission denied (publickey,password)`. External DNS still resolves to `202.5.54.132`; TCP 80 and 443 failed, and both HTTP and HTTPS probes timed out. No server write or risky migration/firewall/OS action was attempted. The installer remains Authenticode `NotSigned` with SHA-256 `6ACBDEDD23239EF87CE102CFFB472E0F1F532F836F72FEB7921A1928248C2DFC`.
+
+Code-side remediation added privacy-minimized rotating Electron operational logs, a validated/safety-backed same-device restore workflow, fail-closed dual-database backup automation, and minimum pilot health monitoring. The frozen billing/sync architecture was not replaced. Verification: 27 Lab Lite tests PASS; web typecheck/lint PASS; desktop typecheck PASS; isolated desktop SQLCipher/backup/reprint/logging regression PASS; Compose YAML parse PASS. Docker engine execution was unavailable locally.
+
+## Final 20-blocker evidence matrix
+
+| # | Severity | Status | Evidence and required remediation |
+|---|---|---|---|
+| 1 Source control | BLOCKER | PASS | Commit `b49280f` pushed to `origin/main`; required files present, scoped secret scan found only synthetic test credentials. |
+| 2 Docker networking | BLOCKER | NOT RUN live | Source binds apps to loopback, publishes no PostgreSQL, and omits pgAdmin. Authenticate server, cut over, inspect actual bindings, and prove old public ports closed. |
+| 3 Persistent DB safety | BLOCKER | NOT RUN live | Source names two volumes and `/var/lib/postgresql/data`; actual volume/project/mount inventory and app-recreate persistence test required. Never use `down -v`. |
+| 4 Pre-migration backup | BLOCKER | NOT RUN | Backup tool implemented; no live dump/hash/off-server copy/full restore exists. |
+| 5 Production migration | BLOCKER | PASS local / NOT RUN live | Five Lab Lite migrations applied in isolated test DB; live pre/post Prisma/custom-ledger status requires backup and server access. |
+| 6 Master seed | HIGH | PASS local / NOT RUN live | Safe separated idempotent paths verified; generic/demo seed remains excluded. Capture live before/after/rerun counts after migration. |
+| 7 HTTPS/TLS | BLOCKER | FAIL | DNS resolves; TCP 80/443 and HTTP/HTTPS failed. Configure NAT/proxy/trusted certificate/renewal and repeat externally. |
+| 8 Firewall | BLOCKER | NOT RUN | Effective server/router rules unavailable. Preserve SSH recovery, apply least privilege, and prove forbidden ports closed. |
+| 9 Supported Ubuntu | BLOCKER | NOT RUN / prior finding unresolved | Server OS could not be reverified; prior Ubuntu 23.10 finding has no supported-LTS remediation evidence. Back up and migrate/rebuild under a witnessed rollback plan. |
+| 10 Signed installer | BLOCKER | FAIL | Installer is `NotSigned`; acquire/custody/sign/timestamp/verify setup and update chain. |
+| 11 Reboot/offline cold start | BLOCKER | NOT RUN | Real reboot prohibited from inference; perform witnessed field sequence and reconcile one identity. |
+| 12 Native Electron UAT | BLOCKER | NOT RUN | Installed app exists; native visual surface was unavailable to current automation. Human native UAT required. |
+| 13 Physical printers/devices | BLOCKER | NOT RUN | Brother A4/A5 hardware was previously detected but no paper inspected; thermal/cutter/drawer unavailable. Certify A4/A5 or do not pilot. Explicitly exclude POS/cutter/drawer if absent. |
+| 14 Save & Print safety | HIGH | PASS automated | Regression proves post precedes receipt, failed receipt lookup/reprint does not change bill count, and existing operation/receipt identity is reused. Physical print-failure drill remains required. |
+| 15 Operational logging | HIGH | PASS source/regression | Rotating allowlisted JSONL logging implemented and redaction/rotation tested; installed-client support collection remains field-UAT work. |
+| 16 Operator-safe restore | HIGH | PASS source/regression / NOT RUN human | Backup validation, safety copy, write suspension, atomic swap, reopen, rollback, sign-out, and reconcile instruction implemented. Witnessed support drill required. |
+| 17 Revoke after restore | HIGH | PASS protocol / NOT RUN native | Server test quarantines revoked-device uploads; exact old-backup native field sequence remains open. |
+| 18 Secret/key custody | BLOCKER | FAIL | Storage/rotation rules documented, but accountable people and operational stores are UNASSIGNED. Assign and approve without recording values in Git. |
+| 19 Monitoring | BLOCKER | IMPLEMENTED / NOT RUN live | App/DB/disk/HTTPS/TLS checks and syslog failure implemented; scheduler, alert delivery, backup-age alert, and failure drills required. |
+| 20 Operator acceptance | BLOCKER | NOT RUN | No intended diagnostic-center operator participated. Execute and sign the acceptance record. |
+
+All NOT RUN and FAIL items above remain open; automated PASS evidence does not close native, physical, infrastructure, or human gates.
 
 ## Environment and artifacts
 
