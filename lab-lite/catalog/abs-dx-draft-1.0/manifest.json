@@ -1,0 +1,17 @@
+{
+  "releaseCode": "ABS-DX-DRAFT-1.0",
+  "canonicalFile": "catalog.json",
+  "canonicalSha256": "a9a636bb1dd68c95b2f0f873b01c9de4a27c78a372a79512aab6bfb391a0b1d5",
+  "repeatGroupsFile": "repeat-groups.json",
+  "repeatGroupsSha256": "01df26b8640a0432beec38c25f688a7ff54434c8c5963b44d2c2f405bab38841",
+  "sourceArchive": "ABS_Lab_Catalog_Cursor_Package.zip",
+  "sourceCreatedOn": "2026-09-20",
+  "sourceStatus": "DRAFT_REVIEW_REQUIRED",
+  "clinicalValidationStatus": "NOT_PERFORMED",
+  "counts": {
+    "starter": 312,
+    "medium": 444,
+    "advanced": 725,
+    "fields": 3571
+  }
+}

@@ -1,0 +1,153 @@
+name: ${COMPOSE_PROJECT_NAME:-abs-healthcare-qc}
+
+services:
+  healthcare-postgres-qc:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${HEALTHCARE_QC_POSTGRES_USER:?required}
+      POSTGRES_PASSWORD: ${HEALTHCARE_QC_POSTGRES_PASSWORD:?required}
+      POSTGRES_DB: ${HEALTHCARE_QC_POSTGRES_DB:?required}
+    volumes:
+      - healthcare_qc_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks: [healthcare-qc-internal]
+    security_opt: [no-new-privileges:true]
+
+  healthcare-app-qc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    depends_on:
+      healthcare-postgres-qc:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DEPLOYMENT_ENV: qc
+      DATABASE_URL: postgresql://${HEALTHCARE_QC_POSTGRES_USER:?required}:${HEALTHCARE_QC_POSTGRES_PASSWORD:?required}@healthcare-postgres-qc:5432/${HEALTHCARE_QC_POSTGRES_DB:?required}?schema=public
+      SESSION_TOKEN_PEPPER: ${HEALTHCARE_QC_SESSION_TOKEN_PEPPER:?required}
+      COOKIE_SECURE: "true"
+      ALLOW_INSECURE_HTTP_LOCAL_QC: "false"
+      TRUST_PROXY: "true"
+    ports:
+      - "127.0.0.1:${HEALTHCARE_QC_APP_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks: [healthcare-qc-internal]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  healthcare-tools-qc:
+    profiles: [ops]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: qc
+    depends_on:
+      healthcare-postgres-qc:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DEPLOYMENT_ENV: qc
+      DATABASE_URL: postgresql://${HEALTHCARE_QC_POSTGRES_USER:?required}:${HEALTHCARE_QC_POSTGRES_PASSWORD:?required}@healthcare-postgres-qc:5432/${HEALTHCARE_QC_POSTGRES_DB:?required}?schema=public
+      SESSION_TOKEN_PEPPER: ${HEALTHCARE_QC_SESSION_TOKEN_PEPPER:?required}
+      COOKIE_SECURE: "true"
+      TRUST_PROXY: "true"
+    networks: [healthcare-qc-internal]
+    security_opt: [no-new-privileges:true]
+
+  lab-lite-postgres-qc:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${LAB_LITE_QC_POSTGRES_USER:?required}
+      POSTGRES_PASSWORD: ${LAB_LITE_QC_POSTGRES_PASSWORD:?required}
+      POSTGRES_DB: ${LAB_LITE_QC_POSTGRES_DB:?required}
+    volumes:
+      - lab_lite_qc_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks: [lab-lite-qc-internal]
+    security_opt: [no-new-privileges:true]
+
+  lab-lite-app-qc:
+    build:
+      context: ./lab-lite
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    depends_on:
+      lab-lite-postgres-qc:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${LAB_LITE_QC_POSTGRES_USER:?required}:${LAB_LITE_QC_POSTGRES_PASSWORD:?required}@lab-lite-postgres-qc:5432/${LAB_LITE_QC_POSTGRES_DB:?required}
+      EXPECTED_DATABASE_NAME: ${LAB_LITE_QC_POSTGRES_DB:?required}
+      SESSION_TOKEN_PEPPER: ${LAB_LITE_QC_SESSION_TOKEN_PEPPER:?required}
+      COOKIE_SECURE: "true"
+      APP_ORIGIN: ${LAB_LITE_QC_APP_ORIGIN:?required}
+      DEVICE_AUTH_PEPPER: ${LAB_LITE_QC_DEVICE_AUTH_PEPPER:?required}
+      DEVICE_LEASE_PRIVATE_KEY_PEM_BASE64: ${LAB_LITE_QC_DEVICE_LEASE_PRIVATE_KEY_PEM_BASE64:?required}
+      DEVICE_LEASE_PUBLIC_KEY_PEM_BASE64: ${LAB_LITE_QC_DEVICE_LEASE_PUBLIC_KEY_PEM_BASE64:?required}
+    ports:
+      - "127.0.0.1:${LAB_LITE_QC_APP_PORT:-3100}:3100"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3100/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    networks: [lab-lite-qc-internal]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  lab-lite-tools-qc:
+    profiles: [ops]
+    build:
+      context: ./lab-lite
+      dockerfile: Dockerfile
+      target: tools
+    depends_on:
+      lab-lite-postgres-qc:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${LAB_LITE_QC_POSTGRES_USER:?required}:${LAB_LITE_QC_POSTGRES_PASSWORD:?required}@lab-lite-postgres-qc:5432/${LAB_LITE_QC_POSTGRES_DB:?required}
+      EXPECTED_DATABASE_NAME: ${LAB_LITE_QC_POSTGRES_DB:?required}
+      SESSION_TOKEN_PEPPER: ${LAB_LITE_QC_SESSION_TOKEN_PEPPER:?required}
+      DEVICE_AUTH_PEPPER: ${LAB_LITE_QC_DEVICE_AUTH_PEPPER:?required}
+      DEVICE_LEASE_PRIVATE_KEY_PEM_BASE64: ${LAB_LITE_QC_DEVICE_LEASE_PRIVATE_KEY_PEM_BASE64:?required}
+      DEVICE_LEASE_PUBLIC_KEY_PEM_BASE64: ${LAB_LITE_QC_DEVICE_LEASE_PUBLIC_KEY_PEM_BASE64:?required}
+    networks: [lab-lite-qc-internal]
+    security_opt: [no-new-privileges:true]
+
+networks:
+  healthcare-qc-internal:
+    internal: true
+  lab-lite-qc-internal:
+    internal: true
+
+volumes:
+  healthcare_qc_postgres_data:
+    name: abs_healthcare_qc_postgres_data
+  lab_lite_qc_postgres_data:
+    name: abs_lab_lite_qc_postgres_data

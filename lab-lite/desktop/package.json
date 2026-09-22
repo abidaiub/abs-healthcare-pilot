@@ -1,0 +1,28 @@
+{
+  "name": "abs-lab-lite-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ABS Lab Lite installed Windows billing client",
+  "author": "Al Baraka Soft",
+  "main": "dist/main.cjs",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "npm run build && electron .",
+    "test": "node scripts/test.mjs",
+    "typecheck": "tsc --noEmit",
+    "package": "npm run build && electron-forge package",
+    "make": "npm run build && electron-forge make"
+  },
+  "dependencies": {
+    "better-sqlite3-multiple-ciphers": "13.0.3"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "7.11.2",
+    "@electron-forge/maker-squirrel": "7.11.2",
+    "@types/node": "^24.0.0",
+    "electron": "44.4.3",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,0 +1,51 @@
+[
+  {
+    "repeat_group": "isolate",
+    "parent": "test_instance",
+    "cardinality": "One row per identified isolate.",
+    "row_key": "isolate_id",
+    "implementation_note": "Culture organism and growth data."
+  },
+  {
+    "repeat_group": "susceptibility",
+    "parent": "isolate",
+    "cardinality": "One row per antimicrobial per isolate.",
+    "row_key": "isolate_id + antimicrobial_id",
+    "implementation_note": "MIC unit and applicable breakpoint standard/version must be configured. Never infer susceptibility from missing results."
+  },
+  {
+    "repeat_group": "agonist",
+    "parent": "test_instance",
+    "cardinality": "One row per platelet agonist.",
+    "row_key": "agonist_id",
+    "implementation_note": "Associate concentration, trace, timing and interpretation under validated protocol."
+  },
+  {
+    "repeat_group": "antigen",
+    "parent": "test_instance",
+    "cardinality": "One row per blood-group antigen.",
+    "row_key": "antigen_id",
+    "implementation_note": "Expression belongs to the same antigen row."
+  },
+  {
+    "repeat_group": "target",
+    "parent": "test_instance",
+    "cardinality": "One row per assay target.",
+    "row_key": "target_id",
+    "implementation_note": "Configure exact target roster from the selected validated kit before activation."
+  },
+  {
+    "repeat_group": "drug",
+    "parent": "test_instance",
+    "cardinality": "One row per mycobacterial susceptibility drug.",
+    "row_key": "drug_id",
+    "implementation_note": "Configure concentrations and interpretive criteria from the chosen laboratory standard."
+  },
+  {
+    "repeat_group": "measurement",
+    "parent": "test_instance",
+    "cardinality": "One row per specialist measurement.",
+    "row_key": "measurement_id + site + side",
+    "implementation_note": "Include value, unit, nerve/muscle/site and reference protocol; no hardcoded normal traces."
+  }
+]

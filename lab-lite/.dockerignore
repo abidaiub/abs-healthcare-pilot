@@ -1,0 +1,10 @@
+node_modules
+.next
+desktop
+.runtime
+.env*
+!.env.example
+coverage
+*.log
+docs
+tests

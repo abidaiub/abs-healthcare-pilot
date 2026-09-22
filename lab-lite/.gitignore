@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.env.local
+.env.test
+.runtime/
+coverage/
+*.log
+desktop/dist/
+desktop/out/
+desktop/.verify/

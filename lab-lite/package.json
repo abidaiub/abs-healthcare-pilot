@@ -1,0 +1,38 @@
+{
+  "name": "abs-lab-lite",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3100",
+    "build": "next build",
+    "start": "next start -p 3100",
+    "typecheck": "tsc --noEmit --incremental false",
+    "lint": "eslint .",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:bootstrap": "tsx scripts/bootstrap.ts",
+    "db:seed-catalog": "tsx scripts/seed-catalog.ts",
+    "seed:master": "tsx scripts/seed-catalog.ts",
+    "verify:master-catalog": "tsx scripts/verify-master-catalog.ts",
+    "seed:uat": "tsx scripts/seed-browser-uat.ts",
+    "db:seed-browser-uat": "tsx scripts/seed-browser-uat.ts",
+    "db:seed-print-sample": "tsx scripts/seed-print-sample.ts",
+    "test": "node scripts/run-tests.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "next": "^16.3.5",
+    "pg": "^8.21.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "^16.3.5",
+    "tsx": "^4.22.4",
+    "typescript": "^5"
+  }
+}
