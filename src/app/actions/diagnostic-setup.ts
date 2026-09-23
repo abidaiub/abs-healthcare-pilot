@@ -314,6 +314,8 @@ export async function createTenantDoctorAction(input: {
   specialty?: string;
   phone?: string;
   departmentId?: string;
+  isReferring?: boolean;
+  commissionApplicable?: boolean;
   isReporting?: boolean;
   isVerifying?: boolean;
   isPathologist?: boolean;
@@ -345,6 +347,8 @@ export async function createTenantDoctorAction(input: {
         specialty: input.specialty?.trim() || null,
         phone: input.phone?.trim() || null,
         departmentId: input.departmentId || null,
+        isReferring: input.isReferring ?? false,
+        commissionApplicable: input.commissionApplicable ?? false,
         isReporting: input.isReporting ?? false,
         isVerifying: input.isVerifying ?? false,
         isPathologist: input.isPathologist ?? false,
