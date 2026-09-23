@@ -37,14 +37,14 @@ services:
       ALLOW_INSECURE_HTTP_LOCAL_QC: "false"
       TRUST_PROXY: "true"
     ports:
-      - "127.0.0.1:${HEALTHCARE_QC_APP_PORT:-3000}:3000"
+      - "127.0.0.1:${HEALTHCARE_QC_APP_PORT:-3001}:3000"
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
       interval: 15s
       timeout: 5s
       retries: 12
       start_period: 30s
-    networks: [healthcare-qc-internal]
+    networks: [healthcare-qc-internal, healthcare-qc-proxy]
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]
@@ -114,7 +114,7 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
-    networks: [lab-lite-qc-internal]
+    networks: [lab-lite-qc-internal, lab-lite-qc-proxy]
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]
@@ -143,8 +143,12 @@ services:
 networks:
   healthcare-qc-internal:
     internal: true
+  healthcare-qc-proxy:
+    driver: bridge
   lab-lite-qc-internal:
     internal: true
+  lab-lite-qc-proxy:
+    driver: bridge
 
 volumes:
   healthcare_qc_postgres_data:
